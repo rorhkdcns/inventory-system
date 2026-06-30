@@ -8,43 +8,37 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial; background: #f5f5f5; padding: 20px; }
     .container { max-width: 100%; }
-    h1 { margin-bottom: 20px; }
+    h1 { margin-bottom: 20px; font-size: 32px; }
     .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
-    .tab-btn { padding: 10px 20px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; }
+    .tab-btn { padding: 12px 24px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; font-size: 16px; }
     .tab-btn.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: bold; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     
     .table-wrapper { background: white; border-radius: 8px; overflow: auto; border: 1px solid #ddd; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background: #0066cc; color: white; font-weight: bold; }
+    th, td { border: 1px solid #ddd; padding: 16px; text-align: center; font-size: 16px; font-weight: bold; }
+    th { background: #0066cc; color: white; }
     tr:nth-child(even) { background: #f9f9f9; }
     
-    .cell-content { min-height: 60px; cursor: pointer; padding: 8px; border-radius: 4px; }
-    .cell-content:hover { background: #e8f4f8; }
-    .item { font-size: 12px; padding: 4px; margin: 2px 0; border-left: 3px solid #ddd; border-radius: 2px; }
-    
-    .danger { background: #ffe6e6 !important; border-left-color: #d9534f !important; }
-    .warning { background: #fff3cd !important; border-left-color: #ffc107 !important; }
-    .success { background: #d4edda !important; border-left-color: #5cb85c !important; }
-    .empty { color: #999; font-size: 11px; }
+    .danger { background: #ffe6e6 !important; }
+    .warning { background: #fff3cd !important; }
+    .success { background: #d4edda !important; }
     
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
-    textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-    input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
-    button { padding: 10px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    button { padding: 12px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
     button:hover { background: #0052a3; }
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
     .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-    .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
-    .modal input, .modal select { margin-bottom: 10px; }
+    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+    .modal input, .modal select { margin-bottom: 10px; font-size: 16px; }
     .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
     .modal-buttons button { flex: 1; margin: 0; }
-    .modal-buttons button.cancel { background: #999; }
     .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   </style>
 </head>
@@ -69,10 +63,16 @@
         <table id="dashboard-table">
           <thead>
             <tr>
-              <th style="width: 60px;">칸</th>
-              <th>A열</th>
-              <th>B열</th>
-              <th>C열</th>
+              <th style="width: 80px;">칸</th>
+              <th>A층</th>
+              <th>A상품명</th>
+              <th>A수량</th>
+              <th>B층</th>
+              <th>B상품명</th>
+              <th>B수량</th>
+              <th>C층</th>
+              <th>C상품명</th>
+              <th>C수량</th>
             </tr>
           </thead>
           <tbody id="table-body"></tbody>
@@ -112,30 +112,6 @@
     </div>
   </div>
 
-  <!-- 수정 모달 -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-title" id="modalTitle">상품 수정</div>
-      <div id="modalItems"></div>
-      
-      <h4 style="margin-top: 20px; margin-bottom: 10px;">새 상품 추가</h4>
-      <div class="input-row">
-        <select id="newItemFloor">
-          <option value="1">층 1</option>
-          <option value="2">층 2</option>
-          <option value="3">층 3</option>
-        </select>
-        <input type="text" id="newItemName" placeholder="상품명">
-        <input type="number" id="newItemQty" placeholder="수량" min="1">
-      </div>
-      
-      <div class="modal-buttons">
-        <button onclick="addNewItem()">추가</button>
-        <button class="cancel" onclick="closeModal()">닫기</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     const data = {
       A: {1:{2:[{n:'매직1제',q:24},{n:'산화제',q:36}]},2:{1:[{n:'산화제',q:8}],2:[{n:'7/33',q:5}],3:[{n:'5/30',q:22}]},3:{2:[{n:'8/33',q:18}],3:[{n:'매직1제',q:24}]},4:{3:[{n:'10/45',q:12}]},5:{1:[{n:'8/30',q:17}],2:[{n:'3/0',q:20}],3:[{n:'산화제',q:36}]},6:{3:[{n:'산화제',q:54}]}},
@@ -161,117 +137,77 @@
       return 'success';
     }
 
-    function getTotalQty(items) {
-      return items.reduce((s, it) => s + it.q, 0);
-    }
-
     function render() {
       let html = '';
       const maxCan = 20;
       
       for (let can = 1; can <= maxCan; can++) {
-        html += `<tr><td style="font-weight: bold; background: #f0f0f0;">칸${can}</td>`;
+        const allItems = [];
         
         ['A', 'B', 'C'].forEach(col => {
-          html += '<td><div class="cell-content" onclick="openEditModal(\'' + col + '\',' + can + ')">';
+          const colItems = [];
           const cd = inv[col][can];
           
-          if (cd && Object.keys(cd).length > 0) {
+          if (cd) {
             for (let f = 1; f <= 3; f++) {
               if (cd[f]) {
-                const total = getTotalQty(cd[f]);
-                const color = getColor(total);
-                cd[f].forEach(it => {
-                  html += `<div class="item ${color}">층${f}: ${it.n}<br>${it.q}개</div>`;
+                cd[f].forEach((it, idx) => {
+                  colItems.push({col, f, idx, n: it.n, q: it.q});
                 });
               }
             }
-          } else {
-            html += '<div class="empty">-</div>';
           }
           
-          html += '</div></td>';
+          allItems.push(colItems);
         });
         
-        html += '</tr>';
+        const maxRows = Math.max(
+          allItems[0].length || 0,
+          allItems[1].length || 0,
+          allItems[2].length || 0
+        );
+        
+        if (maxRows === 0) {
+          html += `<tr><td style="font-weight: bold; background: #f0f0f0;">칸${can}</td>`;
+          html += '<td colspan="9" style="color: #999;">-</td></tr>';
+        } else {
+          for (let r = 0; r < maxRows; r++) {
+            html += '<tr>';
+            
+            if (r === 0) {
+              html += `<td rowspan="${maxRows}" style="font-weight: bold; background: #f0f0f0; font-size: 18px;">칸${can}</td>`;
+            }
+            
+            for (let colIdx = 0; colIdx < 3; colIdx++) {
+              if (r < allItems[colIdx].length) {
+                const item = allItems[colIdx][r];
+                const color = getColor(item.q);
+                html += `<td style="font-size: 16px;">층${item.f}</td>`;
+                html += `<td style="font-size: 16px;">${item.n}</td>`;
+                html += `<td style="font-size: 18px; font-weight: bold; cursor: pointer;" class="${color}" onclick="editQty('${item.col}',${can},${item.f},${item.idx})">${item.q}개</td>`;
+              } else {
+                html += `<td></td><td></td><td></td>`;
+              }
+            }
+            
+            html += '</tr>';
+          }
+        }
       }
       
       document.getElementById('table-body').innerHTML = html;
     }
 
-    function openEditModal(col, can) {
-      currentEditCell = { col, can };
-      const cd = inv[col][can];
-      let itemsHtml = `<div style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;"><h4>${col}열 칸${can}</h4>`;
-      
-      if (cd && Object.keys(cd).length > 0) {
-        for (let f = 1; f <= 3; f++) {
-          if (cd[f]) {
-            cd[f].forEach((it, idx) => {
-              itemsHtml += `<div style="padding: 8px; border: 1px solid #ddd; margin: 5px 0; display: flex; justify-content: space-between; align-items: center;">
-                <div onclick="editItem('${col}',${can},${f},${idx})" style="cursor: pointer; flex: 1;">층${f}: ${it.n} (${it.q}개)</div>
-                <button onclick="removeItem('${col}',${can},${f},${idx})" style="background: #dc3545; padding: 5px 10px; font-size: 11px; margin: 0;">×</button>
-              </div>`;
-            });
-          }
-        }
-      } else {
-        itemsHtml += '<div class="empty">상품 없음</div>';
-      }
-      
-      itemsHtml += '</div>';
-      document.getElementById('modalItems').innerHTML = itemsHtml;
-      document.getElementById('modalTitle').textContent = col + '열 칸' + can;
-      document.getElementById('newItemFloor').value = '1';
-      document.getElementById('newItemName').value = '';
-      document.getElementById('newItemQty').value = '';
-      document.getElementById('editModal').classList.add('active');
-    }
-
-    function editItem(col, can, floor, idx) {
-      const it = inv[col][can][floor][idx];
-      const newName = prompt('상품명:', it.n);
-      if (!newName) return;
-      const newQty = parseInt(prompt('수량:', it.q));
+    function editQty(col, can, floor, idx) {
+      const currentQty = inv[col][can][floor][idx].q;
+      const newQty = prompt(`수량 수정 (현재: ${currentQty}):`, currentQty);
       if (!newQty) return;
+      const qty = parseInt(newQty);
+      if (!qty || qty < 1) return alert('1 이상의 수를 입력해주세요');
       
-      it.n = newName;
-      it.q = newQty;
+      inv[col][can][floor][idx].q = qty;
       localStorage.setItem('inv', JSON.stringify(inv));
-      openEditModal(col, can);
       render();
-    }
-
-    function removeItem(col, can, floor, idx) {
-      if (!confirm('삭제?')) return;
-      inv[col][can][floor].splice(idx, 1);
-      if (inv[col][can][floor].length === 0) delete inv[col][can][floor];
-      localStorage.setItem('inv', JSON.stringify(inv));
-      openEditModal(col, can);
-      render();
-    }
-
-    function addNewItem() {
-      if (!currentEditCell) return;
-      const floor = parseInt(document.getElementById('newItemFloor').value);
-      const name = document.getElementById('newItemName').value.trim();
-      const qty = parseInt(document.getElementById('newItemQty').value);
-      if (!name || !qty) return alert('입력');
-      
-      const col = currentEditCell.col;
-      const can = currentEditCell.can;
-      if (!inv[col][can][floor]) inv[col][can][floor] = [];
-      inv[col][can][floor].push({n: name, q: qty});
-      localStorage.setItem('inv', JSON.stringify(inv));
-      document.getElementById('newItemName').value = '';
-      document.getElementById('newItemQty').value = '';
-      openEditModal(col, can);
-      render();
-    }
-
-    function closeModal() {
-      document.getElementById('editModal').classList.remove('active');
-      currentEditCell = null;
     }
 
     function renderStats() {
@@ -289,9 +225,9 @@
           }
         }
       });
-      let html = `<div class="card"><h3>전체: ${tot}개 | 종류: ${Object.keys(prod).length}</h3>`;
+      let html = `<div class="card"><h3 style="font-size: 20px;">전체: ${tot}개 | 종류: ${Object.keys(prod).length}</h3>`;
       Object.entries(prod).sort((a,b)=>b[1]-a[1]).forEach(([n,q]) => {
-        html += `<div style="padding:10px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd"><span>${n}</span><span>${q}개</span></div>`;
+        html += `<div style="padding:15px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd;font-size:16px;"><span>${n}</span><span style="font-weight: bold;">${q}개</span></div>`;
       });
       html += '</div>';
       document.getElementById('stats-content').innerHTML = html;
@@ -312,14 +248,14 @@
             for (let f = 1; f <= 3; f++) {
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach(it => {
-                  if (it.n.toLowerCase().includes(q)) html += `<div class="card">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
+                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px;">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
                 });
               }
             }
           }
         }
       });
-      document.getElementById('search-results').innerHTML = html || '<div style="color:#999">없음</div>';
+      document.getElementById('search-results').innerHTML = html || '<div style="color:#999; font-size: 16px;">없음</div>';
     }
 
     function resetData() {
