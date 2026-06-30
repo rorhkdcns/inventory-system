@@ -16,8 +16,6 @@
     .panel { display: none; }
     .panel.active { display: block; }
 
-    .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
-
     .cols-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; }
     .col-wrapper { background: white; border-radius: 8px; padding: 0; border: 2px solid #ddd; overflow: hidden; }
     .col-header { padding: 15px; background: #000; color: #fff; font-size: 22px; font-weight: bold; text-align: center; }
@@ -34,12 +32,6 @@
     .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
     .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #222; font-size: 17px; }
     .fl-empty { color: #888; }
-    .floor-line.danger { background: #ffcccc; }
-    .floor-line.danger:hover { background: #ffb8b8; }
-    .floor-line.warning { background: #ffffcc; }
-    .floor-line.warning:hover { background: #fafa9e; }
-    .floor-line.success { background: #ccffcc; }
-    .floor-line.success:hover { background: #b3ffb3; }
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
@@ -73,9 +65,6 @@
       .tabs { gap: 4px; margin-bottom: 14px; }
       .tab-btn { padding: 10px 14px; font-size: 14px; }
 
-      .legend { padding: 12px; font-size: 14px; }
-
-      /* 3열 → 1열로 세로 쌓기 */
       .cols-container { grid-template-columns: 1fr; gap: 16px; }
 
       .col-header { font-size: 20px; padding: 13px; }
@@ -89,11 +78,9 @@
       .fl-name { font-size: 16px; }
       .fl-qty { min-width: 50px; font-size: 16px; }
 
-      /* 모달 모바일 */
       .modal-content { padding: 20px; width: 94%; max-height: 92vh; }
       .modal-title { font-size: 20px; }
 
-      /* 버튼 터치 영역 */
       button { padding: 14px 18px; }
       .modal-buttons button { padding: 14px 10px; font-size: 15px; }
 
@@ -158,10 +145,6 @@
         <button onclick="uploadJSON()">JSON 복원</button>
         <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
       </div>
-    </div>
-
-    <div class="legend">
-      <span>🔴 부족 (≤20개) 🟡 적정 (21-50개) 🟢 충분 (51개+)</span>
     </div>
 
     <div class="cols-container" id="cols-container"></div>
@@ -245,12 +228,6 @@
       btn.classList.add('active');
       if (name === 'stats') renderStats();
       if (name === 'logs') renderLogs();
-    }
-
-    function getColor(qty) {
-      if (qty <= 20) return 'danger';
-      if (qty <= 50) return 'warning';
-      return 'success';
     }
 
     function getTodayDate() {
@@ -444,9 +421,8 @@
           displayFloors.forEach(floor => {
             if (cd && cd[floor] && cd[floor].length > 0) {
               cd[floor].forEach((it, idx) => {
-                const color = getColor(it.q);
                 const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
-                rowsHtml += `<div class="floor-line ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
+                rowsHtml += `<div class="floor-line" onclick="openEditModal('${col}',${can},${floor},${idx})">
                   <span class="fl-floor">${floor}층</span>
                   <span class="fl-name">${displayName}</span>
                   <span class="fl-qty">${it.q}개</span>
