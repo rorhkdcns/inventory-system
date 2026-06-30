@@ -11,11 +11,8 @@
     h1 { margin-bottom: 20px; font-size: 32px; }
     
     .col-tabs { display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; }
-    .col-tab { padding: 12px 40px; background: #000; color: #000; border: none; cursor: pointer; font-size: 18px; font-weight: bold; border-radius: 12px; min-width: 140px; transition: all 0.2s; }
-    .col-tab:hover { transform: scale(1.05); }
-    
-    .settings-btn { padding: 12px 30px; background: #666; color: #000; border: none; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 8px; transition: all 0.2s; }
-    .settings-btn:hover { background: #555; }
+    .col-tab { padding: 12px 40px; background: #666; color: #000; border: none; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 8px; transition: all 0.2s; }
+    .col-tab:hover { background: #555; }
     
     .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; overflow-x: auto; }
     .tab-btn { padding: 12px 24px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; font-size: 16px; white-space: nowrap; color: #000; }
@@ -27,26 +24,31 @@
     .main-view { display: block; }
     .main-view.hidden { display: none; }
     
-    .cols-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .cols-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: start; }
     
     .col-wrapper { background: white; border-radius: 8px; padding: 0; border: 2px solid #ddd; overflow: hidden; }
-    .col-header { padding: 15px; background: #000; color: #fff; font-size: 20px; font-weight: bold; text-align: center; border-radius: 8px 8px 0 0; }
+    .col-header { padding: 15px; background: #000; color: #fff; font-size: 20px; font-weight: bold; text-align: center; }
     
-    .cans-list { display: flex; flex-direction: column; gap: 15px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+    .cans-list { display: flex; flex-direction: column; gap: 18px; padding: 20px; }
     
-    .can-card { background: #bbb; border-radius: 12px; padding: 15px; }
-    .can-label { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #999; }
+    .can-island { display: flex; align-items: center; gap: 12px; }
+    .can-num { font-size: 18px; font-weight: bold; color: #000; min-width: 45px; text-align: center; }
+    .can-box { flex: 1; background: #c4c4c4; border-radius: 12px; padding: 6px 12px; }
     
-    .floor-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #333; cursor: pointer; border-bottom: 1px solid #999; transition: all 0.2s; }
-    .floor-row:last-child { border-bottom: none; }
-    .floor-row:hover { background: #a9a9a9; padding: 8px 5px; }
+    .floor-line { display: flex; align-items: center; padding: 11px 4px; border-bottom: 1px solid #999; cursor: pointer; transition: all 0.15s; border-radius: 4px; }
+    .floor-line:last-child { border-bottom: none; }
+    .floor-line:hover { background: rgba(255,255,255,0.4); }
+    .fl-floor { min-width: 42px; font-weight: bold; color: #444; font-size: 14px; }
+    .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 14px; }
+    .fl-qty { min-width: 50px; text-align: right; font-weight: bold; color: #222; font-size: 14px; }
+    .fl-empty { color: #888; }
     
-    .floor-name { font-weight: 600; }
-    .floor-qty { font-weight: bold; }
-    
-    .danger { background: #ffcccc !important; }
-    .warning { background: #ffffcc !important; }
-    .success { background: #ccffcc !important; }
+    .floor-line.danger { background: #ffcccc; }
+    .floor-line.danger:hover { background: #ffb8b8; }
+    .floor-line.warning { background: #ffffcc; }
+    .floor-line.warning:hover { background: #fafa9e; }
+    .floor-line.success { background: #ccffcc; }
+    .floor-line.success:hover { background: #b3ffb3; }
     
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
@@ -189,6 +191,8 @@
   </div>
 
   <script>
+    const COL_MAX = { A: 6, B: 6, C: 20 };
+
     const data = {
       A: {1:{2:[{n:'매직1제',q:24,d:'2024-01-01'},{n:'산화제',q:36,d:'2024-01-02'}]},2:{1:[{n:'산화제',q:8,d:'2024-01-03'}],2:[{n:'7/33',q:5,d:'2024-01-04'}],3:[{n:'5/30',q:22,d:'2024-01-05'}]},3:{2:[{n:'8/33',q:18,d:'2024-01-06'}],3:[{n:'매직1제',q:24,d:'2024-01-07'}]},4:{3:[{n:'10/45',q:12,d:'2024-01-08'}]},5:{1:[{n:'8/30',q:17,d:'2024-01-09'}],2:[{n:'3/0',q:20,d:'2024-01-10'}],3:[{n:'산화제',q:36,d:'2024-01-11'}]},6:{3:[{n:'산화제',q:54,d:'2024-01-12'}]}},
       B: {1:{2:[{n:'5/45',q:19,d:'2024-01-13'}]},2:{1:[{n:'매직1제',q:6,d:'2024-01-14'}],2:[{n:'8/1',q:3,d:'2024-01-15'}],3:[{n:'9/30',q:16,d:'2024-01-16'}]},3:{1:[{n:'6/30',q:16,d:'2024-01-17'}],2:[{n:'6/33',q:19,d:'2024-01-18'}],3:[{n:'02/02',q:18,d:'2024-01-19'}]},4:{1:[{n:'6/33',q:7,d:'2024-01-20'}],2:[{n:'10/30',q:7,d:'2024-01-21'}]},5:{1:[{n:'1/0',q:22,d:'2024-01-22'}],2:[{n:'3/0',q:14,d:'2024-01-23'}],3:[{n:'산화제',q:36,d:'2024-01-24'}]},6:{3:[{n:'7/30',q:11,d:'2024-01-25'}]}},
@@ -254,7 +258,6 @@
       editingCan = { col, can };
       const item = inv[col][can][floor][idx];
       document.getElementById('modalTitle').textContent = `${col}열 칸${can} 상품 수정`;
-      document.getElementById('modalFloor').value = floor;
       document.getElementById('modalName').value = item.n;
       document.getElementById('modalQty').value = item.q;
       document.getElementById('editButtons').style.display = 'flex';
@@ -267,12 +270,13 @@
       const floors = getAllFloors();
       const floorSelect = document.getElementById('modalFloor');
       floorSelect.innerHTML = '';
-      floors.forEach(f => {
+      const maxF = Math.max(...floors, 3, floor);
+      for (let i = 1; i <= maxF; i++) {
         const opt = document.createElement('option');
-        opt.value = f;
-        opt.textContent = f + '층';
+        opt.value = i;
+        opt.textContent = i + '층';
         floorSelect.appendChild(opt);
-      });
+      }
       floorSelect.value = floor;
       
       document.getElementById('editModal').classList.add('active');
@@ -284,7 +288,6 @@
       editingItem = null;
       editingCan = { col, can };
       document.getElementById('modalTitle').textContent = `${col}열 칸${can} 상품 추가`;
-      document.getElementById('newFloor').value = '1';
       document.getElementById('newName').value = '';
       document.getElementById('newQty').value = '';
       document.getElementById('editButtons').style.display = 'none';
@@ -305,6 +308,11 @@
       }
       
       document.getElementById('editModal').classList.add('active');
+    }
+
+    function openAddModalFloor(col, can, floor) {
+      openAddModal(col, can);
+      document.getElementById('newFloor').value = floor;
     }
 
     function showInModal() {
@@ -417,6 +425,7 @@
       const can = editingCan.can;
       const today = getTodayDate();
       
+      if (!inv[col][can]) inv[col][can] = {};
       if (!inv[col][can][floor]) inv[col][can][floor] = [];
       inv[col][can][floor].push({n: name, q: qty, d: today});
       
@@ -452,32 +461,35 @@
       ['A', 'B', 'C'].forEach(col => {
         let colHtml = `<div class="col-wrapper"><div class="col-header">${col}열</div><div class="cans-list">`;
         
-        for (let can = 1; can <= 20; can++) {
+        const maxCan = COL_MAX[col];
+        
+        for (let can = 1; can <= maxCan; can++) {
           const cd = inv[col][can];
-          let hasContent = false;
-          let canContentHtml = '';
+          let rowsHtml = '';
           
           displayFloors.forEach(floor => {
             if (cd && cd[floor] && cd[floor].length > 0) {
               cd[floor].forEach((it, idx) => {
                 const color = getColor(it.q);
                 const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
-                canContentHtml += `<div class="floor-row ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
-                  <span class="floor-name">${displayName}</span>
-                  <span class="floor-qty">${it.q}개</span>
+                rowsHtml += `<div class="floor-line ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
+                  <span class="fl-floor">${floor}층</span>
+                  <span class="fl-name">${displayName}</span>
+                  <span class="fl-qty">${it.q}개</span>
                 </div>`;
-                hasContent = true;
               });
+            } else {
+              rowsHtml += `<div class="floor-line" onclick="openAddModalFloor('${col}',${can},${floor})">
+                <span class="fl-floor">${floor}층</span>
+                <span class="fl-name fl-empty">+ 추가</span>
+                <span class="fl-qty fl-empty">-</span>
+              </div>`;
             }
           });
           
-          if (!hasContent) {
-            canContentHtml = `<div style="text-align: center; color: #999; padding: 10px;">-</div>`;
-          }
-          
-          colHtml += `<div class="can-card">
-            <div class="can-label">칸${can}</div>
-            ${canContentHtml}
+          colHtml += `<div class="can-island">
+            <div class="can-num">${can}칸</div>
+            <div class="can-box">${rowsHtml}</div>
           </div>`;
         }
         
@@ -494,7 +506,7 @@
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
-            for (let f = 1; f <= 3; f++) {
+            for (let f = 1; f <= 10; f++) {
               if (inv[col][c][f]) inv[col][c][f].forEach(it => {
                 prod[it.n] = (prod[it.n]||0) + it.q;
                 tot += it.q;
@@ -541,7 +553,7 @@
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
-            for (let f = 1; f <= 3; f++) {
+            for (let f = 1; f <= 10; f++) {
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach(it => {
                   if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
@@ -570,7 +582,7 @@
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
-            for (let f = 1; f <= 3; f++) {
+            for (let f = 1; f <= 10; f++) {
               if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q},${it.d}\n`);
             }
           }
