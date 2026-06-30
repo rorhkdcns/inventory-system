@@ -22,6 +22,9 @@
     th { background: #0066cc; color: white; }
     tr:nth-child(even) { background: #f9f9f9; }
     
+    .cell-editable { cursor: pointer; user-select: none; }
+    .cell-editable:hover { background: #e8f4f8 !important; }
+    
     .danger { background: #ffe6e6 !important; }
     .warning { background: #fff3cd !important; }
     .success { background: #d4edda !important; }
@@ -34,12 +37,14 @@
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-    .modal-title { font-size: 20px; font-weight: bold; margin-bottom: 20px; }
-    .modal input, .modal select { margin-bottom: 10px; font-size: 16px; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; }
+    .modal-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; }
+    .modal input, .modal select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    .modal-label { font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; }
     .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
     .modal-buttons button { flex: 1; margin: 0; }
-    .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .modal-buttons button.delete { background: #dc3545; }
+    .modal-buttons button.delete:hover { background: #c82333; }
   </style>
 </head>
 <body>
@@ -112,6 +117,28 @@
     </div>
   </div>
 
+  <!-- 편집 모달 -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title">상품 수정</div>
+      <label class="modal-label">층</label>
+      <select id="modalFloor">
+        <option value="1">층 1</option>
+        <option value="2">층 2</option>
+        <option value="3">층 3</option>
+      </select>
+      <label class="modal-label">상품명</label>
+      <input type="text" id="modalName" placeholder="상품명">
+      <label class="modal-label">수량</label>
+      <input type="number" id="modalQty" placeholder="수량" min="1">
+      <div class="modal-buttons">
+        <button onclick="saveItem()">저장</button>
+        <button class="delete" onclick="deleteItem()">삭제</button>
+        <button style="background: #999;" onclick="closeModal()">취소</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const data = {
       A: {1:{2:[{n:'매직1제',q:24},{n:'산화제',q:36}]},2:{1:[{n:'산화제',q:8}],2:[{n:'7/33',q:5}],3:[{n:'5/30',q:22}]},3:{2:[{n:'8/33',q:18}],3:[{n:'매직1제',q:24}]},4:{3:[{n:'10/45',q:12}]},5:{1:[{n:'8/30',q:17}],2:[{n:'3/0',q:20}],3:[{n:'산화제',q:36}]},6:{3:[{n:'산화제',q:54}]}},
@@ -120,7 +147,7 @@
     };
 
     let inv = JSON.parse(JSON.stringify(data));
-    let currentEditCell = null;
+    let editingItem = null;
 
     function showTab(name) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -135,6 +162,63 @@
       if (qty <= 20) return 'danger';
       if (qty <= 50) return 'warning';
       return 'success';
+    }
+
+    function openEditModal(col, can, floor, idx) {
+      const item = inv[col][can][floor][idx];
+      editingItem = { col, can, floor, idx };
+      document.getElementById('modalFloor').value = floor;
+      document.getElementById('modalName').value = item.n;
+      document.getElementById('modalQty').value = item.q;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('active');
+      editingItem = null;
+    }
+
+    function saveItem() {
+      if (!editingItem) return;
+      const floor = parseInt(document.getElementById('modalFloor').value);
+      const name = document.getElementById('modalName').value.trim();
+      const qty = parseInt(document.getElementById('modalQty').value);
+      
+      if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
+      
+      const oldFloor = editingItem.floor;
+      const col = editingItem.col;
+      const can = editingItem.can;
+      const idx = editingItem.idx;
+      
+      if (floor === oldFloor) {
+        // 같은 층에 수정
+        inv[col][can][floor][idx] = {n: name, q: qty};
+      } else {
+        // 다른 층으로 이동
+        inv[col][can][oldFloor].splice(idx, 1);
+        if (inv[col][can][oldFloor].length === 0) delete inv[col][can][oldFloor];
+        if (!inv[col][can][floor]) inv[col][can][floor] = [];
+        inv[col][can][floor].push({n: name, q: qty});
+      }
+      
+      localStorage.setItem('inv', JSON.stringify(inv));
+      render();
+      closeModal();
+    }
+
+    function deleteItem() {
+      if (!editingItem || !confirm('삭제하시겠어요?')) return;
+      const col = editingItem.col;
+      const can = editingItem.can;
+      const floor = editingItem.floor;
+      const idx = editingItem.idx;
+      
+      inv[col][can][floor].splice(idx, 1);
+      if (inv[col][can][floor].length === 0) delete inv[col][can][floor];
+      localStorage.setItem('inv', JSON.stringify(inv));
+      render();
+      closeModal();
     }
 
     function render() {
@@ -182,9 +266,10 @@
               if (r < allItems[colIdx].length) {
                 const item = allItems[colIdx][r];
                 const color = getColor(item.q);
-                html += `<td style="font-size: 16px;">층${item.f}</td>`;
-                html += `<td style="font-size: 16px;">${item.n}</td>`;
-                html += `<td style="font-size: 18px; font-weight: bold; cursor: pointer;" class="${color}" onclick="editQty('${item.col}',${can},${item.f},${item.idx})">${item.q}개</td>`;
+                
+                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">층${item.f}</td>`;
+                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">${item.n}</td>`;
+                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 18px; font-weight: bold;">${item.q}개</td>`;
               } else {
                 html += `<td></td><td></td><td></td>`;
               }
@@ -196,18 +281,6 @@
       }
       
       document.getElementById('table-body').innerHTML = html;
-    }
-
-    function editQty(col, can, floor, idx) {
-      const currentQty = inv[col][can][floor][idx].q;
-      const newQty = prompt(`수량 수정 (현재: ${currentQty}):`, currentQty);
-      if (!newQty) return;
-      const qty = parseInt(newQty);
-      if (!qty || qty < 1) return alert('1 이상의 수를 입력해주세요');
-      
-      inv[col][can][floor][idx].q = qty;
-      localStorage.setItem('inv', JSON.stringify(inv));
-      render();
     }
 
     function renderStats() {
@@ -248,7 +321,7 @@
             for (let f = 1; f <= 3; f++) {
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach(it => {
-                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px;">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
+                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;" onclick="openSearch('${col}',${c},${f},'${it.n}')">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
                 });
               }
             }
