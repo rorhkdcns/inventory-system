@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>재고관리 시스템</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5; 
+      padding: 20px; 
+      color: #333;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { margin-bottom: 20px; font-size: 24px; }
+    .tabs { 
+      display: flex; 
+      gap: 10px; 
+      margin-bottom: 20px; 
+      border-bottom: 2px solid #ddd; 
+      padding-bottom: 10px; 
+    }
+    .tab-btn { 
+      padding: 10px 20px; 
+      background: none; 
+      border: none; 
+      cursor: pointer; 
+      font-size: 14px; 
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active { 
+      border-bottom-color: #0066cc; 
+      color: #0066cc; 
+      font-weight: bold; 
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .legend {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      border: 1px solid #ddd;
+    }
+    .legend span { display: inline-block; margin-right: 20px; }
+    .legend-box {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      border-radius: 3px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .dashboard-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+      gap: 20px; 
+    }
+    .card { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      border: 1px solid #ddd;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .card-title { 
+      font-size: 18px; 
+      font-weight: bold; 
+      margin-bottom: 15px; 
+      color: #333; 
+      border-bottom: 2px solid #0066cc; 
+      padding-bottom: 10px; 
+    }
+    .can-box { 
+      background: #fafafa; 
+      padding: 12px; 
+      margin: 12px 0; 
+      border-left: 4px solid #0066cc;
+      border-radius: 4px;
+    }
+    .can-label { 
+      font-weight: bold; 
+      color: #333; 
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .floor-item { 
+      margin: 6px 0; 
+      padding: 6px; 
+      background: white; 
+      border-radius: 3px; 
+      font-size: 13px;
+      border-left: 3px solid #ddd;
+    }
+    .floor-item.danger { 
+      background: #ffe6e6; 
+      border-left-color: #d9534f;
+      color: #721c24;
+    }
+    .floor-item.warning { 
+      background: #fff3cd; 
+      border-left-color: #ffc107;
+      color: #856404;
+    }
+    .floor-item.success { 
+      background: #d4edda; 
+      border-left-color: #5cb85c;
+      color: #155724;
+    }
+    .input-box { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      border: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .input-box h2 { font-size: 16px; margin-bottom: 12px; }
+    textarea { 
+      width: 100%; 
+      height: 100px; 
+      padding: 10px; 
+      font-size: 14px; 
+      border: 1px solid #ddd; 
+      border-radius: 4px;
+      font-family: inherit;
+    }
+    button { 
+      padding: 10px 20px; 
+      margin: 10px 10px 10px 0; 
+      background: #0066cc; 
+      color: white; 
+      border: none; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    button:hover { background: #0052a3; }
+    button.secondary { background: #999; }
+    button.secondary:hover { background: #777; }
+    #status { 
+      padding: 12px; 
+      margin: 15px 0; 
+      border-radius: 4px; 
+      display: none; 
+      font-size: 14px;
+    }
+    #status.success { 
+      background: #d4edda; 
+      color: #155724; 
+      border: 1px solid #c3e6cb;
+    }
+    #status.error { 
+      background: #f8d7da; 
+      color: #721c24; 
+      border: 1px solid #f5c6cb;
+    }
+    input[type="text"] { 
+      width: 100%; 
+      padding: 10px; 
+      margin: 10px 0; 
+      border: 1px solid #ddd; 
+      border-radius: 4px; 
+      font-size: 14px; 
+    }
+    .result-item { 
+      background: white; 
+      padding: 12px; 
+      margin: 10px 0; 
+      border-radius: 4px; 
+      border-left: 3px solid #0066cc;
+      border: 1px solid #ddd;
+    }
+    .result-name { font-weight: bold; margin-bottom: 4px; }
+    .result-info { font-size: 12px; color: #999; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-box { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+    .stat-label { font-size: 12px; color: #999; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: bold; color: #0066cc; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📦 재고관리 시스템</h1>
+    
+    <div id="status"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(event, 'dashboard')">📊 현황판</button>
+      <button class="tab-btn" onclick="switchTab(event, 'input')">📝 입력</button>
+      <button class="tab-btn" onclick="switchTab(event, 'search')">🔍 검색</button>
+      <button class="tab-btn" onclick="switchTab(event, 'stats')">📈 통계</button>
+      <button class="tab-btn" onclick="switchTab(event, 'export')">💾 백업</button>
+    </div>
+
+    <!-- 현황판 -->
+    <div id="dashboard" class="tab-content active">
+      <div class="legend">
+        <span><span class="legend-box" style="background: #ffcccc;"></span> 부족 (≤20개)</span>
+        <span><span class="legend-box" style="background: #fff3cd;"></span> 적정 (21-50개)</span>
+        <span><span class="legend-box" style="background: #d4edda;"></span> 충분 (51개+)</span>
+      </div>
+      <div class="dashboard-grid" id="dashboard-grid"></div>
+    </div>
+
+    <!-- 입력 -->
+    <div id="input" class="tab-content">
+      <div class="input-box">
+        <h2>📝 카톡 메시지 입력</h2>
+        <textarea id="input-text" placeholder="예: A-1-2에 매직1제 24개&#10;B-3-1에 산화제 36개"></textarea>
+        <button onclick="parseInput()">✓ 적용하기</button>
+        <button class="secondary" onclick="resetData()">↻ 초기화</button>
+      </div>
+    </div>
+
+    <!-- 검색 -->
+    <div id="search" class="tab-content">
+      <div class="input-box">
+        <h2>🔍 상품 검색</h2>
+        <input type="text" id="search-input" placeholder="상품명 입력..." onkeyup="doSearch()">
+        <div id="search-results"></div>
+      </div>
+    </div>
+
+    <!-- 통계 -->
+    <div id="stats" class="tab-content">
+      <div class="stat-grid" id="stats-grid"></div>
+      <div class="card">
+        <div class="card-title">📊 상품별 총량</div>
+        <div id="stats-list"></div>
+      </div>
+    </div>
+
+    <!-- 백업 -->
+    <div id="export" class="tab-content">
+      <div class="card">
+        <div class="card-title">💾 데이터 관리</div>
+        <button onclick="downloadCSV()">📊 CSV 내보내기</button>
+        <button onclick="downloadJSON()">💾 JSON 백업</button>
+        <button onclick="uploadJSON()">📂 JSON 복원</button>
+        <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 초기 데이터
+    const initialData = {
+      A: { 
+        1: {2: [{name: '매직 1제', qty: 24}, {name: '산화제', qty: 36}]}, 
+        2: {1: [{name: '산화제', qty: 8}], 2: [{name: '7/33', qty: 5}, {name: '7/4', qty: 3}, {name: '6/4', qty: 9}], 3: [{name: '5/30', qty: 22}]}, 
+        3: {2: [{name: '8/33', qty: 18}, {name: '12/30', qty: 9}, {name: '14/30', qty: 5}], 3: [{name: '매직 1제', qty: 24}, {name: '액상', qty: 16}]}, 
+        4: {3: [{name: '10/45', qty: 12}, {name: '6/56', qty: 11}, {name: '9/6', qty: 11}]}, 
+        5: {1: [{name: '8/30', qty: 17}], 2: [{name: '3/0', qty: 20}, {name: '5/30', qty: 24}], 3: [{name: '산화제', qty: 36}, {name: '크림', qty: 24}]}, 
+        6: {3: [{name: '산화제', qty: 54}]} 
+      },
+      B: { 
+        1: {2: [{name: '5/45', qty: 19}]}, 
+        2: {1: [{name: '매직 1제', qty: 6}, {name: '액상', qty: 6}], 2: [{name: '8/1', qty: 3}, {name: '8/45', qty: 11}, {name: '매직 1제', qty: 18}], 3: [{name: '9/30', qty: 16}, {name: '7/34', qty: 19}]}, 
+        3: {1: [{name: '6/30', qty: 16}, {name: '3/0', qty: 3}], 2: [{name: '6/33', qty: 19}, {name: '7/45', qty: 10}], 3: [{name: '02/02', qty: 18}]}, 
+        4: {1: [{name: '6/33', qty: 7}, {name: '6/35', qty: 7}, {name: '8/56', qty: 10}], 2: [{name: '10/30', qty: 7}]}, 
+        5: {1: [{name: '1/0', qty: 22}, {name: '10/4', qty: 13}], 2: [{name: '3/0', qty: 14}], 3: [{name: '산화제', qty: 36}]}, 
+        6: {3: [{name: '7/30', qty: 11}]} 
+      },
+      C: { 
+        1: {2: [{name: '크림', qty: 7}, {name: '매직 1제', qty: 13}]}, 
+        2: {2: [{name: '크림', qty: 24}]}, 
+        3: {1: []}, 
+        4: {1: [{name: '8/34', qty: 4}, {name: '11/7', qty: 2}, {name: '9/7', qty: 2}, {name: '8/45', qty: 1}, {name: '7/34', qty: 1}, {name: '10/45', qty: 1}, {name: '8/56', qty: 10}], 2: [{name: '산화제', qty: 72}]}, 
+        5: {1: [{name: '산화제', qty: 36}], 2: [{name: '산화제', qty: 36}]}, 
+        6: {1: [{name: '6/30', qty: 5}]} 
+      }
+    };
+
+    let inventory = JSON.parse(JSON.stringify(initialData));
+
+    function saveData() {
+      localStorage.setItem('inv_data', JSON.stringify(inventory));
+    }
+
+    function loadData() {
+      const saved = localStorage.getItem('inv_data');
+      if (saved) {
+        try {
+          inventory = JSON.parse(saved);
+        } catch (e) {
+          inventory = JSON.parse(JSON.stringify(initialData));
+        }
+      }
+    }
+
+    function showStatus(msg, isError = false) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = isError ? 'error' : 'success';
+      el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3000);
+    }
+
+    function switchTab(event, name) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+      event.target.classList.add('active');
+      
+      if (name === 'dashboard') renderDashboard();
+      if (name === 'stats') renderStats();
+    }
+
+    function getColor(qty) {
+      if (qty <= 20) return 'danger';
+      if (qty <= 50) return 'warning';
+      return 'success';
+    }
+
+    function getTotalQty(items) {
+      return items.reduce((sum, item) => sum + item.qty, 0);
+    }
+
+    function renderDashboard() {
+      let html = '';
+      ['A', 'B', 'C'].forEach(col => {
+        html += `<div class="card"><div class="card-title">열 ${col}</div>`;
+        let hasContent = false;
+        for (let can = 1; can <= 6; can++) {
+          const canData = inventory[col][can];
+          if (canData && Object.keys(canData).length > 0) {
+            let canHtml = `<div class="can-box"><div class="can-label">칸 ${can}</div>`;
+            for (let floor = 1; floor <= 3; floor++) {
+              if (canData[floor] && canData[floor].length > 0) {
+                const total = getTotalQty(canData[floor]);
+                const color = getColor(total);
+                canData[floor].forEach(item => {
+                  canHtml += `<div class="floor-item ${color}">층${floor}: ${item.name} × ${item.qty}개</div>`;
+                });
+                hasContent = true;
+              }
+            }
+            canHtml += '</div>';
+            canHtml += `</div>`;
+            html += canHtml;
+          }
+        }
+        html += '</div>';
+      });
+      document.getElementById('dashboard-grid').innerHTML = html;
+    }
+
+    function renderStats() {
+      const allProducts = {};
+      let totalQty = 0;
+      ['A', 'B', 'C'].forEach(col => {
+        for (let can = 1; can <= 6; can++) {
+          if (inventory[col][can]) {
+            for (let floor = 1; floor <= 3; floor++) {
+              if (inventory[col][can][floor]) {
+                inventory[col][can][floor].forEach(item => {
+                  allProducts[item.name] = (allProducts[item.name] || 0) + item.qty;
+                  totalQty += item.qty;
+                });
+              }
+            }
+          }
+        }
+      });
+
+      const statsHtml = `
+        <div class="stat-box">
+          <div class="stat-label">전체 수량</div>
+          <div class="stat-value">${totalQty}</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">상품 종류</div>
+          <div class="stat-value">${Object.keys(allProducts).length}</div>
+        </div>
+      `;
+      document.getElementById('stats-grid').innerHTML = statsHtml;
+
+      let listHtml = '';
+      Object.entries(allProducts).sort((a, b) => b[1] - a[1]).forEach(([name, qty]) => {
+        listHtml += `<div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+          <span>${name}</span><span style="font-weight: bold;">${qty}개</span>
+        </div>`;
+      });
+      document.getElementById('stats-list').innerHTML = listHtml || '<div style="padding: 20px; text-align: center; color: #999;">데이터 없음</div>';
+    }
+
+    async function parseInput() {
+      const text = document.getElementById('input-text').value.trim();
+      if (!text) {
+        showStatus('내용을 입력해주세요.', true);
+        return;
+      }
+
+      showStatus('AI가 분석 중입니다...');
+
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: `카톡 메시지에서 재고 정보를 JSON 배열로 추출: {열, 칸, 층, 상품명, 수량}
+메시지: ${text}
+JSON만: [{"열":"A","칸":"1","층":"2","상품명":"매직1제","수량":24}]`
+            })
+          })
+        });
+
+        const data = await response.json();
+        const jsonMatch = data.content[0].text.match(/\[.*\]/s);
+        if (!jsonMatch) throw new Error('형식을 인식할 수 없습니다');
+
+        const items = JSON.parse(jsonMatch[0]);
+        let count = 0;
+        items.forEach(item => {
+          const col = item.열.toUpperCase();
+          const can = parseInt(item.칸);
+          const floor = parseInt(item.층);
+          const name = item.상품명;
+          const qty = parseInt(item.수량);
+
+          if (!inventory[col]) inventory[col] = {};
+          if (!inventory[col][can]) inventory[col][can] = {};
+          if (!inventory[col][can][floor]) inventory[col][can][floor] = [];
+
+          const existing = inventory[col][can][floor].find(p => p.name === name);
+          if (existing) existing.qty = qty;
+          else inventory[col][can][floor].push({name, qty});
+          count++;
+        });
+
+        saveData();
+        renderDashboard();
+        showStatus(`✓ ${count}개 항목이 적용됐습니다!`);
+        document.getElementById('input-text').value = '';
+      } catch (err) {
+        showStatus('오류: ' + err.message, true);
+      }
+    }
+
+    function doSearch() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const results = [];
+
+      ['A', 'B', 'C'].forEach(col => {
+        for (let can = 1; can <= 6; can++) {
+          if (inventory[col][can]) {
+            for (let floor = 1; floor <= 3; floor++) {
+              if (inventory[col][can][floor]) {
+                inventory[col][can][floor].forEach(item => {
+                  if (item.name.toLowerCase().includes(query)) {
+                    results.push({...item, loc: `${col}-${can}-${floor}`});
+                  }
+                });
+              }
+            }
+          }
+        }
+      });
+
+      let html = '';
+      results.forEach(r => {
+        html += `<div class="result-item">
+          <div class="result-name">${r.name}</div>
+          <div class="result-info">위치: ${r.loc} | 수량: ${r.qty}개</div>
+        </div>`;
+      });
+      document.getElementById('search-results').innerHTML = html || '<div style="color: #999; padding: 20px;">결과 없음</div>';
+    }
+
+    function resetData() {
+      if (confirm('정말 초기화하시겠어요? (복구 불가)')) {
+        inventory = JSON.parse(JSON.stringify(initialData));
+        saveData();
+        showStatus('✓ 초기화됐습니다!');
+        renderDashboard();
+      }
+    }
+
+    function downloadCSV() {
+      let csv = '열,칸,층,상품명,수량\n';
+      ['A', 'B', 'C'].forEach(col => {
+        for (let can = 1; can <= 6; can++) {
+          if (inventory[col][can]) {
+            for (let floor = 1; floor <= 3; floor++) {
+              if (inventory[col][can][floor]) {
+                inventory[col][can][floor].forEach(item => {
+                  csv += `${col},${can},${floor},${item.name},${item.qty}\n`;
+                });
+              }
+            }
+          }
+        }
+      });
+      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '재고_' + new Date().toISOString().slice(0,10) + '.csv';
+      link.click();
+      showStatus('✓ CSV로 내보내졌습니다!');
+    }
+
+    function downloadJSON() {
+      const json = JSON.stringify(inventory, null, 2);
+      const blob = new Blob([json], {type: 'application/json'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '재고_백업_' + new Date().toISOString().slice(0,10) + '.json';
+      link.click();
+      showStatus('✓ JSON으로 백업됐습니다!');
+    }
+
+    function uploadJSON() {
+      document.getElementById('file-input').click();
+    }
+
+    function loadJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          inventory = data;
+          saveData();
+          renderDashboard();
+          showStatus('✓ 복원됐습니다!');
+        } catch (err) {
+          showStatus('파일 오류!', true);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // 초기 로드
+    loadData();
+    renderDashboard();
+  </script>
+</body>
+</html>
