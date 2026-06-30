@@ -16,32 +16,34 @@
     .tab-content.active { display: block; }
     .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     
-    .table-wrapper { background: white; border-radius: 8px; overflow: auto; border: 2px solid #333; }
+    .table-wrapper { background: white; border-radius: 8px; overflow: auto; border: 4px solid #000; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ddd; padding: 16px; text-align: center; font-size: 16px; font-weight: bold; }
-    th { background: #003d99; color: white; font-size: 18px; }
+    th, td { border: 1px solid #ccc; padding: 16px; text-align: center; font-size: 16px; font-weight: bold; }
+    th { background: #003d99; color: white; font-size: 18px; border: 1px solid #ccc; }
     
     /* 칸 번호 칼럼 */
-    td:first-child { background: #e6f0ff; font-size: 20px; font-weight: bold; border-right: 3px solid #0066cc; }
+    td:first-child { background: #e6f0ff; font-size: 20px; font-weight: bold; border-right: 5px solid #000; border: 1px solid #ccc; }
     tr:first-child td:first-child { background: #003d99; }
     
     /* A열 그룹 */
-    td:nth-child(2), td:nth-child(3), td:nth-child(4) { border-right: 3px solid #ff6b6b; }
-    .col-a { background: #fff5f5; }
-    .col-a.header { background: #ff6b6b; color: white; }
+    td:nth-child(2), td:nth-child(3), td:nth-child(4) { border-right: 1px solid #ccc; }
+    td:nth-child(4) { border-right: 5px solid #000 !important; }
+    .col-a { background: #fff5f5; border: 1px solid #ccc; }
+    .col-a.header { background: #ff6b6b; color: white; border: 1px solid #ccc; }
     
     /* B열 그룹 */
-    td:nth-child(5), td:nth-child(6), td:nth-child(7) { border-right: 3px solid #4ecdc4; }
-    .col-b { background: #f0ffff; }
-    .col-b.header { background: #4ecdc4; color: white; }
+    td:nth-child(5), td:nth-child(6), td:nth-child(7) { border-right: 1px solid #ccc; }
+    td:nth-child(7) { border-right: 5px solid #000 !important; }
+    .col-b { background: #f0ffff; border: 1px solid #ccc; }
+    .col-b.header { background: #4ecdc4; color: white; border: 1px solid #ccc; }
     
     /* C열 그룹 */
-    td:nth-child(8), td:nth-child(9), td:nth-child(10) { border-right: 3px solid #ffd93d; }
-    .col-c { background: #fffff5; }
-    .col-c.header { background: #ffd93d; color: #333; }
+    td:nth-child(8), td:nth-child(9), td:nth-child(10) { border-right: 1px solid #ccc; }
+    .col-c { background: #fffff5; border: 1px solid #ccc; }
+    .col-c.header { background: #ffd93d; color: #333; border: 1px solid #ccc; }
     
     /* 칸 구분선 */
-    tr:nth-child(2n+1) { border-top: 3px solid #ddd; }
+    tr:nth-child(2n+1) { border-top: 5px solid #000; }
     
     .cell-editable { cursor: pointer; user-select: none; transition: all 0.2s; }
     .cell-editable:hover { transform: scale(1.05); box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
@@ -333,14 +335,14 @@
         );
         
         if (maxRows === 0) {
-          html += `<tr><td style="font-weight: bold; background: #e6f0ff; font-size: 20px;">칸${can}</td>`;
-          html += '<td colspan="9" style="color: #999;">-</td></tr>';
+          html += `<tr><td style="font-weight: bold; background: #e6f0ff; font-size: 20px; border-right: 5px solid #000; border: 1px solid #ccc;">칸${can}</td>`;
+          html += '<td colspan="9" style="color: #999; border: 1px solid #ccc;">-</td></tr>';
         } else {
           for (let r = 0; r < maxRows; r++) {
             html += '<tr>';
             
             if (r === 0) {
-              html += `<td rowspan="${maxRows}" style="font-weight: bold; background: #e6f0ff; font-size: 20px; border-right: 3px solid #0066cc;">칸${can}</td>`;
+              html += `<td rowspan="${maxRows}" style="font-weight: bold; background: #e6f0ff; font-size: 20px; border-right: 5px solid #000; border: 1px solid #ccc;">칸${can}</td>`;
             }
             
             for (let colIdx = 0; colIdx < 3; colIdx++) {
@@ -348,15 +350,17 @@
                 const item = allItems[colIdx][r];
                 const color = getColor(item.q);
                 const colClass = ['col-a', 'col-b', 'col-c'][colIdx];
+                const borderRight = (colIdx < 2) ? '1px solid #ccc' : 'none';
                 
-                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">층${item.f}</td>`;
-                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">${item.n}</td>`;
-                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 18px; font-weight: bold;">${item.q}개</td>`;
+                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px; border-right: ${borderRight};">층${item.f}</td>`;
+                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px; border-right: ${borderRight};">${item.n}</td>`;
+                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 18px; font-weight: bold; border-right: ${colIdx === 2 ? '0' : '5px solid #000'};"><span style="border-right: ${colIdx === 2 ? '0' : '5px solid #000'};">${item.q}개</span></td>`;
               } else {
                 const colClass = ['col-a', 'col-b', 'col-c'][colIdx];
-                html += `<td class="${colClass}"></td>`;
-                html += `<td class="${colClass}"></td>`;
-                html += `<td class="${colClass}" style="cursor: pointer; font-size: 24px;" onclick="openAddModal('${['A','B','C'][colIdx]}',${can})">+</td>`;
+                const borderRight = (colIdx < 2) ? '1px solid #ccc' : 'none';
+                html += `<td class="${colClass}" style="border-right: ${borderRight};"></td>`;
+                html += `<td class="${colClass}" style="border-right: ${borderRight};"></td>`;
+                html += `<td class="${colClass}" style="cursor: pointer; font-size: 24px; border-right: ${colIdx === 2 ? '0' : '5px solid #000'};" onclick="openAddModal('${['A','B','C'][colIdx]}',${can})">+</td>`;
               }
             }
             
