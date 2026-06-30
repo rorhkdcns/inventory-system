@@ -16,14 +16,35 @@
     .tab-content.active { display: block; }
     .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     
-    .table-wrapper { background: white; border-radius: 8px; overflow: auto; border: 1px solid #ddd; }
+    .table-wrapper { background: white; border-radius: 8px; overflow: auto; border: 2px solid #333; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #ddd; padding: 16px; text-align: center; font-size: 16px; font-weight: bold; }
-    th { background: #0066cc; color: white; }
-    tr:nth-child(even) { background: #f9f9f9; }
+    th { background: #003d99; color: white; font-size: 18px; }
     
-    .cell-editable { cursor: pointer; user-select: none; }
-    .cell-editable:hover { background: #e8f4f8 !important; }
+    /* 칸 번호 칼럼 */
+    td:first-child { background: #e6f0ff; font-size: 20px; font-weight: bold; border-right: 3px solid #0066cc; }
+    tr:first-child td:first-child { background: #003d99; }
+    
+    /* A열 그룹 */
+    td:nth-child(2), td:nth-child(3), td:nth-child(4) { border-right: 3px solid #ff6b6b; }
+    .col-a { background: #fff5f5; }
+    .col-a.header { background: #ff6b6b; color: white; }
+    
+    /* B열 그룹 */
+    td:nth-child(5), td:nth-child(6), td:nth-child(7) { border-right: 3px solid #4ecdc4; }
+    .col-b { background: #f0ffff; }
+    .col-b.header { background: #4ecdc4; color: white; }
+    
+    /* C열 그룹 */
+    td:nth-child(8), td:nth-child(9), td:nth-child(10) { border-right: 3px solid #ffd93d; }
+    .col-c { background: #fffff5; }
+    .col-c.header { background: #ffd93d; color: #333; }
+    
+    /* 칸 구분선 */
+    tr:nth-child(2n+1) { border-top: 3px solid #ddd; }
+    
+    .cell-editable { cursor: pointer; user-select: none; transition: all 0.2s; }
+    .cell-editable:hover { transform: scale(1.05); box-shadow: inset 0 0 5px rgba(0,0,0,0.2); }
     
     .danger { background: #ffe6e6 !important; }
     .warning { background: #fff3cd !important; }
@@ -37,14 +58,15 @@
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; }
     .modal-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; }
     .modal input, .modal select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
-    .modal-label { font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; }
+    .modal-label { font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; margin-top: 15px; }
     .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
     .modal-buttons button { flex: 1; margin: 0; }
     .modal-buttons button.delete { background: #dc3545; }
     .modal-buttons button.delete:hover { background: #c82333; }
+    .divider { border-top: 2px solid #ddd; margin: 20px 0; }
   </style>
 </head>
 <body>
@@ -68,16 +90,16 @@
         <table id="dashboard-table">
           <thead>
             <tr>
-              <th style="width: 80px;">칸</th>
-              <th>A층</th>
-              <th>A상품명</th>
-              <th>A수량</th>
-              <th>B층</th>
-              <th>B상품명</th>
-              <th>B수량</th>
-              <th>C층</th>
-              <th>C상품명</th>
-              <th>C수량</th>
+              <th style="width: 80px; background: #333;">칸</th>
+              <th class="col-a header">A층</th>
+              <th class="col-a header">A상품명</th>
+              <th class="col-a header">A수량</th>
+              <th class="col-b header">B층</th>
+              <th class="col-b header">B상품명</th>
+              <th class="col-b header">B수량</th>
+              <th class="col-c header">C층</th>
+              <th class="col-c header">C상품명</th>
+              <th class="col-c header">C수량</th>
             </tr>
           </thead>
           <tbody id="table-body"></tbody>
@@ -120,7 +142,7 @@
   <!-- 편집 모달 -->
   <div id="editModal" class="modal">
     <div class="modal-content">
-      <div class="modal-title">상품 수정</div>
+      <div class="modal-title" id="modalTitle">상품 수정</div>
       <label class="modal-label">층</label>
       <select id="modalFloor">
         <option value="1">층 1</option>
@@ -136,6 +158,22 @@
         <button class="delete" onclick="deleteItem()">삭제</button>
         <button style="background: #999;" onclick="closeModal()">취소</button>
       </div>
+
+      <div class="divider"></div>
+      <h3 style="margin-bottom: 15px;">➕ 새 상품 추가</h3>
+      <label class="modal-label">층</label>
+      <select id="newFloor">
+        <option value="1">층 1</option>
+        <option value="2">층 2</option>
+        <option value="3">층 3</option>
+      </select>
+      <label class="modal-label">상품명</label>
+      <input type="text" id="newName" placeholder="상품명">
+      <label class="modal-label">수량</label>
+      <input type="number" id="newQty" placeholder="수량" min="1">
+      <div class="modal-buttons">
+        <button style="background: #28a745;" onclick="addNewItem()">추가</button>
+      </div>
     </div>
   </div>
 
@@ -148,6 +186,7 @@
 
     let inv = JSON.parse(JSON.stringify(data));
     let editingItem = null;
+    let editingCan = null;
 
     function showTab(name) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -165,17 +204,47 @@
     }
 
     function openEditModal(col, can, floor, idx) {
-      const item = inv[col][can][floor][idx];
       editingItem = { col, can, floor, idx };
+      editingCan = { col, can };
+      const item = inv[col][can][floor][idx];
+      document.getElementById('modalTitle').textContent = `${col}열 칸${can} 상품 수정`;
       document.getElementById('modalFloor').value = floor;
       document.getElementById('modalName').value = item.n;
       document.getElementById('modalQty').value = item.q;
+      document.getElementById('newFloor').value = '1';
+      document.getElementById('newName').value = '';
+      document.getElementById('newQty').value = '';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function openAddModal(col, can) {
+      editingItem = null;
+      editingCan = { col, can };
+      document.getElementById('modalTitle').textContent = `${col}열 칸${can} 상품 추가`;
+      document.getElementById('modalFloor').style.display = 'none';
+      document.getElementById('modalName').style.display = 'none';
+      document.getElementById('modalQty').style.display = 'none';
+      document.querySelectorAll('.modal-label')[0].style.display = 'none';
+      document.querySelectorAll('.modal-label')[1].style.display = 'none';
+      document.querySelectorAll('.modal-label')[2].style.display = 'none';
+      document.querySelectorAll('.modal-buttons')[0].style.display = 'none';
+      document.getElementById('newFloor').value = '1';
+      document.getElementById('newName').value = '';
+      document.getElementById('newQty').value = '';
       document.getElementById('editModal').classList.add('active');
     }
 
     function closeModal() {
       document.getElementById('editModal').classList.remove('active');
+      document.getElementById('modalFloor').style.display = '';
+      document.getElementById('modalName').style.display = '';
+      document.getElementById('modalQty').style.display = '';
+      document.querySelectorAll('.modal-label')[0].style.display = '';
+      document.querySelectorAll('.modal-label')[1].style.display = '';
+      document.querySelectorAll('.modal-label')[2].style.display = '';
+      document.querySelectorAll('.modal-buttons')[0].style.display = '';
       editingItem = null;
+      editingCan = null;
     }
 
     function saveItem() {
@@ -192,15 +261,32 @@
       const idx = editingItem.idx;
       
       if (floor === oldFloor) {
-        // 같은 층에 수정
         inv[col][can][floor][idx] = {n: name, q: qty};
       } else {
-        // 다른 층으로 이동
         inv[col][can][oldFloor].splice(idx, 1);
         if (inv[col][can][oldFloor].length === 0) delete inv[col][can][oldFloor];
         if (!inv[col][can][floor]) inv[col][can][floor] = [];
         inv[col][can][floor].push({n: name, q: qty});
       }
+      
+      localStorage.setItem('inv', JSON.stringify(inv));
+      render();
+      closeModal();
+    }
+
+    function addNewItem() {
+      if (!editingCan) return;
+      const floor = parseInt(document.getElementById('newFloor').value);
+      const name = document.getElementById('newName').value.trim();
+      const qty = parseInt(document.getElementById('newQty').value);
+      
+      if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
+      
+      const col = editingCan.col;
+      const can = editingCan.can;
+      
+      if (!inv[col][can][floor]) inv[col][can][floor] = [];
+      inv[col][can][floor].push({n: name, q: qty});
       
       localStorage.setItem('inv', JSON.stringify(inv));
       render();
@@ -252,26 +338,30 @@
         );
         
         if (maxRows === 0) {
-          html += `<tr><td style="font-weight: bold; background: #f0f0f0;">칸${can}</td>`;
+          html += `<tr><td style="font-weight: bold; background: #e6f0ff; font-size: 20px;">칸${can}</td>`;
           html += '<td colspan="9" style="color: #999;">-</td></tr>';
         } else {
           for (let r = 0; r < maxRows; r++) {
             html += '<tr>';
             
             if (r === 0) {
-              html += `<td rowspan="${maxRows}" style="font-weight: bold; background: #f0f0f0; font-size: 18px;">칸${can}</td>`;
+              html += `<td rowspan="${maxRows}" style="font-weight: bold; background: #e6f0ff; font-size: 20px; border-right: 3px solid #0066cc;">칸${can}</td>`;
             }
             
             for (let colIdx = 0; colIdx < 3; colIdx++) {
               if (r < allItems[colIdx].length) {
                 const item = allItems[colIdx][r];
                 const color = getColor(item.q);
+                const colClass = ['col-a', 'col-b', 'col-c'][colIdx];
                 
-                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">층${item.f}</td>`;
-                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">${item.n}</td>`;
-                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 18px; font-weight: bold;">${item.q}개</td>`;
+                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">층${item.f}</td>`;
+                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 16px;">${item.n}</td>`;
+                html += `<td class="cell-editable ${colClass} ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})" style="font-size: 18px; font-weight: bold;">${item.q}개</td>`;
               } else {
-                html += `<td></td><td></td><td></td>`;
+                const colClass = ['col-a', 'col-b', 'col-c'][colIdx];
+                html += `<td class="${colClass}"></td>`;
+                html += `<td class="${colClass}"></td>`;
+                html += `<td class="${colClass}" style="cursor: pointer; font-size: 24px;" onclick="openAddModal('${['A','B','C'][colIdx]}',${can})">+</td>`;
               }
             }
             
@@ -321,7 +411,7 @@
             for (let f = 1; f <= 3; f++) {
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach(it => {
-                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;" onclick="openSearch('${col}',${c},${f},'${it.n}')">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
+                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
                 });
               }
             }
