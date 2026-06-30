@@ -9,6 +9,12 @@
     body { font-family: Arial; background: #f5f5f5; padding: 20px; }
     .container { max-width: 100%; }
     h1 { margin-bottom: 20px; font-size: 32px; }
+    
+    .tabs-main { display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; }
+    .tab-btn-main { padding: 12px 30px; background: #000; color: white; border: none; cursor: pointer; font-size: 18px; font-weight: bold; border-radius: 12px; min-width: 120px; transition: all 0.2s; }
+    .tab-btn-main.active { background: #0066cc; }
+    .tab-btn-main:hover { transform: scale(1.05); }
+    
     .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; overflow-x: auto; }
     .tab-btn { padding: 12px 24px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; font-size: 16px; white-space: nowrap; }
     .tab-btn.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: bold; }
@@ -16,30 +22,20 @@
     .tab-content.active { display: block; }
     .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     
-    .col-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #e0e0e0; }
-    .col-header { font-size: 28px; font-weight: bold; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-    .col-a .col-header { background: #ff6b6b; }
-    .col-b .col-header { background: #4ecdc4; }
-    .col-c .col-header { background: #ffd93d; color: #333; }
+    .cans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .can-card { background: white; border-radius: 12px; padding: 0; border: 2px solid #ddd; overflow: hidden; }
+    .can-header { padding: 15px; background: #999; color: white; font-size: 18px; font-weight: bold; text-align: center; }
     
-    .can-section { background: #f9f9f9; border-radius: 8px; margin-bottom: 12px; border: 1px solid #eee; }
-    .can-header { padding: 12px 15px; background: #f0f0f0; border-radius: 8px 8px 0 0; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; transition: all 0.2s; }
-    .can-header:hover { background: #e0e0e0; }
-    .can-content { display: none; padding: 15px; }
-    .can-content.open { display: block; }
-    .expand-icon { display: inline-block; transition: transform 0.2s; }
-    .expand-icon.open { transform: rotate(180deg); }
+    .floor-row { padding: 12px 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; cursor: pointer; transition: all 0.2s; }
+    .floor-row:last-child { border-bottom: none; }
+    .floor-row:hover { background: #f0f0f0; }
     
-    .floor-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 8px 0; background: white; border-radius: 6px; border-left: 4px solid #ddd; font-size: 14px; cursor: pointer; transition: all 0.2s; }
-    .floor-item:hover { background: #f5f5f5; }
+    .floor-name { font-weight: 600; color: #333; }
+    .floor-qty { font-weight: bold; color: #666; }
     
-    .floor-label { font-weight: bold; color: #666; min-width: 50px; }
-    .floor-name { flex: 1; margin: 0 10px; }
-    .floor-qty { font-weight: bold; font-size: 15px; }
-    
-    .danger { background: #ffcccc !important; border-left-color: #ff6b6b !important; }
-    .warning { background: #ffffcc !important; border-left-color: #ffd93d !important; }
-    .success { background: #ccffcc !important; border-left-color: #51cf66 !important; }
+    .danger { background: #ffcccc !important; }
+    .warning { background: #ffffcc !important; }
+    .success { background: #ccffcc !important; }
     
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
@@ -68,57 +64,65 @@
   <div class="container">
     <h1>📦 재고관리</h1>
 
-    <div class="tabs">
-      <button class="tab-btn active" onclick="showTab('dashboard')">📊 현황판</button>
-      <button class="tab-btn" onclick="showTab('input')">📝 입력</button>
-      <button class="tab-btn" onclick="showTab('search')">🔍 검색</button>
-      <button class="tab-btn" onclick="showTab('stats')">📈 통계</button>
-      <button class="tab-btn" onclick="showTab('logs')">📋 로그</button>
-      <button class="tab-btn" onclick="showTab('export')">💾 백업</button>
+    <div class="tabs-main">
+      <button class="tab-btn-main active" onclick="showColTab('A')">A열</button>
+      <button class="tab-btn-main" onclick="showColTab('B')">B열</button>
+      <button class="tab-btn-main" onclick="showColTab('C')">C열</button>
+      <button class="tab-btn-main" style="background: #666;" onclick="showColTab('settings')">⚙️ 설정</button>
     </div>
 
-    <div id="dashboard" class="tab-content active">
+    <div id="col-view" class="tab-content active">
       <div class="legend">
         <span>🔴 부족 (≤20개) 🟡 적정 (21-50개) 🟢 충분 (51개+)</span>
       </div>
-      <div id="col-cards-container"></div>
+      <div class="cans-grid" id="cans-grid"></div>
     </div>
 
-    <div id="input" class="tab-content">
-      <div class="card">
-        <h2>카톡 메시지 입력</h2>
-        <textarea id="input-text" placeholder="A-1-2에 매직1제 24개"></textarea>
-        <button onclick="parseInput()">적용</button>
-        <button onclick="resetData()" style="background: #999;">초기화</button>
+    <div id="settings" class="tab-content">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('input')">📝 입력</button>
+        <button class="tab-btn" onclick="showTab('search')">🔍 검색</button>
+        <button class="tab-btn" onclick="showTab('stats')">📈 통계</button>
+        <button class="tab-btn" onclick="showTab('logs')">📋 로그</button>
+        <button class="tab-btn" onclick="showTab('export')">💾 백업</button>
       </div>
-    </div>
 
-    <div id="search" class="tab-content">
-      <div class="card">
-        <h2>상품 검색</h2>
-        <input type="text" id="search-input" placeholder="상품명..." onkeyup="doSearch()">
-        <div id="search-results"></div>
+      <div id="input" class="tab-content active">
+        <div class="card">
+          <h2>카톡 메시지 입력</h2>
+          <textarea id="input-text" placeholder="A-1-2에 매직1제 24개"></textarea>
+          <button onclick="parseInput()">적용</button>
+          <button onclick="resetData()" style="background: #999;">초기화</button>
+        </div>
       </div>
-    </div>
 
-    <div id="stats" class="tab-content">
-      <div id="stats-content"></div>
-    </div>
-
-    <div id="logs" class="tab-content">
-      <div class="card">
-        <h2>입/출고 로그</h2>
-        <div id="logs-content"></div>
+      <div id="search" class="tab-content">
+        <div class="card">
+          <h2>상품 검색</h2>
+          <input type="text" id="search-input" placeholder="상품명..." onkeyup="doSearch()">
+          <div id="search-results"></div>
+        </div>
       </div>
-    </div>
 
-    <div id="export" class="tab-content">
-      <div class="card">
-        <h2>데이터 관리</h2>
-        <button onclick="downloadCSV()">CSV 내보내기</button>
-        <button onclick="downloadJSON()">JSON 백업</button>
-        <button onclick="uploadJSON()">JSON 복원</button>
-        <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
+      <div id="stats" class="tab-content">
+        <div id="stats-content"></div>
+      </div>
+
+      <div id="logs" class="tab-content">
+        <div class="card">
+          <h2>입/출고 로그</h2>
+          <div id="logs-content"></div>
+        </div>
+      </div>
+
+      <div id="export" class="tab-content">
+        <div class="card">
+          <h2>데이터 관리</h2>
+          <button onclick="downloadCSV()">CSV 내보내기</button>
+          <button onclick="downloadJSON()">JSON 백업</button>
+          <button onclick="uploadJSON()">JSON 복원</button>
+          <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
+        </div>
       </div>
     </div>
   </div>
@@ -186,13 +190,31 @@
     let editingCan = null;
     let isAddMode = false;
     let inMode = false;
+    let currentCol = 'A';
+
+    function showColTab(col) {
+      if (col === 'settings') {
+        document.getElementById('col-view').style.display = 'none';
+        document.getElementById('settings').style.display = 'block';
+        document.querySelectorAll('.tab-btn-main').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+      } else {
+        currentCol = col;
+        renderCanGrid();
+        document.getElementById('col-view').style.display = 'block';
+        document.getElementById('settings').style.display = 'none';
+        document.querySelectorAll('.tab-btn-main').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+      }
+    }
 
     function showTab(name) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('[id^="input"], [id^="search"], [id^="stats"], [id^="logs"], [id^="export"]').forEach(el => {
+        if (el.id === name) el.classList.add('active');
+        else el.classList.remove('active');
+      });
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById(name).classList.add('active');
       event.target.classList.add('active');
-      if (name === 'dashboard') render();
       if (name === 'stats') renderStats();
       if (name === 'logs') renderLogs();
     }
@@ -315,7 +337,7 @@
       logs.push({ type: '입고', col, can, floor, name: inv[col][can][floor][idx].n, qty, date: today });
       localStorage.setItem('inv', JSON.stringify(inv));
       localStorage.setItem('logs', JSON.stringify(logs));
-      render();
+      renderCanGrid();
       closeModal();
       alert('입고되었습니다!');
     }
@@ -337,7 +359,7 @@
       logs.push({ type: '출고', col, can, floor, name: inv[col][can][floor][idx].n, qty, date: today });
       localStorage.setItem('inv', JSON.stringify(inv));
       localStorage.setItem('logs', JSON.stringify(logs));
-      render();
+      renderCanGrid();
       closeModal();
       alert('출고되었습니다!');
     }
@@ -374,7 +396,7 @@
       }
       
       localStorage.setItem('inv', JSON.stringify(inv));
-      render();
+      renderCanGrid();
       closeModal();
     }
 
@@ -399,7 +421,7 @@
       
       localStorage.setItem('inv', JSON.stringify(inv));
       localStorage.setItem('logs', JSON.stringify(logs));
-      render();
+      renderCanGrid();
       closeModal();
     }
 
@@ -413,69 +435,50 @@
       inv[col][can][floor].splice(idx, 1);
       if (inv[col][can][floor].length === 0) delete inv[col][can][floor];
       localStorage.setItem('inv', JSON.stringify(inv));
-      render();
+      renderCanGrid();
       closeModal();
     }
 
-    function toggleCan(colLetter, canNum) {
-      const el = document.getElementById(`can-${colLetter}-${canNum}`);
-      el.classList.toggle('open');
-      const icon = el.querySelector('.expand-icon');
-      icon.classList.toggle('open');
-    }
-
-    function render() {
+    function renderCanGrid() {
       let html = '';
+      const col = currentCol;
       const allFloors = getAllFloors();
       const displayFloors = allFloors.length > 0 ? allFloors : [1, 2, 3];
       
-      ['A', 'B', 'C'].forEach(col => {
-        let colClass = col === 'A' ? 'col-a' : col === 'B' ? 'col-b' : 'col-c';
-        let cardHtml = `<div class="col-card ${colClass}"><div class="col-header">${col}열</div>`;
+      for (let can = 1; can <= 20; can++) {
+        const cd = inv[col][can];
+        let cardHtml = `<div class="can-card"><div class="can-header">칸${can}</div>`;
         
-        for (let can = 1; can <= 20; can++) {
-          const cd = inv[col][can];
-          let hasContent = false;
-          let canContentHtml = '';
-          
-          displayFloors.forEach(floor => {
-            if (cd && cd[floor] && cd[floor].length > 0) {
-              cd[floor].forEach((it, idx) => {
-                const color = getColor(it.q);
-                const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
-                canContentHtml += `<div class="floor-item ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
-                  <span class="floor-label">${floor}층</span>
-                  <span class="floor-name">${displayName}</span>
-                  <span class="floor-qty">${it.q}개</span>
-                </div>`;
-                hasContent = true;
-              });
-            }
-          });
-          
-          if (!hasContent) {
-            canContentHtml = `<div style="text-align: center; color: #999; padding: 15px;">
-              <div style="margin-bottom: 10px;">상품 없음</div>
-              <div style="cursor: pointer; font-size: 24px;" onclick="openAddModal('${col}',${can})">+</div>
+        let hasContent = false;
+        
+        displayFloors.forEach(floor => {
+          if (cd && cd[floor] && cd[floor].length > 0) {
+            cd[floor].forEach((it, idx) => {
+              const color = getColor(it.q);
+              const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
+              cardHtml += `<div class="floor-row ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
+                <span class="floor-name">${displayName}</span>
+                <span class="floor-qty">${it.q}개</span>
+              </div>`;
+              hasContent = true;
+            });
+          } else {
+            cardHtml += `<div class="floor-row" style="color: #999; cursor: default;">
+              <span class="floor-name">${floor}층</span>
+              <span class="floor-qty">-</span>
             </div>`;
           }
-          
-          cardHtml += `<div class="can-section">
-            <div class="can-header" onclick="toggleCan('${col}',${can})">
-              <span>칸 ${can}</span>
-              <span class="expand-icon">▼</span>
-            </div>
-            <div class="can-content" id="can-${col}-${can}">
-              ${canContentHtml}
-            </div>
-          </div>`;
+        });
+        
+        if (!hasContent) {
+          cardHtml += `<div class="floor-row" style="justify-content: center; cursor: pointer; color: #0066cc; font-weight: bold;" onclick="openAddModal('${col}',${can})">+ 추가</div>`;
         }
         
         cardHtml += `</div>`;
         html += cardHtml;
-      });
+      }
       
-      document.getElementById('col-cards-container').innerHTML = html;
+      document.getElementById('cans-grid').innerHTML = html;
     }
 
     function renderStats() {
@@ -522,7 +525,7 @@
     function parseInput() {
       const t = document.getElementById('input-text').value;
       if (!t) return alert('입력');
-      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`JSON: {열,칸,층,상품명,수량}\n${t}`}]})}).then(r=>r.json()).then(d=>{const m=d.content[0].text.match(/\[.*\]/s);if(!m)return alert('오류');const items=JSON.parse(m[0]);items.forEach(it=>{const c=it.열.toUpperCase();if(!inv[c])inv[c]={};if(!inv[c][it.칸])inv[c][it.칸]={};if(!inv[c][it.칸][it.층])inv[c][it.칸][it.층]=[];const idx=inv[c][it.칸][it.층].findIndex(x=>x.n===it.상품명);const today=getTodayDate();if(idx>=0)inv[c][it.칸][it.층][idx].q=it.수량;else inv[c][it.칸][it.층].push({n:it.상품명,q:it.수량,d:today});logs.push({type:'입고',col:c,can:it.칸,floor:it.층,name:it.상품명,qty:it.수량,date:today});});localStorage.setItem('inv',JSON.stringify(inv));localStorage.setItem('logs',JSON.stringify(logs));render();alert('완료!');document.getElementById('input-text').value='';}).catch(e=>alert('에러: '+e.message));
+      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`JSON: {열,칸,층,상품명,수량}\n${t}`}]})}).then(r=>r.json()).then(d=>{const m=d.content[0].text.match(/\[.*\]/s);if(!m)return alert('오류');const items=JSON.parse(m[0]);items.forEach(it=>{const c=it.열.toUpperCase();if(!inv[c])inv[c]={};if(!inv[c][it.칸])inv[c][it.칸]={};if(!inv[c][it.칸][it.층])inv[c][it.칸][it.층]=[];const idx=inv[c][it.칸][it.층].findIndex(x=>x.n===it.상품명);const today=getTodayDate();if(idx>=0)inv[c][it.칸][it.층][idx].q=it.수량;else inv[c][it.칸][it.층].push({n:it.상품명,q:it.수량,d:today});logs.push({type:'입고',col:c,can:it.칸,floor:it.층,name:it.상품명,qty:it.수량,date:today});});localStorage.setItem('inv',JSON.stringify(inv));localStorage.setItem('logs',JSON.stringify(logs));renderCanGrid();alert('완료!');document.getElementById('input-text').value='';}).catch(e=>alert('에러: '+e.message));
     }
 
     function doSearch() {
@@ -550,7 +553,7 @@
         logs = [];
         localStorage.removeItem('inv');
         localStorage.removeItem('logs');
-        render();
+        renderCanGrid();
         alert('완료!');
       }
     }
@@ -596,7 +599,7 @@
           logs = d.logs || [];
           localStorage.setItem('inv', JSON.stringify(inv));
           localStorage.setItem('logs', JSON.stringify(logs));
-          render();
+          renderCanGrid();
           alert('복원!');
         } catch(err) {
           alert('오류!');
@@ -609,7 +612,7 @@
     if (saved) inv = JSON.parse(saved);
     const savedLogs = localStorage.getItem('logs');
     if (savedLogs) logs = JSON.parse(savedLogs);
-    render();
+    renderCanGrid();
   </script>
 </body>
 </html>
