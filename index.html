@@ -3,526 +3,240 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>재고관리 시스템</title>
+  <title>재고관리</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5; 
-      padding: 20px; 
-      color: #333;
-    }
-    .container { max-width: 100%; margin: 0 auto; }
-    h1 { margin-bottom: 20px; font-size: 24px; }
-    .tabs { 
-      display: flex; 
-      gap: 10px; 
-      margin-bottom: 20px; 
-      border-bottom: 2px solid #ddd; 
-      padding-bottom: 10px; 
-    }
-    .tab-btn { 
-      padding: 10px 20px; 
-      background: none; 
-      border: none; 
-      cursor: pointer; 
-      font-size: 14px; 
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s;
-    }
-    .tab-btn.active { 
-      border-bottom-color: #0066cc; 
-      color: #0066cc; 
-      font-weight: bold; 
-    }
+    body { font-family: Arial; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 100%; }
+    h1 { margin-bottom: 20px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+    .tab-btn { padding: 10px 20px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; }
+    .tab-btn.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: bold; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .legend {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      border: 1px solid #ddd;
-    }
-    .legend span { display: inline-block; margin-right: 20px; }
-    .legend-box {
-      display: inline-block;
-      width: 15px;
-      height: 15px;
-      border-radius: 3px;
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-    .dashboard-grid { 
-      display: grid; 
-      grid-template-columns: repeat(3, 1fr); 
-      gap: 20px; 
-    }
-    .column { 
-      background: white; 
-      padding: 20px; 
-      border-radius: 8px; 
-      border: 1px solid #ddd;
-    }
-    .column-title { 
-      font-size: 20px; 
-      font-weight: bold; 
-      margin-bottom: 20px; 
-      color: white;
-      background: #0066cc;
-      padding: 12px;
-      border-radius: 4px;
-      text-align: center;
-    }
-    .can-section { 
-      background: #fafafa; 
-      padding: 15px; 
-      margin-bottom: 15px; 
-      border-left: 4px solid #0066cc;
-      border-radius: 4px;
-    }
-    .can-label { 
-      font-weight: bold; 
-      color: #333; 
-      margin-bottom: 10px;
-      font-size: 14px;
-      background: white;
-      padding: 8px;
-      border-radius: 3px;
-    }
-    .floor-item { 
-      margin: 6px 0; 
-      padding: 8px; 
-      background: white; 
-      border-radius: 3px; 
-      font-size: 12px;
-      border-left: 3px solid #ddd;
-    }
-    .floor-item.danger { 
-      background: #ffe6e6; 
-      border-left-color: #d9534f;
-      color: #721c24;
-    }
-    .floor-item.warning { 
-      background: #fff3cd; 
-      border-left-color: #ffc107;
-      color: #856404;
-    }
-    .floor-item.success { 
-      background: #d4edda; 
-      border-left-color: #5cb85c;
-      color: #155724;
-    }
-    .empty-can {
-      padding: 12px;
-      background: #f0f0f0;
-      border-radius: 3px;
-      color: #999;
-      font-size: 12px;
-    }
-    .input-box { 
-      background: white; 
-      padding: 20px; 
-      border-radius: 8px; 
-      border: 1px solid #ddd;
-      margin-bottom: 20px;
-    }
-    textarea { 
-      width: 100%; 
-      height: 100px; 
-      padding: 10px; 
-      font-size: 14px; 
-      border: 1px solid #ddd; 
-      border-radius: 4px;
-      font-family: inherit;
-    }
-    button { 
-      padding: 10px 20px; 
-      margin: 10px 10px 10px 0; 
-      background: #0066cc; 
-      color: white; 
-      border: none; 
-      border-radius: 4px; 
-      cursor: pointer; 
-      font-size: 14px;
-      transition: all 0.2s;
-    }
+    .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .column { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    .column-title { font-size: 20px; font-weight: bold; background: #0066cc; color: white; padding: 12px; border-radius: 4px; text-align: center; margin-bottom: 20px; }
+    .can-section { background: #fafafa; padding: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc; border-radius: 4px; }
+    .can-label { font-weight: bold; background: white; padding: 8px; border-radius: 3px; margin-bottom: 10px; }
+    .floor-item { margin: 6px 0; padding: 8px; background: white; font-size: 12px; border-left: 3px solid #ddd; border-radius: 3px; }
+    .danger { background: #ffe6e6 !important; border-left-color: #d9534f !important; }
+    .warning { background: #fff3cd !important; border-left-color: #ffc107 !important; }
+    .success { background: #d4edda !important; border-left-color: #5cb85c !important; }
+    .empty-can { padding: 12px; background: #f0f0f0; border-radius: 3px; color: #999; font-size: 12px; }
+    .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+    textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+    input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+    button { padding: 10px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; }
     button:hover { background: #0052a3; }
-    button.secondary { background: #999; }
-    input[type="text"] { 
-      width: 100%; 
-      padding: 10px; 
-      margin: 10px 0; 
-      border: 1px solid #ddd; 
-      border-radius: 4px; 
-      font-size: 14px; 
-    }
-    #status { 
-      padding: 12px; 
-      margin: 15px 0; 
-      border-radius: 4px; 
-      display: none; 
-      font-size: 14px;
-    }
-    #status.success { 
-      background: #d4edda; 
-      color: #155724; 
-      border: 1px solid #c3e6cb;
-    }
-    #status.error { 
-      background: #f8d7da; 
-      color: #721c24; 
-      border: 1px solid #f5c6cb;
-    }
-    .result-item { 
-      background: white; 
-      padding: 12px; 
-      margin: 10px 0; 
-      border-radius: 4px; 
-      border-left: 3px solid #0066cc;
-      border: 1px solid #ddd;
-    }
-    .stat-box { 
-      background: white; 
-      padding: 20px; 
-      border-radius: 8px; 
-      text-align: center;
-      border: 1px solid #ddd;
-    }
-    .stat-value { font-size: 28px; font-weight: bold; color: #0066cc; }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      margin-bottom: 20px;
-    }
-    .card-title {
-      font-size: 16px;
-      font-weight: bold;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #0066cc;
-      padding-bottom: 10px;
-    }
+    #status { padding: 12px; margin: 15px 0; border-radius: 4px; display: none; }
+    #status.success { background: #d4edda; color: #155724; }
+    #status.error { background: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📦 재고관리 시스템</h1>
+    <h1>📦 재고관리</h1>
     <div id="status"></div>
+
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab(event, 'dashboard')">📊 현황판</button>
-      <button class="tab-btn" onclick="switchTab(event, 'input')">📝 입력</button>
-      <button class="tab-btn" onclick="switchTab(event, 'search')">🔍 검색</button>
-      <button class="tab-btn" onclick="switchTab(event, 'stats')">📈 통계</button>
-      <button class="tab-btn" onclick="switchTab(event, 'export')">💾 백업</button>
+      <button class="tab-btn active" onclick="showTab('dashboard')">📊 현황판</button>
+      <button class="tab-btn" onclick="showTab('input')">📝 입력</button>
+      <button class="tab-btn" onclick="showTab('search')">🔍 검색</button>
+      <button class="tab-btn" onclick="showTab('stats')">📈 통계</button>
+      <button class="tab-btn" onclick="showTab('export')">💾 백업</button>
     </div>
 
     <div id="dashboard" class="tab-content active">
       <div class="legend">
-        <span><span class="legend-box" style="background: #ffcccc;"></span> 부족 (≤20개)</span>
-        <span><span class="legend-box" style="background: #fff3cd;"></span> 적정 (21-50개)</span>
-        <span><span class="legend-box" style="background: #d4edda;"></span> 충분 (51개+)</span>
+        <span>🔴 부족 (≤20개) 🟡 적정 (21-50개) 🟢 충분 (51개+)</span>
       </div>
       <div class="dashboard-grid" id="dashboard-grid"></div>
     </div>
 
     <div id="input" class="tab-content">
-      <div class="input-box">
-        <h2>📝 카톡 메시지 입력</h2>
-        <textarea id="input-text" placeholder="예: A-1-2에 매직1제 24개"></textarea>
-        <button onclick="parseInput()">✓ 적용하기</button>
-        <button class="secondary" onclick="resetData()">↻ 초기화</button>
+      <div class="card">
+        <h2>카톡 메시지 입력</h2>
+        <textarea id="input-text" placeholder="A-1-2에 매직1제 24개"></textarea>
+        <button onclick="parseInput()">적용</button>
+        <button onclick="resetData()" style="background: #999;">초기화</button>
       </div>
     </div>
 
     <div id="search" class="tab-content">
-      <div class="input-box">
-        <h2>🔍 상품 검색</h2>
-        <input type="text" id="search-input" placeholder="상품명 입력..." onkeyup="doSearch()">
+      <div class="card">
+        <h2>상품 검색</h2>
+        <input type="text" id="search-input" placeholder="상품명..." onkeyup="doSearch()">
         <div id="search-results"></div>
       </div>
     </div>
 
     <div id="stats" class="tab-content">
-      <div id="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px;"></div>
-      <div class="card">
-        <div class="card-title">📊 상품별 총량</div>
-        <div id="stats-list"></div>
-      </div>
+      <div id="stats-content"></div>
     </div>
 
     <div id="export" class="tab-content">
       <div class="card">
-        <div class="card-title">💾 데이터 관리</div>
-        <button onclick="downloadCSV()">📊 CSV 내보내기</button>
-        <button onclick="downloadJSON()">💾 JSON 백업</button>
-        <button onclick="uploadJSON()">📂 JSON 복원</button>
+        <h2>데이터 관리</h2>
+        <button onclick="downloadCSV()">CSV 내보내기</button>
+        <button onclick="downloadJSON()">JSON 백업</button>
+        <button onclick="uploadJSON()">JSON 복원</button>
         <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
       </div>
     </div>
   </div>
 
   <script>
-    const initialData = {
-      A: { 
-        1: {2: [{name: '매직 1제', qty: 24}, {name: '산화제', qty: 36}]}, 
-        2: {1: [{name: '산화제', qty: 8}], 2: [{name: '7/33', qty: 5}, {name: '7/4', qty: 3}, {name: '6/4', qty: 9}], 3: [{name: '5/30', qty: 22}]}, 
-        3: {2: [{name: '8/33', qty: 18}, {name: '12/30', qty: 9}, {name: '14/30', qty: 5}], 3: [{name: '매직 1제', qty: 24}, {name: '액상', qty: 16}]}, 
-        4: {3: [{name: '10/45', qty: 12}, {name: '6/56', qty: 11}, {name: '9/6', qty: 11}]}, 
-        5: {1: [{name: '8/30', qty: 17}], 2: [{name: '3/0', qty: 20}, {name: '5/30', qty: 24}], 3: [{name: '산화제', qty: 36}, {name: '크림', qty: 24}]}, 
-        6: {3: [{name: '산화제', qty: 54}]} 
-      },
-      B: { 
-        1: {2: [{name: '5/45', qty: 19}]}, 
-        2: {1: [{name: '매직 1제', qty: 6}, {name: '액상', qty: 6}], 2: [{name: '8/1', qty: 3}, {name: '8/45', qty: 11}, {name: '매직 1제', qty: 18}], 3: [{name: '9/30', qty: 16}, {name: '7/34', qty: 19}]}, 
-        3: {1: [{name: '6/30', qty: 16}, {name: '3/0', qty: 3}], 2: [{name: '6/33', qty: 19}, {name: '7/45', qty: 10}], 3: [{name: '02/02', qty: 18}]}, 
-        4: {1: [{name: '6/33', qty: 7}, {name: '6/35', qty: 7}, {name: '8/56', qty: 10}], 2: [{name: '10/30', qty: 7}]}, 
-        5: {1: [{name: '1/0', qty: 22}, {name: '10/4', qty: 13}], 2: [{name: '3/0', qty: 14}], 3: [{name: '산화제', qty: 36}]}, 
-        6: {3: [{name: '7/30', qty: 11}]} 
-      },
-      C: { 
-        1: {2: [{name: '크림', qty: 7}, {name: '매직 1제', qty: 13}]}, 
-        2: {2: [{name: '크림', qty: 24}]}, 
-        4: {1: [{name: '8/34', qty: 4}, {name: '11/7', qty: 2}, {name: '9/7', qty: 2}, {name: '8/45', qty: 1}, {name: '7/34', qty: 1}, {name: '10/45', qty: 1}, {name: '8/56', qty: 10}], 2: [{name: '산화제', qty: 72}]}, 
-        5: {1: [{name: '산화제', qty: 36}], 2: [{name: '산화제', qty: 36}]}, 
-        6: {1: [{name: '6/30', qty: 5}]} 
-      }
+    const data = {
+      A: {1:{2:[{n:'매직1제',q:24},{n:'산화제',q:36}]},2:{1:[{n:'산화제',q:8}],2:[{n:'7/33',q:5}],3:[{n:'5/30',q:22}]},3:{2:[{n:'8/33',q:18}],3:[{n:'매직1제',q:24}]},4:{3:[{n:'10/45',q:12}]},5:{1:[{n:'8/30',q:17}],2:[{n:'3/0',q:20}],3:[{n:'산화제',q:36}]},6:{3:[{n:'산화제',q:54}]}},
+      B: {1:{2:[{n:'5/45',q:19}]},2:{1:[{n:'매직1제',q:6}],2:[{n:'8/1',q:3}],3:[{n:'9/30',q:16}]},3:{1:[{n:'6/30',q:16}],2:[{n:'6/33',q:19}],3:[{n:'02/02',q:18}]},4:{1:[{n:'6/33',q:7}],2:[{n:'10/30',q:7}]},5:{1:[{n:'1/0',q:22}],2:[{n:'3/0',q:14}],3:[{n:'산화제',q:36}]},6:{3:[{n:'7/30',q:11}]}},
+      C: {1:{2:[{n:'크림',q:7}]},2:{2:[{n:'크림',q:24}]},4:{1:[{n:'8/34',q:4}],2:[{n:'산화제',q:72}]},5:{1:[{n:'산화제',q:36}],2:[{n:'산화제',q:36}]},6:{1:[{n:'6/30',q:5}]}}
     };
 
-    let inventory = JSON.parse(JSON.stringify(initialData));
+    let inv = JSON.parse(JSON.stringify(data));
 
-    function saveData() { localStorage.setItem('inv_data', JSON.stringify(inventory)); }
-    function loadData() { const saved = localStorage.getItem('inv_data'); if (saved) { try { inventory = JSON.parse(saved); } catch(e) {} } }
-    
-    function showStatus(msg, isError = false) {
-      const el = document.getElementById('status');
-      el.textContent = msg;
-      el.className = isError ? 'error' : 'success';
-      el.style.display = 'block';
-      setTimeout(() => el.style.display = 'none', 3000);
-    }
-
-    function switchTab(event, name) {
+    function showTab(name) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(name).classList.add('active');
       event.target.classList.add('active');
-      if (name === 'dashboard') renderDashboard();
+      if (name === 'dashboard') render();
       if (name === 'stats') renderStats();
     }
 
-    function getColor(qty) {
-      if (qty <= 20) return 'danger';
-      if (qty <= 50) return 'warning';
-      return 'success';
-    }
-
-    function getTotalQty(items) {
-      return items.reduce((sum, item) => sum + item.qty, 0);
-    }
-
-    function renderDashboard() {
+    function render() {
       let html = '';
-      ['A', 'B', 'C'].forEach(col => {
-        const maxCan = col === 'C' ? 20 : 6;
+      ['A','B','C'].forEach(col => {
+        const max = col === 'C' ? 20 : 6;
         html += `<div class="column"><div class="column-title">${col}열</div>`;
-        for (let can = 1; can <= maxCan; can++) {
-          const canData = inventory[col][can];
-          if (canData && Object.keys(canData).length > 0) {
-            html += `<div class="can-section"><div class="can-label">칸 ${can}</div>`;
-            for (let floor = 1; floor <= 3; floor++) {
-              if (canData[floor] && canData[floor].length > 0) {
-                const total = getTotalQty(canData[floor]);
-                const color = getColor(total);
-                canData[floor].forEach(item => {
-                  html += `<div class="floor-item ${color}">층${floor}: ${item.name}<br>${item.qty}개</div>`;
-                });
-              }
+        for (let c = 1; c <= max; c++) {
+          const cd = inv[col][c];
+          if (cd && Object.keys(cd).length > 0) {
+            html += `<div class="can-section"><div class="can-label">칸${c}</div>`;
+            for (let f = 1; f <= 3; f++) {
+              if (cd[f]) cd[f].forEach(it => {
+                const color = it.q <= 20 ? 'danger' : it.q <= 50 ? 'warning' : 'success';
+                html += `<div class="floor-item ${color}">층${f}: ${it.n} ${it.q}개</div>`;
+              });
             }
-            html += `</div>`;
+            html += '</div>';
           } else {
-            html += `<div class="can-section"><div class="empty-can">칸 ${can}: 빈칸</div></div>`;
+            html += `<div class="can-section"><div class="empty-can">칸${c}: 비어있음</div></div>`;
           }
         }
-        html += `</div>`;
+        html += '</div>';
       });
       document.getElementById('dashboard-grid').innerHTML = html;
     }
 
     function renderStats() {
-      const allProducts = {};
-      let totalQty = 0;
-      ['A', 'B', 'C'].forEach(col => {
-        for (let can = 1; can <= 20; can++) {
-          if (inventory[col][can]) {
-            for (let floor = 1; floor <= 3; floor++) {
-              if (inventory[col][can][floor]) {
-                inventory[col][can][floor].forEach(item => {
-                  allProducts[item.name] = (allProducts[item.name] || 0) + item.qty;
-                  totalQty += item.qty;
-                });
-              }
+      const prod = {};
+      let tot = 0;
+      ['A','B','C'].forEach(col => {
+        for (let c = 1; c <= 20; c++) {
+          if (inv[col][c]) {
+            for (let f = 1; f <= 3; f++) {
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => {
+                prod[it.n] = (prod[it.n]||0) + it.q;
+                tot += it.q;
+              });
             }
           }
         }
       });
-
-      const statsHtml = `<div class="stat-box"><div style="font-size: 12px; color: #999;">전체 수량</div><div class="stat-value">${totalQty}</div></div><div class="stat-box"><div style="font-size: 12px; color: #999;">상품 종류</div><div class="stat-value">${Object.keys(allProducts).length}</div></div>`;
-      document.getElementById('stats-grid').innerHTML = statsHtml;
-
-      let listHtml = '';
-      Object.entries(allProducts).sort((a, b) => b[1] - a[1]).forEach(([name, qty]) => {
-        listHtml += `<div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;"><span>${name}</span><span style="font-weight: bold;">${qty}개</span></div>`;
+      let html = `<div class="card"><h3>전체: ${tot}개 | 종류: ${Object.keys(prod).length}</h3>`;
+      Object.entries(prod).sort((a,b)=>b[1]-a[1]).forEach(([n,q]) => {
+        html += `<div style="padding:10px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd"><span>${n}</span><span>${q}개</span></div>`;
       });
-      document.getElementById('stats-list').innerHTML = listHtml || '<div style="padding: 20px; text-align: center; color: #999;">데이터 없음</div>';
+      html += '</div>';
+      document.getElementById('stats-content').innerHTML = html;
     }
 
-    async function parseInput() {
-      const text = document.getElementById('input-text').value.trim();
-      if (!text) { showStatus('내용을 입력해주세요.', true); return; }
-      showStatus('AI가 분석 중입니다...');
-
-      try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 1000,
-            messages: [{
-              role: 'user',
-              content: `카톡 메시지에서 재고 정보를 JSON 배열로 추출: {열, 칸, 층, 상품명, 수량}\n메시지: ${text}\nJSON만: [{"열":"A","칸":"1","층":"2","상품명":"매직1제","수량":24}]`
-            })
-          })
-        });
-
-        const data = await response.json();
-        const jsonMatch = data.content[0].text.match(/\[.*\]/s);
-        if (!jsonMatch) throw new Error('형식을 인식할 수 없습니다');
-
-        const items = JSON.parse(jsonMatch[0]);
-        let count = 0;
-        items.forEach(item => {
-          const col = item.열.toUpperCase();
-          const can = parseInt(item.칸);
-          const floor = parseInt(item.층);
-          const name = item.상품명;
-          const qty = parseInt(item.수량);
-
-          if (!inventory[col]) inventory[col] = {};
-          if (!inventory[col][can]) inventory[col][can] = {};
-          if (!inventory[col][can][floor]) inventory[col][can][floor] = [];
-
-          const existing = inventory[col][can][floor].find(p => p.name === name);
-          if (existing) existing.qty = qty;
-          else inventory[col][can][floor].push({name, qty});
-          count++;
-        });
-
-        saveData();
-        renderDashboard();
-        showStatus(`✓ ${count}개 항목이 적용됐습니다!`);
-        document.getElementById('input-text').value = '';
-      } catch (err) {
-        showStatus('오류: ' + err.message, true);
-      }
+    function parseInput() {
+      const t = document.getElementById('input-text').value;
+      if (!t) return alert('입력');
+      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`JSON: {열,칸,층,상품명,수량}\n${t}`}]})}).then(r=>r.json()).then(d=>{const m=d.content[0].text.match(/\[.*\]/s);if(!m)return alert('오류');const items=JSON.parse(m[0]);items.forEach(it=>{const c=it.열.toUpperCase();if(!inv[c])inv[c]={};if(!inv[c][it.칸])inv[c][it.칸]={};if(!inv[c][it.칸][it.층])inv[c][it.칸][it.층]=[];const idx=inv[c][it.칸][it.층].findIndex(x=>x.n===it.상품명);if(idx>=0)inv[c][it.칸][it.층][idx].q=it.수량;else inv[c][it.칸][it.층].push({n:it.상품명,q:it.수량});});localStorage.setItem('inv',JSON.stringify(inv));render();alert('완료!');document.getElementById('input-text').value='';}).catch(e=>alert('에러: '+e.message));
     }
 
     function doSearch() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      const results = [];
-
-      ['A', 'B', 'C'].forEach(col => {
-        for (let can = 1; can <= 20; can++) {
-          if (inventory[col][can]) {
-            for (let floor = 1; floor <= 3; floor++) {
-              if (inventory[col][can][floor]) {
-                inventory[col][can][floor].forEach(item => {
-                  if (item.name.toLowerCase().includes(query)) {
-                    results.push({...item, loc: `${col}-${can}-${floor}`});
-                  }
+      const q = document.getElementById('search-input').value.toLowerCase();
+      let html = '';
+      ['A','B','C'].forEach(col => {
+        for (let c = 1; c <= 20; c++) {
+          if (inv[col][c]) {
+            for (let f = 1; f <= 3; f++) {
+              if (inv[col][c][f]) {
+                inv[col][c][f].forEach(it => {
+                  if (it.n.toLowerCase().includes(q)) html += `<div class="card">${it.n}<br>${col}-${c}-${f} | ${it.q}개</div>`;
                 });
               }
             }
           }
         }
       });
-
-      let html = '';
-      results.forEach(r => {
-        html += `<div class="result-item"><div style="font-weight: bold; margin-bottom: 4px;">${r.name}</div><div style="font-size: 12px; color: #999;">위치: ${r.loc} | 수량: ${r.qty}개</div></div>`;
-      });
-      document.getElementById('search-results').innerHTML = html || '<div style="color: #999; padding: 20px;">결과 없음</div>';
+      document.getElementById('search-results').innerHTML = html || '<div style="color:#999">없음</div>';
     }
 
     function resetData() {
-      if (confirm('정말 초기화하시겠어요? (복구 불가)')) {
-        inventory = JSON.parse(JSON.stringify(initialData));
-        saveData();
-        showStatus('✓ 초기화됐습니다!');
-        renderDashboard();
+      if (confirm('초기화?')) {
+        inv = JSON.parse(JSON.stringify(data));
+        localStorage.removeItem('inv');
+        render();
+        alert('완료!');
       }
     }
 
     function downloadCSV() {
       let csv = '열,칸,층,상품명,수량\n';
-      ['A', 'B', 'C'].forEach(col => {
-        for (let can = 1; can <= 20; can++) {
-          if (inventory[col][can]) {
-            for (let floor = 1; floor <= 3; floor++) {
-              if (inventory[col][can][floor]) {
-                inventory[col][can][floor].forEach(item => {
-                  csv += `${col},${can},${floor},${item.name},${item.qty}\n`;
-                });
-              }
+      ['A','B','C'].forEach(col => {
+        for (let c = 1; c <= 20; c++) {
+          if (inv[col][c]) {
+            for (let f = 1; f <= 3; f++) {
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q}\n`);
             }
           }
         }
       });
-      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = '재고_' + new Date().toISOString().slice(0,10) + '.csv';
-      link.click();
-      showStatus('✓ CSV로 내보내졌습니다!');
+      const blob = new Blob([csv], {type: 'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '재고.csv';
+      a.click();
     }
 
     function downloadJSON() {
-      const json = JSON.stringify(inventory, null, 2);
-      const blob = new Blob([json], {type: 'application/json'});
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = '재고_백업_' + new Date().toISOString().slice(0,10) + '.json';
-      link.click();
-      showStatus('✓ JSON으로 백업됐습니다!');
+      const blob = new Blob([JSON.stringify(inv,null,2)], {type: 'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '재고.json';
+      a.click();
     }
 
     function uploadJSON() {
       document.getElementById('file-input').click();
     }
 
-    function loadJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
+    function loadJSON(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = (ev) => {
         try {
-          const data = JSON.parse(e.target.result);
-          inventory = data;
-          saveData();
-          renderDashboard();
-          showStatus('✓ 복원됐습니다!');
-        } catch (err) {
-          showStatus('파일 오류!', true);
+          inv = JSON.parse(ev.target.result);
+          localStorage.setItem('inv', JSON.stringify(inv));
+          render();
+          alert('복원!');
+        } catch(err) {
+          alert('오류!');
         }
       };
-      reader.readAsText(file);
+      r.readAsText(f);
     }
 
-    loadData();
-    renderDashboard();
+    const saved = localStorage.getItem('inv');
+    if (saved) inv = JSON.parse(saved);
+    render();
   </script>
 </body>
 </html>
