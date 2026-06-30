@@ -39,12 +39,13 @@
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 400px; width: 90%; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
     .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 20px; }
-    .modal input { margin-bottom: 10px; }
+    .modal input, .modal select { margin-bottom: 10px; }
     .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
     .modal-buttons button { flex: 1; margin: 0; }
     .modal-buttons button.cancel { background: #999; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -116,10 +117,20 @@
     <div class="modal-content">
       <div class="modal-title" id="modalTitle">상품 수정</div>
       <div id="modalItems"></div>
-      <input type="text" id="newItemName" placeholder="새 상품명">
-      <input type="number" id="newItemQty" placeholder="수량" min="1">
+      
+      <h4 style="margin-top: 20px; margin-bottom: 10px;">새 상품 추가</h4>
+      <div class="input-row">
+        <select id="newItemFloor">
+          <option value="1">층 1</option>
+          <option value="2">층 2</option>
+          <option value="3">층 3</option>
+        </select>
+        <input type="text" id="newItemName" placeholder="상품명">
+        <input type="number" id="newItemQty" placeholder="수량" min="1">
+      </div>
+      
       <div class="modal-buttons">
-        <button onclick="addNewItem()">상품추가</button>
+        <button onclick="addNewItem()">추가</button>
         <button class="cancel" onclick="closeModal()">닫기</button>
       </div>
     </div>
@@ -191,7 +202,7 @@
     function openEditModal(col, can) {
       currentEditCell = { col, can };
       const cd = inv[col][can];
-      let itemsHtml = `<div style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;"><h4>${col}열 칸${can}</h4>`;
+      let itemsHtml = `<div style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;"><h4>${col}열 칸${can}</h4>`;
       
       if (cd && Object.keys(cd).length > 0) {
         for (let f = 1; f <= 3; f++) {
@@ -211,6 +222,9 @@
       itemsHtml += '</div>';
       document.getElementById('modalItems').innerHTML = itemsHtml;
       document.getElementById('modalTitle').textContent = col + '열 칸' + can;
+      document.getElementById('newItemFloor').value = '1';
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemQty').value = '';
       document.getElementById('editModal').classList.add('active');
     }
 
@@ -239,14 +253,15 @@
 
     function addNewItem() {
       if (!currentEditCell) return;
+      const floor = parseInt(document.getElementById('newItemFloor').value);
       const name = document.getElementById('newItemName').value.trim();
       const qty = parseInt(document.getElementById('newItemQty').value);
       if (!name || !qty) return alert('입력');
       
       const col = currentEditCell.col;
       const can = currentEditCell.can;
-      if (!inv[col][can][1]) inv[col][can][1] = [];
-      inv[col][can][1].push({n: name, q: qty});
+      if (!inv[col][can][floor]) inv[col][can][floor] = [];
+      inv[col][can][floor].push({n: name, q: qty});
       localStorage.setItem('inv', JSON.stringify(inv));
       document.getElementById('newItemName').value = '';
       document.getElementById('newItemQty').value = '';
