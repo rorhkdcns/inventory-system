@@ -15,25 +15,28 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; }
-    .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .column { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
-    .column-title { font-size: 20px; font-weight: bold; background: #0066cc; color: white; padding: 12px; border-radius: 4px; text-align: center; margin-bottom: 20px; }
-    .can-section { background: #fafafa; padding: 15px; margin-bottom: 15px; border-left: 4px solid #0066cc; border-radius: 4px; }
-    .can-label { font-weight: bold; background: white; padding: 8px; border-radius: 3px; margin-bottom: 10px; }
-    .floor-item { margin: 6px 0; padding: 8px; background: white; font-size: 12px; border-left: 3px solid #ddd; border-radius: 3px; cursor: pointer; }
-    .floor-item:hover { background: #f0f0f0; }
+    
+    .table-wrapper { background: white; border-radius: 8px; overflow: auto; border: 1px solid #ddd; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #0066cc; color: white; font-weight: bold; }
+    tr:nth-child(even) { background: #f9f9f9; }
+    
+    .cell-content { min-height: 60px; cursor: pointer; padding: 8px; border-radius: 4px; }
+    .cell-content:hover { background: #e8f4f8; }
+    .item { font-size: 12px; padding: 4px; margin: 2px 0; border-left: 3px solid #ddd; border-radius: 2px; }
+    
     .danger { background: #ffe6e6 !important; border-left-color: #d9534f !important; }
     .warning { background: #fff3cd !important; border-left-color: #ffc107 !important; }
     .success { background: #d4edda !important; border-left-color: #5cb85c !important; }
-    .empty-can { padding: 12px; background: #f0f0f0; border-radius: 3px; color: #999; font-size: 12px; }
+    .empty { color: #999; font-size: 11px; }
+    
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
     input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
     button { padding: 10px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; }
     button:hover { background: #0052a3; }
-    #status { padding: 12px; margin: 15px 0; border-radius: 4px; display: none; }
-    #status.success { background: #d4edda; color: #155724; }
-    #status.error { background: #f8d7da; color: #721c24; }
+    
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
     .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 400px; width: 90%; }
@@ -42,9 +45,6 @@
     .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
     .modal-buttons button { flex: 1; margin: 0; }
     .modal-buttons button.cancel { background: #999; }
-    .modal-buttons button.cancel:hover { background: #777; }
-    .add-btn { padding: 8px 12px; background: #28a745; font-size: 12px; margin-top: 10px; }
-    .add-btn:hover { background: #218838; }
   </style>
 </head>
 <body>
@@ -64,7 +64,19 @@
       <div class="legend">
         <span>🔴 부족 (≤20개) 🟡 적정 (21-50개) 🟢 충분 (51개+)</span>
       </div>
-      <div class="dashboard-grid" id="dashboard-grid"></div>
+      <div class="table-wrapper">
+        <table id="dashboard-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">칸</th>
+              <th>A열</th>
+              <th>B열</th>
+              <th>C열</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="input" class="tab-content">
@@ -102,13 +114,13 @@
   <!-- 수정 모달 -->
   <div id="editModal" class="modal">
     <div class="modal-content">
-      <div class="modal-title">상품 수정</div>
-      <input type="text" id="modalName" placeholder="상품명">
-      <input type="number" id="modalQty" placeholder="수량" min="1">
+      <div class="modal-title" id="modalTitle">상품 수정</div>
+      <div id="modalItems"></div>
+      <input type="text" id="newItemName" placeholder="새 상품명">
+      <input type="number" id="newItemQty" placeholder="수량" min="1">
       <div class="modal-buttons">
-        <button onclick="saveItem()">저장</button>
-        <button class="cancel" onclick="closeModal()">취소</button>
-        <button class="cancel" style="background: #dc3545;" onclick="deleteItem()">삭제</button>
+        <button onclick="addNewItem()">상품추가</button>
+        <button class="cancel" onclick="closeModal()">닫기</button>
       </div>
     </div>
   </div>
@@ -121,7 +133,7 @@
     };
 
     let inv = JSON.parse(JSON.stringify(data));
-    let editingItem = null;
+    let currentEditCell = null;
 
     function showTab(name) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -132,84 +144,119 @@
       if (name === 'stats') renderStats();
     }
 
-    function openEditModal(col, can, floor, idx) {
-      const item = inv[col][can][floor][idx];
-      editingItem = { col, can, floor, idx };
-      document.getElementById('modalName').value = item.n;
-      document.getElementById('modalQty').value = item.q;
-      document.getElementById('editModal').classList.add('active');
+    function getColor(qty) {
+      if (qty <= 20) return 'danger';
+      if (qty <= 50) return 'warning';
+      return 'success';
     }
 
-    function closeModal() {
-      document.getElementById('editModal').classList.remove('active');
-      editingItem = null;
-    }
-
-    function saveItem() {
-      if (!editingItem) return;
-      const name = document.getElementById('modalName').value.trim();
-      const qty = parseInt(document.getElementById('modalQty').value);
-      if (!name || !qty) return alert('입력');
-      
-      inv[editingItem.col][editingItem.can][editingItem.floor][editingItem.idx] = {n: name, q: qty};
-      localStorage.setItem('inv', JSON.stringify(inv));
-      render();
-      closeModal();
-      alert('저장됨!');
-    }
-
-    function deleteItem() {
-      if (!editingItem) return;
-      if (!confirm('삭제?')) return;
-      inv[editingItem.col][editingItem.can][editingItem.floor].splice(editingItem.idx, 1);
-      if (inv[editingItem.col][editingItem.can][editingItem.floor].length === 0) {
-        delete inv[editingItem.col][editingItem.can][editingItem.floor];
-      }
-      localStorage.setItem('inv', JSON.stringify(inv));
-      render();
-      closeModal();
-      alert('삭제됨!');
+    function getTotalQty(items) {
+      return items.reduce((s, it) => s + it.q, 0);
     }
 
     function render() {
       let html = '';
-      ['A','B','C'].forEach(col => {
-        const max = col === 'C' ? 20 : 6;
-        html += `<div class="column"><div class="column-title">${col}열</div>`;
-        for (let c = 1; c <= max; c++) {
-          const cd = inv[col][c];
-          html += `<div class="can-section"><div class="can-label">칸${c}</div>`;
+      const maxCan = 20;
+      
+      for (let can = 1; can <= maxCan; can++) {
+        html += `<tr><td style="font-weight: bold; background: #f0f0f0;">칸${can}</td>`;
+        
+        ['A', 'B', 'C'].forEach(col => {
+          html += '<td><div class="cell-content" onclick="openEditModal(\'' + col + '\',' + can + ')">';
+          const cd = inv[col][can];
           
           if (cd && Object.keys(cd).length > 0) {
             for (let f = 1; f <= 3; f++) {
-              if (cd[f]) cd[f].forEach((it, idx) => {
-                const color = it.q <= 20 ? 'danger' : it.q <= 50 ? 'warning' : 'success';
-                html += `<div class="floor-item ${color}" onclick="openEditModal('${col}',${c},${f},${idx})">층${f}: ${it.n} ${it.q}개</div>`;
-              });
+              if (cd[f]) {
+                const total = getTotalQty(cd[f]);
+                const color = getColor(total);
+                cd[f].forEach(it => {
+                  html += `<div class="item ${color}">층${f}: ${it.n}<br>${it.q}개</div>`;
+                });
+              }
             }
           } else {
-            html += `<div class="empty-can">비어있음</div>`;
+            html += '<div class="empty">-</div>';
           }
           
-          html += `<button class="add-btn" onclick="addItem('${col}',${c})">+추가</button>`;
-          html += '</div>';
-        }
-        html += '</div>';
-      });
-      document.getElementById('dashboard-grid').innerHTML = html;
+          html += '</div></td>';
+        });
+        
+        html += '</tr>';
+      }
+      
+      document.getElementById('table-body').innerHTML = html;
     }
 
-    function addItem(col, can) {
-      const name = prompt('상품명:');
-      if (!name) return;
-      const qty = parseInt(prompt('수량:'));
-      if (!qty) return;
+    function openEditModal(col, can) {
+      currentEditCell = { col, can };
+      const cd = inv[col][can];
+      let itemsHtml = `<div style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;"><h4>${col}열 칸${can}</h4>`;
       
-      if (!inv[col][can]) inv[col][can] = {};
+      if (cd && Object.keys(cd).length > 0) {
+        for (let f = 1; f <= 3; f++) {
+          if (cd[f]) {
+            cd[f].forEach((it, idx) => {
+              itemsHtml += `<div style="padding: 8px; border: 1px solid #ddd; margin: 5px 0; display: flex; justify-content: space-between; align-items: center;">
+                <div onclick="editItem('${col}',${can},${f},${idx})" style="cursor: pointer; flex: 1;">층${f}: ${it.n} (${it.q}개)</div>
+                <button onclick="removeItem('${col}',${can},${f},${idx})" style="background: #dc3545; padding: 5px 10px; font-size: 11px; margin: 0;">×</button>
+              </div>`;
+            });
+          }
+        }
+      } else {
+        itemsHtml += '<div class="empty">상품 없음</div>';
+      }
+      
+      itemsHtml += '</div>';
+      document.getElementById('modalItems').innerHTML = itemsHtml;
+      document.getElementById('modalTitle').textContent = col + '열 칸' + can;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function editItem(col, can, floor, idx) {
+      const it = inv[col][can][floor][idx];
+      const newName = prompt('상품명:', it.n);
+      if (!newName) return;
+      const newQty = parseInt(prompt('수량:', it.q));
+      if (!newQty) return;
+      
+      it.n = newName;
+      it.q = newQty;
+      localStorage.setItem('inv', JSON.stringify(inv));
+      openEditModal(col, can);
+      render();
+    }
+
+    function removeItem(col, can, floor, idx) {
+      if (!confirm('삭제?')) return;
+      inv[col][can][floor].splice(idx, 1);
+      if (inv[col][can][floor].length === 0) delete inv[col][can][floor];
+      localStorage.setItem('inv', JSON.stringify(inv));
+      openEditModal(col, can);
+      render();
+    }
+
+    function addNewItem() {
+      if (!currentEditCell) return;
+      const name = document.getElementById('newItemName').value.trim();
+      const qty = parseInt(document.getElementById('newItemQty').value);
+      if (!name || !qty) return alert('입력');
+      
+      const col = currentEditCell.col;
+      const can = currentEditCell.can;
       if (!inv[col][can][1]) inv[col][can][1] = [];
       inv[col][can][1].push({n: name, q: qty});
       localStorage.setItem('inv', JSON.stringify(inv));
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemQty').value = '';
+      openEditModal(col, can);
       render();
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').classList.remove('active');
+      currentEditCell = null;
     }
 
     function renderStats() {
