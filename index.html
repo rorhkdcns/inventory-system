@@ -34,7 +34,6 @@
     .fl-empty { color: #888; }
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
-    textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
     input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
     button { padding: 12px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
     button:hover { background: #0052a3; }
@@ -102,23 +101,13 @@
     <h1>📦 재고관리</h1>
 
     <div class="tabs">
-      <button class="tab-btn active" onclick="showTab('input', this)">📝 입력</button>
-      <button class="tab-btn" onclick="showTab('search', this)">🔍 검색</button>
+      <button class="tab-btn active" onclick="showTab('search', this)">🔍 검색</button>
       <button class="tab-btn" onclick="showTab('stats', this)">📈 통계</button>
       <button class="tab-btn" onclick="showTab('logs', this)">📋 로그</button>
       <button class="tab-btn" onclick="showTab('export', this)">💾 백업</button>
     </div>
 
-    <div id="input" class="panel active">
-      <div class="card">
-        <h2>카톡 메시지 입력</h2>
-        <textarea id="input-text" placeholder="A-1-2에 매직1제 24개"></textarea>
-        <button onclick="parseInput()">적용</button>
-        <button onclick="resetData()" style="background: #999;">초기화</button>
-      </div>
-    </div>
-
-    <div id="search" class="panel">
+    <div id="search" class="panel active">
       <div class="card">
         <h2>상품 검색</h2>
         <input type="text" id="search-input" placeholder="상품명..." onkeyup="doSearch()">
@@ -144,6 +133,7 @@
         <button onclick="downloadJSON()">JSON 백업</button>
         <button onclick="uploadJSON()">JSON 복원</button>
         <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
+        <button onclick="resetData()" style="background: #999;">초기화</button>
       </div>
     </div>
 
@@ -499,12 +489,6 @@
       logs = [];
       localStorage.setItem('logs', JSON.stringify(logs));
       renderLogs();
-    }
-
-    function parseInput() {
-      const t = document.getElementById('input-text').value;
-      if (!t) return alert('입력');
-      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`JSON: {열,칸,층,상품명,수량}\n${t}`}]})}).then(r=>r.json()).then(d=>{const m=d.content[0].text.match(/\[.*\]/s);if(!m)return alert('오류');const items=JSON.parse(m[0]);items.forEach(it=>{const c=it.열.toUpperCase();if(!inv[c])inv[c]={};if(!inv[c][it.칸])inv[c][it.칸]={};if(!inv[c][it.칸][it.층])inv[c][it.칸][it.층]=[];const idx=inv[c][it.칸][it.층].findIndex(x=>x.n===it.상품명);const today=getTodayDate();if(idx>=0)inv[c][it.칸][it.층][idx].q=it.수량;else inv[c][it.칸][it.층].push({n:it.상품명,q:it.수량,d:today});logs.push({type:'입고',col:c,can:it.칸,floor:it.층,name:it.상품명,qty:it.수량,date:today});});localStorage.setItem('inv',JSON.stringify(inv));localStorage.setItem('logs',JSON.stringify(logs));render();alert('완료!');document.getElementById('input-text').value='';}).catch(e=>alert('에러: '+e.message));
     }
 
     function doSearch() {
