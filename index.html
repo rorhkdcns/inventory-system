@@ -10,7 +10,7 @@
     .container { max-width: 100%; }
     h1 { margin-bottom: 20px; font-size: 32px; }
 
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; overflow-x: auto; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .tab-btn { padding: 12px 24px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; font-size: 16px; white-space: nowrap; color: #000; }
     .tab-btn.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: bold; }
     .panel { display: none; }
@@ -25,13 +25,13 @@
 
     .can-island { display: flex; align-items: center; gap: 12px; }
     .can-num { font-size: 22px; font-weight: bold; color: #000; min-width: 50px; text-align: center; }
-    .can-box { flex: 1; background: #fff; border: 2px solid #bbb; border-radius: 12px; padding: 6px 12px; }
+    .can-box { flex: 1; min-width: 0; background: #fff; border: 2px solid #bbb; border-radius: 12px; padding: 6px 12px; }
 
     .floor-line { display: flex; align-items: center; padding: 13px 4px; border-bottom: 1px solid #ddd; cursor: pointer; transition: all 0.15s; border-radius: 4px; }
     .floor-line:last-child { border-bottom: none; }
     .floor-line:hover { background: #f0f0f0; }
     .fl-floor { min-width: 48px; font-weight: bold; color: #444; font-size: 17px; }
-    .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 17px; }
+    .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
     .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #222; font-size: 17px; }
     .fl-empty { color: #888; }
     .floor-line.danger { background: #ffcccc; }
@@ -64,6 +64,50 @@
     .log-date { color: #666; font-size: 13px; }
     .log-del { background: #dc3545; padding: 8px 14px; margin: 0; flex: none; }
     .log-del:hover { background: #c82333; }
+
+    /* ===== 모바일 최적화 ===== */
+    @media (max-width: 768px) {
+      body { padding: 12px; }
+      h1 { font-size: 24px; margin-bottom: 14px; }
+
+      .tabs { gap: 4px; margin-bottom: 14px; }
+      .tab-btn { padding: 10px 14px; font-size: 14px; }
+
+      .legend { padding: 12px; font-size: 14px; }
+
+      /* 3열 → 1열로 세로 쌓기 */
+      .cols-container { grid-template-columns: 1fr; gap: 16px; }
+
+      .col-header { font-size: 20px; padding: 13px; }
+      .cans-list { gap: 14px; padding: 14px; }
+
+      .can-num { font-size: 20px; min-width: 42px; }
+      .can-box { padding: 4px 10px; }
+
+      .floor-line { padding: 14px 4px; }
+      .fl-floor { min-width: 42px; font-size: 16px; }
+      .fl-name { font-size: 16px; }
+      .fl-qty { min-width: 50px; font-size: 16px; }
+
+      /* 모달 모바일 */
+      .modal-content { padding: 20px; width: 94%; max-height: 92vh; }
+      .modal-title { font-size: 20px; }
+
+      /* 버튼 터치 영역 */
+      button { padding: 14px 18px; }
+      .modal-buttons button { padding: 14px 10px; font-size: 15px; }
+
+      .log-entry { flex-direction: column; align-items: stretch; }
+      .log-del { width: 100%; padding: 12px; }
+    }
+
+    @media (max-width: 400px) {
+      .can-island { gap: 8px; }
+      .can-num { font-size: 18px; min-width: 36px; }
+      .fl-floor { min-width: 38px; font-size: 15px; }
+      .fl-name { font-size: 15px; }
+      .fl-qty { min-width: 44px; font-size: 15px; }
+    }
   </style>
 </head>
 <body>
