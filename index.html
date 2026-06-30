@@ -10,28 +10,39 @@
     .container { max-width: 100%; }
     h1 { margin-bottom: 20px; font-size: 32px; }
     
-    .tabs-main { display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; }
-    .tab-btn-main { padding: 12px 30px; background: #000; color: white; border: none; cursor: pointer; font-size: 18px; font-weight: bold; border-radius: 12px; min-width: 120px; transition: all 0.2s; }
-    .tab-btn-main.active { background: #0066cc; }
-    .tab-btn-main:hover { transform: scale(1.05); }
+    .col-tabs { display: flex; gap: 15px; margin-bottom: 30px; justify-content: center; }
+    .col-tab { padding: 12px 40px; background: #000; color: #000; border: none; cursor: pointer; font-size: 18px; font-weight: bold; border-radius: 12px; min-width: 140px; transition: all 0.2s; }
+    .col-tab:hover { transform: scale(1.05); }
+    
+    .settings-btn { padding: 12px 30px; background: #666; color: #000; border: none; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 8px; transition: all 0.2s; }
+    .settings-btn:hover { background: #555; }
     
     .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; overflow-x: auto; }
-    .tab-btn { padding: 12px 24px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; font-size: 16px; white-space: nowrap; }
+    .tab-btn { padding: 12px 24px; background: none; border: none; cursor: pointer; border-bottom: 3px solid transparent; font-size: 16px; white-space: nowrap; color: #000; }
     .tab-btn.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: bold; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     
-    .cans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .can-card { background: white; border-radius: 12px; padding: 0; border: 2px solid #ddd; overflow: hidden; }
-    .can-header { padding: 15px; background: #999; color: white; font-size: 18px; font-weight: bold; text-align: center; }
+    .main-view { display: block; }
+    .main-view.hidden { display: none; }
     
-    .floor-row { padding: 12px 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; cursor: pointer; transition: all 0.2s; }
+    .cols-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    
+    .col-wrapper { background: white; border-radius: 8px; padding: 0; border: 2px solid #ddd; overflow: hidden; }
+    .col-header { padding: 15px; background: #000; color: #fff; font-size: 20px; font-weight: bold; text-align: center; border-radius: 8px 8px 0 0; }
+    
+    .cans-list { display: flex; flex-direction: column; gap: 15px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+    
+    .can-card { background: #bbb; border-radius: 12px; padding: 15px; }
+    .can-label { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #999; }
+    
+    .floor-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #333; cursor: pointer; border-bottom: 1px solid #999; transition: all 0.2s; }
     .floor-row:last-child { border-bottom: none; }
-    .floor-row:hover { background: #f0f0f0; }
+    .floor-row:hover { background: #a9a9a9; padding: 8px 5px; }
     
-    .floor-name { font-weight: 600; color: #333; }
-    .floor-qty { font-weight: bold; color: #666; }
+    .floor-name { font-weight: 600; }
+    .floor-qty { font-weight: bold; }
     
     .danger { background: #ffcccc !important; }
     .warning { background: #ffffcc !important; }
@@ -64,18 +75,16 @@
   <div class="container">
     <h1>📦 재고관리</h1>
 
-    <div class="tabs-main">
-      <button class="tab-btn-main active" onclick="showColTab('A')">A열</button>
-      <button class="tab-btn-main" onclick="showColTab('B')">B열</button>
-      <button class="tab-btn-main" onclick="showColTab('C')">C열</button>
-      <button class="tab-btn-main" style="background: #666;" onclick="showColTab('settings')">⚙️ 설정</button>
+    <div class="col-tabs">
+      <button class="col-tab" onclick="showSettings()">⚙️ 설정</button>
     </div>
 
-    <div id="col-view" class="tab-content active">
+    <div id="main-view" class="main-view">
       <div class="legend">
         <span>🔴 부족 (≤20개) 🟡 적정 (21-50개) 🟢 충분 (51개+)</span>
       </div>
-      <div class="cans-grid" id="cans-grid"></div>
+      
+      <div class="cols-container" id="cols-container"></div>
     </div>
 
     <div id="settings" class="tab-content">
@@ -93,6 +102,7 @@
           <textarea id="input-text" placeholder="A-1-2에 매직1제 24개"></textarea>
           <button onclick="parseInput()">적용</button>
           <button onclick="resetData()" style="background: #999;">초기화</button>
+          <button onclick="backToMain()" style="background: #666;">돌아가기</button>
         </div>
       </div>
 
@@ -122,6 +132,7 @@
           <button onclick="downloadJSON()">JSON 백업</button>
           <button onclick="uploadJSON()">JSON 복원</button>
           <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
+          <button onclick="backToMain()" style="background: #666; margin-top: 10px;">돌아가기</button>
         </div>
       </div>
     </div>
@@ -190,30 +201,24 @@
     let editingCan = null;
     let isAddMode = false;
     let inMode = false;
-    let currentCol = 'A';
 
-    function showColTab(col) {
-      if (col === 'settings') {
-        document.getElementById('col-view').style.display = 'none';
-        document.getElementById('settings').style.display = 'block';
-        document.querySelectorAll('.tab-btn-main').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
-      } else {
-        currentCol = col;
-        renderCanGrid();
-        document.getElementById('col-view').style.display = 'block';
-        document.getElementById('settings').style.display = 'none';
-        document.querySelectorAll('.tab-btn-main').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
-      }
+    function showSettings() {
+      document.getElementById('main-view').classList.add('hidden');
+      document.getElementById('settings').classList.add('active');
+    }
+
+    function backToMain() {
+      document.getElementById('main-view').classList.remove('hidden');
+      document.getElementById('settings').classList.remove('active');
+      render();
     }
 
     function showTab(name) {
-      document.querySelectorAll('[id^="input"], [id^="search"], [id^="stats"], [id^="logs"], [id^="export"]').forEach(el => {
-        if (el.id === name) el.classList.add('active');
-        else el.classList.remove('active');
+      document.querySelectorAll('[id="input"], [id="search"], [id="stats"], [id="logs"], [id="export"]').forEach(el => {
+        el.classList.remove('active');
       });
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
       event.target.classList.add('active');
       if (name === 'stats') renderStats();
       if (name === 'logs') renderLogs();
@@ -337,7 +342,7 @@
       logs.push({ type: '입고', col, can, floor, name: inv[col][can][floor][idx].n, qty, date: today });
       localStorage.setItem('inv', JSON.stringify(inv));
       localStorage.setItem('logs', JSON.stringify(logs));
-      renderCanGrid();
+      render();
       closeModal();
       alert('입고되었습니다!');
     }
@@ -359,7 +364,7 @@
       logs.push({ type: '출고', col, can, floor, name: inv[col][can][floor][idx].n, qty, date: today });
       localStorage.setItem('inv', JSON.stringify(inv));
       localStorage.setItem('logs', JSON.stringify(logs));
-      renderCanGrid();
+      render();
       closeModal();
       alert('출고되었습니다!');
     }
@@ -396,7 +401,7 @@
       }
       
       localStorage.setItem('inv', JSON.stringify(inv));
-      renderCanGrid();
+      render();
       closeModal();
     }
 
@@ -421,7 +426,7 @@
       
       localStorage.setItem('inv', JSON.stringify(inv));
       localStorage.setItem('logs', JSON.stringify(logs));
-      renderCanGrid();
+      render();
       closeModal();
     }
 
@@ -435,50 +440,52 @@
       inv[col][can][floor].splice(idx, 1);
       if (inv[col][can][floor].length === 0) delete inv[col][can][floor];
       localStorage.setItem('inv', JSON.stringify(inv));
-      renderCanGrid();
+      render();
       closeModal();
     }
 
-    function renderCanGrid() {
+    function render() {
       let html = '';
-      const col = currentCol;
       const allFloors = getAllFloors();
       const displayFloors = allFloors.length > 0 ? allFloors : [1, 2, 3];
       
-      for (let can = 1; can <= 20; can++) {
-        const cd = inv[col][can];
-        let cardHtml = `<div class="can-card"><div class="can-header">칸${can}</div>`;
+      ['A', 'B', 'C'].forEach(col => {
+        let colHtml = `<div class="col-wrapper"><div class="col-header">${col}열</div><div class="cans-list">`;
         
-        let hasContent = false;
-        
-        displayFloors.forEach(floor => {
-          if (cd && cd[floor] && cd[floor].length > 0) {
-            cd[floor].forEach((it, idx) => {
-              const color = getColor(it.q);
-              const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
-              cardHtml += `<div class="floor-row ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
-                <span class="floor-name">${displayName}</span>
-                <span class="floor-qty">${it.q}개</span>
-              </div>`;
-              hasContent = true;
-            });
-          } else {
-            cardHtml += `<div class="floor-row" style="color: #999; cursor: default;">
-              <span class="floor-name">${floor}층</span>
-              <span class="floor-qty">-</span>
-            </div>`;
+        for (let can = 1; can <= 20; can++) {
+          const cd = inv[col][can];
+          let hasContent = false;
+          let canContentHtml = '';
+          
+          displayFloors.forEach(floor => {
+            if (cd && cd[floor] && cd[floor].length > 0) {
+              cd[floor].forEach((it, idx) => {
+                const color = getColor(it.q);
+                const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
+                canContentHtml += `<div class="floor-row ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
+                  <span class="floor-name">${displayName}</span>
+                  <span class="floor-qty">${it.q}개</span>
+                </div>`;
+                hasContent = true;
+              });
+            }
+          });
+          
+          if (!hasContent) {
+            canContentHtml = `<div style="text-align: center; color: #999; padding: 10px;">-</div>`;
           }
-        });
-        
-        if (!hasContent) {
-          cardHtml += `<div class="floor-row" style="justify-content: center; cursor: pointer; color: #0066cc; font-weight: bold;" onclick="openAddModal('${col}',${can})">+ 추가</div>`;
+          
+          colHtml += `<div class="can-card">
+            <div class="can-label">칸${can}</div>
+            ${canContentHtml}
+          </div>`;
         }
         
-        cardHtml += `</div>`;
-        html += cardHtml;
-      }
+        colHtml += `</div></div>`;
+        html += colHtml;
+      });
       
-      document.getElementById('cans-grid').innerHTML = html;
+      document.getElementById('cols-container').innerHTML = html;
     }
 
     function renderStats() {
@@ -525,7 +532,7 @@
     function parseInput() {
       const t = document.getElementById('input-text').value;
       if (!t) return alert('입력');
-      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`JSON: {열,칸,층,상품명,수량}\n${t}`}]})}).then(r=>r.json()).then(d=>{const m=d.content[0].text.match(/\[.*\]/s);if(!m)return alert('오류');const items=JSON.parse(m[0]);items.forEach(it=>{const c=it.열.toUpperCase();if(!inv[c])inv[c]={};if(!inv[c][it.칸])inv[c][it.칸]={};if(!inv[c][it.칸][it.층])inv[c][it.칸][it.층]=[];const idx=inv[c][it.칸][it.층].findIndex(x=>x.n===it.상품명);const today=getTodayDate();if(idx>=0)inv[c][it.칸][it.층][idx].q=it.수량;else inv[c][it.칸][it.층].push({n:it.상품명,q:it.수량,d:today});logs.push({type:'입고',col:c,can:it.칸,floor:it.층,name:it.상품명,qty:it.수량,date:today});});localStorage.setItem('inv',JSON.stringify(inv));localStorage.setItem('logs',JSON.stringify(logs));renderCanGrid();alert('완료!');document.getElementById('input-text').value='';}).catch(e=>alert('에러: '+e.message));
+      fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:`JSON: {열,칸,층,상품명,수량}\n${t}`}]})}).then(r=>r.json()).then(d=>{const m=d.content[0].text.match(/\[.*\]/s);if(!m)return alert('오류');const items=JSON.parse(m[0]);items.forEach(it=>{const c=it.열.toUpperCase();if(!inv[c])inv[c]={};if(!inv[c][it.칸])inv[c][it.칸]={};if(!inv[c][it.칸][it.층])inv[c][it.칸][it.층]=[];const idx=inv[c][it.칸][it.층].findIndex(x=>x.n===it.상품명);const today=getTodayDate();if(idx>=0)inv[c][it.칸][it.층][idx].q=it.수량;else inv[c][it.칸][it.층].push({n:it.상품명,q:it.수량,d:today});logs.push({type:'입고',col:c,can:it.칸,floor:it.층,name:it.상품명,qty:it.수량,date:today});});localStorage.setItem('inv',JSON.stringify(inv));localStorage.setItem('logs',JSON.stringify(logs));render();alert('완료!');document.getElementById('input-text').value='';}).catch(e=>alert('에러: '+e.message));
     }
 
     function doSearch() {
@@ -553,7 +560,7 @@
         logs = [];
         localStorage.removeItem('inv');
         localStorage.removeItem('logs');
-        renderCanGrid();
+        render();
         alert('완료!');
       }
     }
@@ -599,7 +606,7 @@
           logs = d.logs || [];
           localStorage.setItem('inv', JSON.stringify(inv));
           localStorage.setItem('logs', JSON.stringify(logs));
-          renderCanGrid();
+          render();
           alert('복원!');
         } catch(err) {
           alert('오류!');
@@ -612,7 +619,7 @@
     if (saved) inv = JSON.parse(saved);
     const savedLogs = localStorage.getItem('logs');
     if (savedLogs) logs = JSON.parse(savedLogs);
-    renderCanGrid();
+    render();
   </script>
 </body>
 </html>
