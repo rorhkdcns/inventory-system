@@ -28,10 +28,11 @@
     .floor-line { display: flex; align-items: center; padding: 13px 4px; border-bottom: 1px solid #ddd; cursor: pointer; transition: all 0.15s; border-radius: 4px; }
     .floor-line:last-child { border-bottom: none; }
     .floor-line:hover { background: #f0f0f0; }
-    .fl-floor { min-width: 48px; font-weight: bold; color: #444; font-size: 17px; }
+    .fl-floor { min-width: 48px; font-weight: bold; color: #0066cc; font-size: 17px; }
     .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
-    .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #222; font-size: 17px; }
-    .fl-empty { color: #888; }
+    .fl-date { font-weight: 400; color: #888; font-size: 14px; }
+    .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #e03131; font-size: 17px; }
+    .fl-empty { color: #888; font-weight: 400; }
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
@@ -75,6 +76,7 @@
       .floor-line { padding: 14px 4px; }
       .fl-floor { min-width: 42px; font-size: 16px; }
       .fl-name { font-size: 16px; }
+      .fl-date { font-size: 13px; }
       .fl-qty { min-width: 50px; font-size: 16px; }
 
       .modal-content { padding: 20px; width: 94%; max-height: 92vh; }
@@ -411,10 +413,10 @@
           displayFloors.forEach(floor => {
             if (cd && cd[floor] && cd[floor].length > 0) {
               cd[floor].forEach((it, idx) => {
-                const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
+                const dateHtml = it.d ? ` <span class="fl-date">[${it.d}]</span>` : '';
                 rowsHtml += `<div class="floor-line" onclick="openEditModal('${col}',${can},${floor},${idx})">
                   <span class="fl-floor">${floor}층</span>
-                  <span class="fl-name">${displayName}</span>
+                  <span class="fl-name">${it.n}${dateHtml}</span>
                   <span class="fl-qty">${it.q}개</span>
                 </div>`;
               });
