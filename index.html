@@ -14,25 +14,30 @@
     .tab-btn.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: bold; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ddd; font-size: 16px; }
+    .legend { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
     
-    .table-wrapper { background: white; border: 1px solid #000; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #000; padding: 12px; text-align: center; font-size: 16px; font-weight: bold; }
-    th { background: #d3d3d3; color: #000; }
-    tr:nth-child(even) td { background: #f5f5f5; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .can-card { background: white; border-radius: 16px; padding: 20px; border: 2px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .can-header { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 15px; text-align: center; padding-bottom: 15px; border-bottom: 2px solid #eee; }
     
-    .cell-editable { cursor: pointer; user-select: none; transition: all 0.2s; }
-    .cell-editable:hover { background: #e8f4f8 !important; }
+    .col-section { margin-bottom: 15px; padding: 12px; background: #f9f9f9; border-radius: 8px; }
+    .col-title { font-size: 14px; font-weight: bold; color: #666; margin-bottom: 10px; }
     
-    .danger { background: #ffcccc !important; }
-    .warning { background: #ffffcc !important; }
-    .success { background: #ccffcc !important; }
+    .floor-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; margin: 5px 0; background: white; border-radius: 6px; border-left: 4px solid #ddd; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .floor-item:hover { background: #f0f0f0; }
     
-    .card { background: white; padding: 20px; border-radius: 4px; border: 1px solid #ddd; margin-bottom: 20px; }
-    textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; font-size: 16px; }
-    input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; font-size: 16px; }
-    button { padding: 12px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; cursor: pointer; font-size: 16px; }
+    .floor-label { font-weight: bold; color: #666; }
+    .floor-name { flex: 1; margin: 0 10px; }
+    .floor-qty { font-weight: bold; font-size: 14px; }
+    
+    .danger { background: #ffcccc !important; border-left-color: #ff6b6b !important; }
+    .warning { background: #ffffcc !important; border-left-color: #ffd93d !important; }
+    .success { background: #ccffcc !important; border-left-color: #51cf66 !important; }
+    
+    .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+    textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
+    button { padding: 12px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
     button:hover { background: #0052a3; }
     button.in { background: #28a745; }
     button.in:hover { background: #218838; }
@@ -41,12 +46,12 @@
     
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
     .modal.active { display: flex; align-items: center; justify-content: center; }
-    .modal-content { background: white; padding: 30px; border-radius: 4px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
     .modal-title { font-size: 22px; font-weight: bold; margin-bottom: 20px; }
-    .modal input, .modal select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; font-size: 16px; }
+    .modal input, .modal select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
     .modal-label { font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; margin-top: 15px; }
-    .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-    .modal-buttons button { flex: 1; margin: 0; }
+    .modal-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .modal-buttons button { flex: 1; margin: 0; min-width: 100px; }
     .divider { border-top: 2px solid #ddd; margin: 20px 0; }
     .log-entry { background: #f9f9f9; padding: 12px; margin: 10px 0; border-left: 4px solid #0066cc; border-radius: 4px; }
     .log-date { color: #666; font-size: 13px; }
@@ -69,25 +74,7 @@
       <div class="legend">
         <span>🔴 부족 (≤20개) 🟡 적정 (21-50개) 🟢 충분 (51개+)</span>
       </div>
-      <div class="table-wrapper">
-        <table id="dashboard-table">
-          <thead>
-            <tr>
-              <th style="width: 80px;">칸</th>
-              <th>A층</th>
-              <th>A상품명</th>
-              <th>A수량</th>
-              <th>B층</th>
-              <th>B상품명</th>
-              <th>B수량</th>
-              <th>C층</th>
-              <th>C상품명</th>
-              <th>C수량</th>
-            </tr>
-          </thead>
-          <tbody id="table-body"></tbody>
-        </table>
-      </div>
+      <div class="cards-grid" id="cards-grid"></div>
     </div>
 
     <div id="input" class="tab-content">
@@ -135,9 +122,9 @@
       <div class="modal-title" id="modalTitle">상품 수정</div>
       <label class="modal-label">층</label>
       <select id="modalFloor">
-        <option value="1">층 1</option>
-        <option value="2">층 2</option>
-        <option value="3">층 3</option>
+        <option value="1">1층</option>
+        <option value="2">2층</option>
+        <option value="3">3층</option>
       </select>
       <label class="modal-label">상품명</label>
       <input type="text" id="modalName" placeholder="상품명">
@@ -155,9 +142,9 @@
       <h3 style="margin-bottom: 15px;">➕ 새 상품 추가</h3>
       <label class="modal-label">층</label>
       <select id="newFloor">
-        <option value="1">층 1</option>
-        <option value="2">층 2</option>
-        <option value="3">층 3</option>
+        <option value="1">1층</option>
+        <option value="2">2층</option>
+        <option value="3">3층</option>
       </select>
       <label class="modal-label">상품명</label>
       <input type="text" id="newName" placeholder="상품명">
@@ -214,6 +201,18 @@
       return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
 
+    function getAllFloors() {
+      const floors = new Set();
+      ['A', 'B', 'C'].forEach(col => {
+        for (let can = 1; can <= 20; can++) {
+          if (inv[col][can]) {
+            Object.keys(inv[col][can]).forEach(f => floors.add(parseInt(f)));
+          }
+        }
+      });
+      return Array.from(floors).sort((a, b) => a - b);
+    }
+
     function openEditModal(col, can, floor, idx) {
       inMode = false;
       isAddMode = false;
@@ -230,6 +229,19 @@
       document.getElementById('inTitle').style.display = 'none';
       document.getElementById('inQty').style.display = 'none';
       document.getElementById('inButtons').style.display = 'none';
+      
+      // 동적으로 층 옵션 업데이트
+      const floors = getAllFloors();
+      const floorSelect = document.getElementById('modalFloor');
+      floorSelect.innerHTML = '';
+      floors.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f + '층';
+        floorSelect.appendChild(opt);
+      });
+      floorSelect.value = floor;
+      
       document.getElementById('editModal').classList.add('active');
     }
 
@@ -248,6 +260,18 @@
       document.getElementById('inTitle').style.display = 'none';
       document.getElementById('inQty').style.display = 'none';
       document.getElementById('inButtons').style.display = 'none';
+      
+      // 동적으로 층 옵션 업데이트
+      const floors = getAllFloors();
+      const floorSelect = document.getElementById('newFloor');
+      floorSelect.innerHTML = '';
+      for (let i = 1; i <= Math.max(...floors, 3); i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i + '층';
+        floorSelect.appendChild(opt);
+      }
+      
       document.getElementById('editModal').classList.add('active');
     }
 
@@ -391,65 +415,48 @@
     function render() {
       let html = '';
       const maxCan = 20;
+      const allFloors = getAllFloors();
+      const displayFloors = allFloors.length > 0 ? allFloors : [1, 2, 3];
       
       for (let can = 1; can <= maxCan; can++) {
-        const allItems = [];
+        let cardHtml = `<div class="can-card"><div class="can-header">칸${can}</div>`;
         
         ['A', 'B', 'C'].forEach(col => {
-          const colItems = [];
-          const cd = inv[col][can];
+          cardHtml += `<div class="col-section"><div class="col-title">${col}열</div>`;
           
-          if (cd) {
-            for (let f = 1; f <= 3; f++) {
-              if (cd[f]) {
-                cd[f].forEach((it, idx) => {
-                  colItems.push({col, f, idx, n: it.n, q: it.q, d: it.d});
-                });
-              }
+          const cd = inv[col][can];
+          let hasContent = false;
+          
+          displayFloors.forEach(floor => {
+            if (cd && cd[floor] && cd[floor].length > 0) {
+              cd[floor].forEach((it, idx) => {
+                const color = getColor(it.q);
+                const displayName = it.d ? `${it.n} [${it.d}]` : it.n;
+                cardHtml += `<div class="floor-item ${color}" onclick="openEditModal('${col}',${can},${floor},${idx})">
+                  <span class="floor-label">${floor}층</span>
+                  <span class="floor-name">${displayName}</span>
+                  <span class="floor-qty">${it.q}개</span>
+                </div>`;
+                hasContent = true;
+              });
             }
+          });
+          
+          if (!hasContent) {
+            displayFloors.forEach(floor => {
+              cardHtml += `<div class="floor-item" style="color: #999; cursor: default;"><span class="floor-label">${floor}층</span><span class="floor-name">-</span><span class="floor-qty">0개</span></div>`;
+            });
+            cardHtml += `<div class="floor-item" style="justify-content: center; cursor: pointer; color: #0066cc; font-size: 20px; padding: 12px;" onclick="openAddModal('${col}',${can})">+</div>`;
           }
           
-          allItems.push(colItems);
+          cardHtml += `</div>`;
         });
         
-        const maxRows = Math.max(
-          allItems[0].length || 0,
-          allItems[1].length || 0,
-          allItems[2].length || 0
-        );
-        
-        if (maxRows === 0) {
-          html += `<tr><td>${can}</td><td colspan="9">-</td></tr>`;
-        } else {
-          for (let r = 0; r < maxRows; r++) {
-            html += '<tr>';
-            
-            if (r === 0) {
-              html += `<td rowspan="${maxRows}">${can}</td>`;
-            }
-            
-            for (let colIdx = 0; colIdx < 3; colIdx++) {
-              if (r < allItems[colIdx].length) {
-                const item = allItems[colIdx][r];
-                const color = getColor(item.q);
-                const displayName = item.d ? `${item.n} [${item.d}]` : item.n;
-                
-                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})">층${item.f}</td>`;
-                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})">${displayName}</td>`;
-                html += `<td class="cell-editable ${color}" onclick="openEditModal('${item.col}',${can},${item.f},${item.idx})">${item.q}개</td>`;
-              } else {
-                html += `<td></td>`;
-                html += `<td></td>`;
-                html += `<td style="cursor: pointer; font-size: 20px;" onclick="openAddModal('${['A','B','C'][colIdx]}',${can})">+</td>`;
-              }
-            }
-            
-            html += '</tr>';
-          }
-        }
+        cardHtml += `</div>`;
+        html += cardHtml;
       }
       
-      document.getElementById('table-body').innerHTML = html;
+      document.getElementById('cards-grid').innerHTML = html;
     }
 
     function renderStats() {
@@ -508,7 +515,7 @@
             for (let f = 1; f <= 3; f++) {
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach(it => {
-                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}-${c}-${f} | ${it.q}개</div>`;
+                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
                 });
               }
             }
