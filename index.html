@@ -124,10 +124,13 @@
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
           <h2 style="margin:0;">📦 재고 통계</h2>
-          <select id="stats-sort" class="stat-select" onchange="renderStats()">
-            <option value="qty">수량순</option>
-            <option value="name">이름순(가나다)</option>
-          </select>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <select id="stats-sort" class="stat-select" onchange="renderStats()">
+              <option value="qty">수량순</option>
+              <option value="name">이름순(가나다)</option>
+            </select>
+            <button onclick="downloadInventoryExcel()" style="margin:0;">📊 재고현황 엑셀</button>
+          </div>
         </div>
         <div id="stats-content"></div>
       </div>
@@ -135,12 +138,13 @@
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
           <h2 style="margin:0;">📅 월별 입출고 통계</h2>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
             <select id="month-select" class="stat-select" onchange="renderMonthlyStats()"></select>
             <select id="monthly-sort" class="stat-select" onchange="renderMonthlyStats()">
               <option value="qty">수량순</option>
               <option value="name">이름순(가나다)</option>
             </select>
+            <button onclick="downloadMonthlyStatsExcel()" style="margin:0;">📊 월별통계 엑셀</button>
           </div>
         </div>
         <div id="monthly-stats-content"></div>
@@ -149,7 +153,10 @@
 
     <div id="logs" class="panel">
       <div class="card">
-        <h2>입/출고 로그</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h2 style="margin:0;">입/출고 로그</h2>
+          <button onclick="downloadLogsExcel()" style="margin:0;">📊 입출고로그 엑셀</button>
+        </div>
         <div id="logs-content"></div>
       </div>
     </div>
@@ -158,9 +165,6 @@
       <div class="card">
         <h2>데이터 관리</h2>
         <button onclick="downloadCSV()">CSV 내보내기</button>
-        <button onclick="downloadInventoryExcel()">📊 재고현황 엑셀</button>
-        <button onclick="downloadLogsExcel()">📊 입출고로그 엑셀</button>
-        <button onclick="downloadMonthlyStatsExcel()">📊 월별통계 엑셀</button>
         <button onclick="downloadJSON()">JSON 백업</button>
         <button onclick="uploadJSON()">JSON 복원</button>
         <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
