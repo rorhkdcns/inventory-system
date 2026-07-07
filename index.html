@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
+    :root { --surface-1: #f1f3f5; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial; background: #f5f5f5; padding: 20px; }
     .container { max-width: 100%; }
@@ -41,12 +42,24 @@
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     .stat-select { padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; background: white; }
     .loc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .loc-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid #d8e0e8; border-radius: 20px; background: #eef3f8; font-weight: 500; font-size: 15px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
-    .loc-chip:hover, .loc-chip:active { background: #dbe6f2; }
+    .loc-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; background: #f2f2f2; font-weight: 500; font-size: 15px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+    .loc-chip:hover, .loc-chip:active { background: #e5e5e5; }
     .loc-chip .loc-col { color: #185FA5; }
     .loc-chip .loc-can { color: #3B6D11; }
     .loc-chip .loc-floor { color: #854F0B; }
     .loc-chip .loc-dash { color: #999; margin: 0 1px; }
+
+    .stats-summary-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; background: var(--surface-1); border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; font-size: 14px; color: #333; }
+    .stats-summary-count { font-weight: bold; }
+    .stats-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #555; }
+    .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+    .stock-card { display: flex; background: white; border: 0.5px solid #ccc; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+    .stock-card-bar { width: 5px; flex-shrink: 0; }
+    .stock-card-body { flex: 1; min-width: 0; padding: 14px 16px; }
+    .stock-card-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .stock-card-name { font-size: 19px; font-weight: bold; color: #222; word-break: break-all; }
+    .stock-card-qty { font-size: 17px; font-weight: bold; white-space: nowrap; }
     input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
     button { padding: 12px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
     button:hover { background: #0052a3; }
@@ -624,20 +637,40 @@
       return sorted;
     }
 
+    function getStockStatus(qty) {
+      if (qty <= 10) return { color: '#E24B4A' };
+      if (qty <= 50) return { color: '#639922' };
+      return { color: '#378ADD' };
+    }
+
     function renderStats() {
       const { prod, tot } = getProductTotals();
       const sortMode = document.getElementById('stats-sort').value;
       const entries = sortEntries(Object.entries(prod), sortMode, data => data.qty);
-      let html = `<h3 style="font-size: 20px; margin-bottom: 10px;">전체: ${tot}개 | 종류: ${Object.keys(prod).length}</h3>`;
+
+      let html = `<div class="stats-summary-bar">
+        <div class="stats-summary-count">전체 ${tot.toLocaleString()}개 · 종류 ${Object.keys(prod).length.toLocaleString()}</div>
+        <div class="stats-legend">
+          <span><span class="legend-dot" style="background:#E24B4A;"></span>부족 10개↓</span>
+          <span><span class="legend-dot" style="background:#639922;"></span>적정 11~50</span>
+          <span><span class="legend-dot" style="background:#378ADD;"></span>여유 51개↑</span>
+        </div>
+      </div>`;
+
       entries.forEach(([n, data]) => {
+        const { color } = getStockStatus(data.qty);
         const chipsHtml = data.locations.map(loc => `<button class="loc-chip" onclick="openEditModal('${loc.col}',${loc.can},${loc.floor},${loc.idx})">
-          <span class="loc-col">${loc.col}</span><span class="loc-dash">-</span><span class="loc-can">${loc.can}</span><span class="loc-dash">-</span><span class="loc-floor">${loc.floor}</span>
+          <span class="loc-col">${loc.col}</span><span class="loc-dash">·</span><span class="loc-can">${loc.can}</span><span class="loc-dash">·</span><span class="loc-floor">${loc.floor}</span>
         </button>`).join('');
-        html += `<div style="padding:15px;border-bottom:1px solid #ddd;">
-          <div style="display:flex;justify-content:space-between;font-size:16px;">
-            <span>${n}</span><span style="font-weight: bold;">${data.qty}개</span>
+        html += `<div class="stock-card">
+          <div class="stock-card-bar" style="background:${color};"></div>
+          <div class="stock-card-body">
+            <div class="stock-card-header">
+              <span class="stock-card-name">${n}</span>
+              <span class="stock-card-qty" style="color:${color};">${data.qty}개</span>
+            </div>
+            <div class="loc-chips">${chipsHtml}</div>
           </div>
-          <div class="loc-chips">${chipsHtml}</div>
         </div>`;
       });
       document.getElementById('stats-content').innerHTML = html;
