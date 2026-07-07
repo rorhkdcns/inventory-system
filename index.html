@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>재고관리</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial; background: #f5f5f5; padding: 20px; }
@@ -38,6 +39,14 @@
     .fl-empty { color: #888; font-weight: 400; }
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
+    .stat-select { padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; background: white; }
+    .loc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .loc-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid #d8e0e8; border-radius: 20px; background: #eef3f8; font-weight: 500; font-size: 15px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+    .loc-chip:hover, .loc-chip:active { background: #dbe6f2; }
+    .loc-chip .loc-col { color: #185FA5; }
+    .loc-chip .loc-can { color: #3B6D11; }
+    .loc-chip .loc-floor { color: #854F0B; }
+    .loc-chip .loc-dash { color: #999; margin: 0 1px; }
     input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }
     button { padding: 12px 20px; margin: 10px 10px 10px 0; background: #0066cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
     button:hover { background: #0052a3; }
@@ -112,7 +121,30 @@
     </div>
 
     <div id="stats" class="panel">
-      <div id="stats-content"></div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h2 style="margin:0;">📦 재고 통계</h2>
+          <select id="stats-sort" class="stat-select" onchange="renderStats()">
+            <option value="qty">수량순</option>
+            <option value="name">이름순(가나다)</option>
+          </select>
+        </div>
+        <div id="stats-content"></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h2 style="margin:0;">📅 월별 입출고 통계</h2>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <select id="month-select" class="stat-select" onchange="renderMonthlyStats()"></select>
+            <select id="monthly-sort" class="stat-select" onchange="renderMonthlyStats()">
+              <option value="qty">수량순</option>
+              <option value="name">이름순(가나다)</option>
+            </select>
+          </div>
+        </div>
+        <div id="monthly-stats-content"></div>
+      </div>
     </div>
 
     <div id="logs" class="panel">
@@ -126,6 +158,9 @@
       <div class="card">
         <h2>데이터 관리</h2>
         <button onclick="downloadCSV()">CSV 내보내기</button>
+        <button onclick="downloadInventoryExcel()">📊 재고현황 엑셀</button>
+        <button onclick="downloadLogsExcel()">📊 입출고로그 엑셀</button>
+        <button onclick="downloadMonthlyStatsExcel()">📊 월별통계 엑셀</button>
         <button onclick="downloadJSON()">JSON 백업</button>
         <button onclick="uploadJSON()">JSON 복원</button>
         <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
@@ -294,7 +329,7 @@
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(name).classList.add('active');
       btn.classList.add('active');
-      if (name === 'stats') renderStats();
+      if (name === 'stats') { renderStats(); renderMonthlyStats(); }
       if (name === 'logs') renderLogs();
     }
 
@@ -556,24 +591,104 @@
       document.getElementById('cols-container').innerHTML = html;
     }
 
-    function renderStats() {
+    function getProductTotals() {
       const prod = {};
       let tot = 0;
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
             for (let f = 1; f <= 10; f++) {
-              if (inv[col][c][f]) inv[col][c][f].forEach(it => { prod[it.n] = (prod[it.n]||0) + it.q; tot += it.q; });
+              if (inv[col][c][f]) {
+                inv[col][c][f].forEach((it, idx) => {
+                  if (!prod[it.n]) prod[it.n] = { qty: 0, locations: [] };
+                  prod[it.n].qty += it.q;
+                  prod[it.n].locations.push({ col, can: c, floor: f, idx });
+                  tot += it.q;
+                });
+              }
             }
           }
         }
       });
-      let html = `<div class="card"><h3 style="font-size: 20px;">전체: ${tot}개 | 종류: ${Object.keys(prod).length}</h3>`;
-      Object.entries(prod).sort((a,b)=>b[1]-a[1]).forEach(([n,q]) => {
-        html += `<div style="padding:15px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd;font-size:16px;"><span>${n}</span><span style="font-weight: bold;">${q}개</span></div>`;
+      return { prod, tot };
+    }
+
+    function sortEntries(entries, sortMode, valueOf) {
+      const sorted = entries.slice();
+      if (sortMode === 'name') sorted.sort((a, b) => a[0].localeCompare(b[0], 'ko'));
+      else sorted.sort((a, b) => valueOf(b[1]) - valueOf(a[1]));
+      return sorted;
+    }
+
+    function renderStats() {
+      const { prod, tot } = getProductTotals();
+      const sortMode = document.getElementById('stats-sort').value;
+      const entries = sortEntries(Object.entries(prod), sortMode, data => data.qty);
+      let html = `<h3 style="font-size: 20px; margin-bottom: 10px;">전체: ${tot}개 | 종류: ${Object.keys(prod).length}</h3>`;
+      entries.forEach(([n, data]) => {
+        const chipsHtml = data.locations.map(loc => `<button class="loc-chip" onclick="openEditModal('${loc.col}',${loc.can},${loc.floor},${loc.idx})">
+          <span class="loc-col">${loc.col}</span><span class="loc-dash">-</span><span class="loc-can">${loc.can}</span><span class="loc-dash">-</span><span class="loc-floor">${loc.floor}</span>
+        </button>`).join('');
+        html += `<div style="padding:15px;border-bottom:1px solid #ddd;">
+          <div style="display:flex;justify-content:space-between;font-size:16px;">
+            <span>${n}</span><span style="font-weight: bold;">${data.qty}개</span>
+          </div>
+          <div class="loc-chips">${chipsHtml}</div>
+        </div>`;
       });
-      html += '</div>';
       document.getElementById('stats-content').innerHTML = html;
+    }
+
+    function getAvailableMonths() {
+      const months = new Set();
+      logs.forEach(l => { if (l.date) months.add(l.date.slice(0, 7)); });
+      return Array.from(months).sort();
+    }
+
+    function getSelectedMonth() {
+      const sel = document.getElementById('month-select');
+      if (sel && sel.value) return sel.value;
+      const months = getAvailableMonths();
+      return months.length ? months[months.length - 1] : getTodayDate().slice(0, 7);
+    }
+
+    function getMonthlyProductStats(month) {
+      const prod = {};
+      logs.forEach(l => {
+        if (!l.date || l.date.slice(0, 7) !== month) return;
+        if (!prod[l.name]) prod[l.name] = { in: 0, out: 0 };
+        if (l.type === '입고') prod[l.name].in += l.qty;
+        else prod[l.name].out += l.qty;
+      });
+      return prod;
+    }
+
+    function renderMonthlyStats() {
+      const months = getAvailableMonths();
+      const sel = document.getElementById('month-select');
+      const keep = sel.value;
+      sel.innerHTML = months.length
+        ? months.map(m => `<option value="${m}">${m}</option>`).join('')
+        : '<option value="">데이터 없음</option>';
+      sel.value = months.includes(keep) ? keep : (months[months.length - 1] || '');
+
+      const month = sel.value;
+      const sortMode = document.getElementById('monthly-sort').value;
+      const prod = getMonthlyProductStats(month);
+      const entries = sortEntries(Object.entries(prod), sortMode, v => v.in + v.out);
+
+      let html = '';
+      if (!month || entries.length === 0) {
+        html = '<div style="color:#999; text-align:center; padding:20px;">해당 월의 입출고 기록이 없습니다</div>';
+      } else {
+        entries.forEach(([name, v]) => {
+          html += `<div style="padding:15px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd;font-size:16px;">
+            <span>${name}</span>
+            <span><span style="color:#28a745;font-weight:bold;">입고 ${v.in}</span> / <span style="color:#e8590c;font-weight:bold;">출고 ${v.out}</span></span>
+          </div>`;
+        });
+      }
+      document.getElementById('monthly-stats-content').innerHTML = html;
     }
 
     function renderLogs() {
@@ -689,6 +804,40 @@
       a.href = URL.createObjectURL(blob);
       a.download = '재고.csv';
       a.click();
+    }
+
+    function downloadInventoryExcel() {
+      const rows = [['열', '칸', '층', '상품명', '수량', '입고일', '유통기한']];
+      ['A', 'B', 'C'].forEach(col => {
+        for (let c = 1; c <= 20; c++) {
+          if (inv[col][c]) {
+            for (let f = 1; f <= 10; f++) {
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => rows.push([col, c, f, it.n, it.q, it.d || '', it.e || '']));
+            }
+          }
+        }
+      });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '재고현황');
+      XLSX.writeFile(wb, `재고현황_${getTodayDate()}.xlsx`);
+    }
+
+    function downloadLogsExcel() {
+      const rows = [['구분', '열', '칸', '층', '상품명', '수량', '날짜']];
+      logs.forEach(l => rows.push([l.type, l.col, l.can, l.floor, l.name, l.qty, l.date]));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '입출고로그');
+      XLSX.writeFile(wb, `입출고로그_${getTodayDate()}.xlsx`);
+    }
+
+    function downloadMonthlyStatsExcel() {
+      const month = getSelectedMonth();
+      const prod = getMonthlyProductStats(month);
+      const rows = [['월', '상품명', '입고', '출고']];
+      Object.entries(prod).forEach(([name, v]) => rows.push([month, name, v.in, v.out]));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '월별통계');
+      XLSX.writeFile(wb, `월별통계_${month}.xlsx`);
     }
 
     function downloadJSON() {
