@@ -41,6 +41,8 @@
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
     .stat-select { padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; background: white; }
+    .sort-dir-btn { padding: 10px 14px; min-width: 88px; border: 1px solid #ddd; border-radius: 4px; font-size: 15px; background: white; color: #0066cc; font-weight: bold; cursor: pointer; margin: 0; }
+    .sort-dir-btn:hover, .sort-dir-btn:active { background: #f0f6ff; }
     .loc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .loc-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; background: #f2f2f2; font-weight: 500; font-size: 15px; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
     .loc-chip:hover, .loc-chip:active { background: #e5e5e5; }
@@ -142,6 +144,7 @@
               <option value="qty">수량순</option>
               <option value="name">이름순(가나다)</option>
             </select>
+            <button id="stats-sort-dir" class="sort-dir-btn" onclick="toggleStatsSortDir()">↓ 내림</button>
             <button onclick="downloadInventoryExcel()" style="margin:0;">📊 재고현황 엑셀</button>
           </div>
         </div>
@@ -157,6 +160,7 @@
               <option value="qty">수량순</option>
               <option value="name">이름순(가나다)</option>
             </select>
+            <button id="monthly-sort-dir" class="sort-dir-btn" onclick="toggleMonthlySortDir()">↓ 내림</button>
             <button onclick="downloadMonthlyStatsExcel()" style="margin:0;">📊 월별통계 엑셀</button>
           </div>
         </div>
@@ -286,6 +290,18 @@
     let logs = [];
     let editingItem = null;
     let editingCan = null;
+    let statsSortDir = 'desc';
+    let monthlySortDir = 'desc';
+
+    function toggleStatsSortDir() {
+      statsSortDir = statsSortDir === 'desc' ? 'asc' : 'desc';
+      renderStats();
+    }
+
+    function toggleMonthlySortDir() {
+      monthlySortDir = monthlySortDir === 'desc' ? 'asc' : 'desc';
+      renderMonthlyStats();
+    }
 
     function flattenInitialData() {
       const rows = [];
@@ -630,11 +646,16 @@
       return { prod, tot };
     }
 
-    function sortEntries(entries, sortMode, valueOf) {
+    function sortEntries(entries, sortMode, dir, valueOf) {
       const sorted = entries.slice();
-      if (sortMode === 'name') sorted.sort((a, b) => a[0].localeCompare(b[0], 'ko'));
-      else sorted.sort((a, b) => valueOf(b[1]) - valueOf(a[1]));
+      const mult = dir === 'asc' ? 1 : -1;
+      if (sortMode === 'name') sorted.sort((a, b) => mult * a[0].localeCompare(b[0], 'ko'));
+      else sorted.sort((a, b) => mult * (valueOf(a[1]) - valueOf(b[1])));
       return sorted;
+    }
+
+    function updateSortDirLabel(btnId, dir) {
+      document.getElementById(btnId).textContent = dir === 'desc' ? '↓ 내림' : '↑ 오름';
     }
 
     function getStockStatus(qty) {
@@ -646,7 +667,8 @@
     function renderStats() {
       const { prod, tot } = getProductTotals();
       const sortMode = document.getElementById('stats-sort').value;
-      const entries = sortEntries(Object.entries(prod), sortMode, data => data.qty);
+      updateSortDirLabel('stats-sort-dir', statsSortDir);
+      const entries = sortEntries(Object.entries(prod), sortMode, statsSortDir, data => data.qty);
 
       let html = `<div class="stats-summary-bar">
         <div class="stats-summary-count">전체 ${tot.toLocaleString()}개 · 종류 ${Object.keys(prod).length.toLocaleString()}</div>
@@ -711,8 +733,9 @@
 
       const month = sel.value;
       const sortMode = document.getElementById('monthly-sort').value;
+      updateSortDirLabel('monthly-sort-dir', monthlySortDir);
       const prod = getMonthlyProductStats(month);
-      const entries = sortEntries(Object.entries(prod), sortMode, v => v.in + v.out);
+      const entries = sortEntries(Object.entries(prod), sortMode, monthlySortDir, v => v.in + v.out);
 
       let html = '';
       if (!month || entries.length === 0) {
