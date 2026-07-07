@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>재고관리</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial; background: #f5f5f5; padding: 20px; }
@@ -29,10 +28,12 @@
     .floor-line { display: flex; align-items: center; padding: 13px 4px; border-bottom: 1px solid #ddd; cursor: pointer; transition: all 0.15s; border-radius: 4px; }
     .floor-line:last-child { border-bottom: none; }
     .floor-line:hover { background: #f0f0f0; }
-    .fl-floor { min-width: 48px; font-weight: bold; color: #0066cc; font-size: 17px; }
-    .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
+    .fl-floor { min-width: 48px; font-weight: bold; color: #0066cc; font-size: 17px; align-self: flex-start; padding-top: 2px; }
+    .fl-mid { flex: 1; min-width: 0; text-align: center; }
+    .fl-name { font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
     .fl-date { font-weight: 400; color: #888; font-size: 14px; }
-    .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #e03131; font-size: 17px; }
+    .fl-exp { display: block; font-weight: 400; color: #e8590c; font-size: 13px; margin-top: 2px; }
+    .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #e03131; font-size: 17px; align-self: flex-start; padding-top: 2px; }
     .fl-empty { color: #888; font-weight: 400; }
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
@@ -73,6 +74,7 @@
       .fl-floor { min-width: 42px; font-size: 16px; }
       .fl-name { font-size: 16px; }
       .fl-date { font-size: 13px; }
+      .fl-exp { font-size: 12px; }
       .fl-qty { min-width: 50px; font-size: 16px; }
       .modal-content { padding: 20px; width: 94%; max-height: 92vh; }
       .modal-title { font-size: 20px; }
@@ -128,7 +130,6 @@
         <button onclick="uploadJSON()">JSON 복원</button>
         <input id="file-input" type="file" style="display:none;" onchange="loadJSON(event)">
         <button onclick="resetData()" style="background: #999;">초기화</button>
-        <button onclick="seedInitialData()" style="background: #28a745;">🌱 초기 데이터 넣기</button>
       </div>
     </div>
 
@@ -149,6 +150,8 @@
         <input type="number" id="modalQty" placeholder="수량" min="1">
         <label class="modal-label">입고일자</label>
         <input type="date" id="modalDate">
+        <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
+        <input type="date" id="modalExp">
       </div>
 
       <div id="editButtons">
@@ -176,6 +179,8 @@
         <input type="number" id="newQty" placeholder="수량" min="1">
         <label class="modal-label">입고일자 <span style="font-weight:400; color:#888; font-size:13px;">(비우면 오늘 날짜)</span></label>
         <input type="date" id="newDate">
+        <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
+        <input type="date" id="newExp">
         <div class="modal-buttons">
           <button class="in" onclick="addNewItem('in')">입고 등록</button>
           <button style="background: #28a745;" onclick="addNewItem('normal')">등록</button>
@@ -190,6 +195,8 @@
         <input type="number" id="inQty" placeholder="입고 수량" min="1">
         <label class="modal-label">입고일자 <span style="font-weight:400; color:#888; font-size:13px;">(비우면 오늘 날짜)</span></label>
         <input type="date" id="inDate">
+        <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
+        <input type="date" id="inExp">
         <div class="modal-buttons">
           <button class="in" onclick="confirmIn()">입고</button>
           <button style="background: #999;" onclick="cancelIn()">취소</button>
@@ -201,70 +208,16 @@
   <script>
     const COL_MAX = { A: 6, B: 6, C: 20 };
 
-    // Supabase 초기화
-    const SUPABASE_URL = 'https://ibdklbgmkiymqqscpoeu.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImliZGtsYmdta2l5bXFxc2Nwb2V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzMzU3MTEsImV4cCI6MjA5NzkxMTcxMX0.oQxJj_wsUAYaEIs4G0xzPszBiv8mplU-vea_Nnq9r1Q';
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // 초기 데이터 (seedInitialData / resetData 에서만 사용)
-    const initialData = {
+    const data = {
       A: {1:{2:[{n:'매직1제',q:24,d:'2024-01-01'},{n:'산화제',q:36,d:'2024-01-02'}]},2:{1:[{n:'산화제',q:8,d:'2024-01-03'}],2:[{n:'7/33',q:5,d:'2024-01-04'}],3:[{n:'5/30',q:22,d:'2024-01-05'}]},3:{2:[{n:'8/33',q:18,d:'2024-01-06'}],3:[{n:'매직1제',q:24,d:'2024-01-07'}]},4:{3:[{n:'10/45',q:12,d:'2024-01-08'}]},5:{1:[{n:'8/30',q:17,d:'2024-01-09'}],2:[{n:'3/0',q:20,d:'2024-01-10'}],3:[{n:'산화제',q:36,d:'2024-01-11'}]},6:{3:[{n:'산화제',q:54,d:'2024-01-12'}]}},
       B: {1:{2:[{n:'5/45',q:19,d:'2024-01-13'}]},2:{1:[{n:'매직1제',q:6,d:'2024-01-14'}],2:[{n:'8/1',q:3,d:'2024-01-15'}],3:[{n:'9/30',q:16,d:'2024-01-16'}]},3:{1:[{n:'6/30',q:16,d:'2024-01-17'}],2:[{n:'6/33',q:19,d:'2024-01-18'}],3:[{n:'02/02',q:18,d:'2024-01-19'}]},4:{1:[{n:'6/33',q:7,d:'2024-01-20'}],2:[{n:'10/30',q:7,d:'2024-01-21'}]},5:{1:[{n:'1/0',q:22,d:'2024-01-22'}],2:[{n:'3/0',q:14,d:'2024-01-23'}],3:[{n:'산화제',q:36,d:'2024-01-24'}]},6:{3:[{n:'7/30',q:11,d:'2024-01-25'}]}},
       C: {1:{2:[{n:'크림',q:7,d:'2024-01-26'}]},2:{2:[{n:'크림',q:24,d:'2024-01-27'}]},4:{1:[{n:'8/34',q:4,d:'2024-01-28'}],2:[{n:'산화제',q:72,d:'2024-01-29'}]},5:{1:[{n:'산화제',q:36,d:'2024-01-30'}],2:[{n:'산화제',q:36,d:'2024-01-31'}]},6:{1:[{n:'6/30',q:5,d:'2024-02-01'}]}}
     };
 
-    let inv = { A: {}, B: {}, C: {} };
+    let inv = JSON.parse(JSON.stringify(data));
     let logs = [];
     let editingItem = null;
     let editingCan = null;
-
-    function flattenInitialData() {
-      const rows = [];
-      Object.entries(initialData).forEach(([col, cans]) => {
-        Object.entries(cans).forEach(([can, floors]) => {
-          Object.entries(floors).forEach(([floor, items]) => {
-            items.forEach(it => rows.push({ col, can: parseInt(can), floor: parseInt(floor), name: it.n, qty: it.q, in_date: it.d }));
-          });
-        });
-      });
-      return rows;
-    }
-
-    async function loadInventory() {
-      const { data: rows, error } = await sb.from('inventory_items').select('*');
-      if (error) { alert('재고 불러오기 오류: ' + error.message); return; }
-      const next = { A: {}, B: {}, C: {} };
-      rows.forEach(row => {
-        const { id, col, can, floor, name, qty, in_date } = row;
-        if (!next[col]) next[col] = {};
-        if (!next[col][can]) next[col][can] = {};
-        if (!next[col][can][floor]) next[col][can][floor] = [];
-        next[col][can][floor].push({ id, n: name, q: qty, d: in_date });
-      });
-      inv = next;
-    }
-
-    async function loadLogs() {
-      const { data: rows, error } = await sb.from('inventory_logs').select('*').order('id', { ascending: true });
-      if (error) { alert('로그 불러오기 오류: ' + error.message); return; }
-      logs = rows.map(r => ({ id: r.id, type: r.type, col: r.col, can: r.can, floor: r.floor, name: r.name, qty: r.qty, date: r.date }));
-    }
-
-    function subscribeRealtime() {
-      sb.channel('inventory-items-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_items' }, async () => {
-          await loadInventory();
-          render();
-        })
-        .subscribe();
-
-      sb.channel('inventory-logs-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_logs' }, async () => {
-          await loadLogs();
-          renderLogs();
-        })
-        .subscribe();
-    }
 
     function showTab(name, btn) {
       document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
@@ -300,13 +253,14 @@
     }
 
     function openEditModal(col, can, floor, idx) {
-      const item = inv[col][can][floor][idx];
-      editingItem = { col, can, floor, idx, id: item.id };
+      editingItem = { col, can, floor, idx };
       editingCan = { col, can };
+      const item = inv[col][can][floor][idx];
       document.getElementById('modalTitle').textContent = `${col}열 칸${can} 상품 수정`;
       document.getElementById('modalName').value = item.n;
       document.getElementById('modalQty').value = item.q;
       document.getElementById('modalDate').value = item.d || getTodayDate();
+      document.getElementById('modalExp').value = item.e || '';
       setEditMode();
 
       const floors = getAllFloors();
@@ -326,6 +280,7 @@
       document.getElementById('newName').value = '';
       document.getElementById('newQty').value = '';
       document.getElementById('newDate').value = '';
+      document.getElementById('newExp').value = '';
 
       document.getElementById('editModal').classList.add('active');
     }
@@ -348,6 +303,7 @@
       document.getElementById('newName').value = '';
       document.getElementById('newQty').value = '';
       document.getElementById('newDate').value = '';
+      document.getElementById('newExp').value = '';
       document.getElementById('editModal').classList.add('active');
     }
 
@@ -363,52 +319,42 @@
       document.getElementById('inSection').style.display = 'block';
       document.getElementById('inQty').value = '';
       document.getElementById('inDate').value = '';
+      document.getElementById('inExp').value = editingItem ? (inv[editingItem.col][editingItem.can][editingItem.floor][editingItem.idx].e || '') : '';
     }
 
     function cancelIn() {
       setEditMode();
     }
 
-    async function confirmIn() {
+    function confirmIn() {
       if (!editingItem) return;
       const qty = parseInt(document.getElementById('inQty').value);
       if (!qty || qty < 1) return alert('수량을 입력해주세요');
-      const { col, can, floor, idx, id } = editingItem;
+      const { col, can, floor, idx } = editingItem;
       const date = document.getElementById('inDate').value || getTodayDate();
-      const item = inv[col][can][floor][idx];
-      const newQty = item.q + qty;
-
-      const { error: updErr } = await sb.from('inventory_items').update({ qty: newQty, in_date: date }).eq('id', id);
-      if (updErr) return alert('입고 오류: ' + updErr.message);
-
-      const { error: logErr } = await sb.from('inventory_logs').insert({ type: '입고', col, can, floor, name: item.n, qty, date });
-      if (logErr) return alert('로그 저장 오류: ' + logErr.message);
-
-      await loadInventory();
-      await loadLogs();
+      const exp = document.getElementById('inExp').value;
+      inv[col][can][floor][idx].q += qty;
+      inv[col][can][floor][idx].d = date;
+      if (exp) inv[col][can][floor][idx].e = exp;
+      logs.push({ type: '입고', col, can, floor, name: inv[col][can][floor][idx].n, qty, date });
+      localStorage.setItem('inv', JSON.stringify(inv));
+      localStorage.setItem('logs', JSON.stringify(logs));
       render();
       closeModal();
       alert('입고되었습니다!');
     }
 
-    async function outItem() {
+    function outItem() {
       if (!editingItem) return;
       const qty = parseInt(prompt('출고 수량:'));
       if (!qty || qty < 1) return alert('수량을 입력해주세요');
-      const { col, can, floor, idx, id } = editingItem;
+      const { col, can, floor, idx } = editingItem;
       const today = getTodayDate();
-      const item = inv[col][can][floor][idx];
-      if (item.q < qty) return alert('재고가 부족합니다');
-      const newQty = item.q - qty;
-
-      const { error: updErr } = await sb.from('inventory_items').update({ qty: newQty }).eq('id', id);
-      if (updErr) return alert('출고 오류: ' + updErr.message);
-
-      const { error: logErr } = await sb.from('inventory_logs').insert({ type: '출고', col, can, floor, name: item.n, qty, date: today });
-      if (logErr) return alert('로그 저장 오류: ' + logErr.message);
-
-      await loadInventory();
-      await loadLogs();
+      if (inv[col][can][floor][idx].q < qty) return alert('재고가 부족합니다');
+      inv[col][can][floor][idx].q -= qty;
+      logs.push({ type: '출고', col, can, floor, name: inv[col][can][floor][idx].n, qty, date: today });
+      localStorage.setItem('inv', JSON.stringify(inv));
+      localStorage.setItem('logs', JSON.stringify(logs));
       render();
       closeModal();
       alert('출고되었습니다!');
@@ -420,51 +366,57 @@
       editingCan = null;
     }
 
-    async function saveItem() {
+    function saveItem() {
       if (!editingItem) return;
       const floor = parseInt(document.getElementById('modalFloor').value);
       const name = document.getElementById('modalName').value.trim();
       const qty = parseInt(document.getElementById('modalQty').value);
       const date = document.getElementById('modalDate').value || getTodayDate();
+      const exp = document.getElementById('modalExp').value;
       if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
-      const { id } = editingItem;
-
-      const { error } = await sb.from('inventory_items').update({ floor, name, qty, in_date: date }).eq('id', id);
-      if (error) return alert('저장 오류: ' + error.message);
-
-      await loadInventory();
+      const { col, can, idx, floor: oldFloor } = editingItem;
+      const obj = {n: name, q: qty, d: date};
+      if (exp) obj.e = exp;
+      if (floor === oldFloor) {
+        inv[col][can][floor][idx] = obj;
+      } else {
+        inv[col][can][oldFloor].splice(idx, 1);
+        if (inv[col][can][oldFloor].length === 0) delete inv[col][can][oldFloor];
+        if (!inv[col][can][floor]) inv[col][can][floor] = [];
+        inv[col][can][floor].push(obj);
+      }
+      localStorage.setItem('inv', JSON.stringify(inv));
       render();
       closeModal();
     }
 
-    async function addNewItem(type) {
+    function addNewItem(type) {
       if (!editingCan) return;
       const floor = parseInt(document.getElementById('newFloor').value);
       const name = document.getElementById('newName').value.trim();
       const qty = parseInt(document.getElementById('newQty').value);
       const date = document.getElementById('newDate').value || getTodayDate();
+      const exp = document.getElementById('newExp').value;
       if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
       const { col, can } = editingCan;
-
-      const { error } = await sb.from('inventory_items').insert({ col, can, floor, name, qty, in_date: date });
-      if (error) return alert('추가 오류: ' + error.message);
-
-      if (type === 'in') {
-        const { error: logErr } = await sb.from('inventory_logs').insert({ type: '입고', col, can, floor, name, qty, date });
-        if (logErr) return alert('로그 저장 오류: ' + logErr.message);
-        await loadLogs();
-      }
-
-      await loadInventory();
+      if (!inv[col][can]) inv[col][can] = {};
+      if (!inv[col][can][floor]) inv[col][can][floor] = [];
+      const obj = {n: name, q: qty, d: date};
+      if (exp) obj.e = exp;
+      inv[col][can][floor].push(obj);
+      if (type === 'in') logs.push({ type: '입고', col, can, floor, name, qty, date });
+      localStorage.setItem('inv', JSON.stringify(inv));
+      localStorage.setItem('logs', JSON.stringify(logs));
       render();
       closeModal();
     }
 
-    async function deleteItem() {
+    function deleteItem() {
       if (!editingItem || !confirm('삭제하시겠어요?')) return;
-      const { error } = await sb.from('inventory_items').delete().eq('id', editingItem.id);
-      if (error) return alert('삭제 오류: ' + error.message);
-      await loadInventory();
+      const { col, can, floor, idx } = editingItem;
+      inv[col][can][floor].splice(idx, 1);
+      if (inv[col][can][floor].length === 0) delete inv[col][can][floor];
+      localStorage.setItem('inv', JSON.stringify(inv));
       render();
       closeModal();
     }
@@ -484,16 +436,20 @@
             if (cd && cd[floor] && cd[floor].length > 0) {
               cd[floor].forEach((it, idx) => {
                 const dateHtml = it.d ? ` <span class="fl-date">[${it.d}]</span>` : '';
+                const expHtml = it.e ? `<span class="fl-exp">유통기한: ${it.e}</span>` : '';
                 rowsHtml += `<div class="floor-line" onclick="openEditModal('${col}',${can},${floor},${idx})">
                   <span class="fl-floor">${floor}층</span>
-                  <span class="fl-name">${it.n}${dateHtml}</span>
+                  <span class="fl-mid">
+                    <span class="fl-name">${it.n}${dateHtml}</span>
+                    ${expHtml}
+                  </span>
                   <span class="fl-qty">${it.q}개</span>
                 </div>`;
               });
             } else {
               rowsHtml += `<div class="floor-line" onclick="openAddModalFloor('${col}',${can},${floor})">
                 <span class="fl-floor">${floor}층</span>
-                <span class="fl-name fl-empty">+ 추가</span>
+                <span class="fl-mid"><span class="fl-name fl-empty">+ 추가</span></span>
                 <span class="fl-qty fl-empty">-</span>
               </div>`;
             }
@@ -549,20 +505,17 @@
       document.getElementById('logs-content').innerHTML = html;
     }
 
-    async function deleteLog(idx) {
+    function deleteLog(idx) {
       if (!confirm('이 로그를 삭제할까요?')) return;
-      const id = logs[idx].id;
-      const { error } = await sb.from('inventory_logs').delete().eq('id', id);
-      if (error) return alert('삭제 오류: ' + error.message);
-      await loadLogs();
+      logs.splice(idx, 1);
+      localStorage.setItem('logs', JSON.stringify(logs));
       renderLogs();
     }
 
-    async function clearLogs() {
+    function clearLogs() {
       if (!confirm('로그 전체를 삭제할까요?')) return;
-      const { error } = await sb.from('inventory_logs').delete().gte('id', 0);
-      if (error) return alert('삭제 오류: ' + error.message);
-      await loadLogs();
+      logs = [];
+      localStorage.setItem('logs', JSON.stringify(logs));
       renderLogs();
     }
 
@@ -575,7 +528,7 @@
             for (let f = 1; f <= 10; f++) {
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach(it => {
-                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
+                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}${it.d ? ' [' + it.d + ']' : ''}${it.e ? ' · 유통기한 ' + it.e : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
                 });
               }
             }
@@ -585,52 +538,24 @@
       document.getElementById('search-results').innerHTML = html || '<div style="color:#999; font-size: 16px;">없음</div>';
     }
 
-    async function resetData() {
-      if (!confirm('초기화? (모든 데이터가 지워지고 초기 데이터로 교체됩니다)')) return;
-
-      const { error: delItemsErr } = await sb.from('inventory_items').delete().gte('id', 0);
-      if (delItemsErr) return alert('초기화 오류: ' + delItemsErr.message);
-      const { error: delLogsErr } = await sb.from('inventory_logs').delete().gte('id', 0);
-      if (delLogsErr) return alert('초기화 오류: ' + delLogsErr.message);
-
-      const rows = flattenInitialData();
-      if (rows.length) {
-        const { error: insErr } = await sb.from('inventory_items').insert(rows);
-        if (insErr) return alert('초기화 오류: ' + insErr.message);
+    function resetData() {
+      if (confirm('초기화?')) {
+        inv = JSON.parse(JSON.stringify(data));
+        logs = [];
+        localStorage.removeItem('inv');
+        localStorage.removeItem('logs');
+        render();
+        alert('완료!');
       }
-
-      await loadInventory();
-      await loadLogs();
-      render();
-      alert('완료!');
-    }
-
-    async function seedInitialData() {
-      const { count, error: countErr } = await sb.from('inventory_items').select('*', { count: 'exact', head: true });
-      if (countErr) return alert('확인 오류: ' + countErr.message);
-
-      if (count > 0) {
-        if (!confirm(`이미 ${count}개의 데이터가 등록되어 있습니다. 그래도 초기 데이터를 추가하시겠습니까? (중복 등록됩니다)`)) return;
-      } else {
-        if (!confirm('초기 데이터를 Supabase에 등록하시겠습니까?')) return;
-      }
-
-      const rows = flattenInitialData();
-      const { error } = await sb.from('inventory_items').insert(rows);
-      if (error) return alert('등록 오류: ' + error.message);
-
-      alert('초기 데이터가 등록되었습니다!');
-      await loadInventory();
-      render();
     }
 
     function downloadCSV() {
-      let csv = '열,칸,층,상품명,수량,입고날짜\n';
+      let csv = '열,칸,층,상품명,수량,입고날짜,유통기한\n';
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
             for (let f = 1; f <= 10; f++) {
-              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q},${it.d}\n`);
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q},${it.d},${it.e || ''}\n`);
             }
           }
         }
@@ -656,50 +581,25 @@
       const f = e.target.files[0];
       if (!f) return;
       const r = new FileReader();
-      r.onload = async (ev) => {
+      r.onload = (ev) => {
         try {
           const d = JSON.parse(ev.target.result);
-          if (!confirm('현재 Supabase 데이터를 모두 지우고 이 파일로 복원하시겠습니까?')) return;
-
-          const { error: delItemsErr } = await sb.from('inventory_items').delete().gte('id', 0);
-          if (delItemsErr) throw new Error(delItemsErr.message);
-          const { error: delLogsErr } = await sb.from('inventory_logs').delete().gte('id', 0);
-          if (delLogsErr) throw new Error(delLogsErr.message);
-
-          const itemRows = [];
-          Object.entries(d.inv || {}).forEach(([col, cans]) => {
-            Object.entries(cans).forEach(([can, floors]) => {
-              Object.entries(floors).forEach(([floor, items]) => {
-                items.forEach(it => itemRows.push({ col, can: parseInt(can), floor: parseInt(floor), name: it.n, qty: it.q, in_date: it.d }));
-              });
-            });
-          });
-          if (itemRows.length) {
-            const { error } = await sb.from('inventory_items').insert(itemRows);
-            if (error) throw new Error(error.message);
-          }
-
-          const logRows = (d.logs || []).map(l => ({ type: l.type, col: l.col, can: l.can, floor: l.floor, name: l.name, qty: l.qty, date: l.date }));
-          if (logRows.length) {
-            const { error } = await sb.from('inventory_logs').insert(logRows);
-            if (error) throw new Error(error.message);
-          }
-
-          await loadInventory();
-          await loadLogs();
+          inv = d.inv;
+          logs = d.logs || [];
+          localStorage.setItem('inv', JSON.stringify(inv));
+          localStorage.setItem('logs', JSON.stringify(logs));
           render();
           alert('복원!');
-        } catch(err) { alert('오류: ' + err.message); }
+        } catch(err) { alert('오류!'); }
       };
       r.readAsText(f);
     }
 
-    (async function init() {
-      await loadInventory();
-      await loadLogs();
-      render();
-      subscribeRealtime();
-    })();
+    const saved = localStorage.getItem('inv');
+    if (saved) inv = JSON.parse(saved);
+    const savedLogs = localStorage.getItem('logs');
+    if (savedLogs) logs = JSON.parse(savedLogs);
+    render();
   </script>
 </body>
 </html>
