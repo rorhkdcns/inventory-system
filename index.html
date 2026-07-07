@@ -30,8 +30,10 @@
     .floor-line:last-child { border-bottom: none; }
     .floor-line:hover { background: #f0f0f0; }
     .fl-floor { min-width: 48px; font-weight: bold; color: #0066cc; font-size: 17px; }
-    .fl-name { flex: 1; text-align: center; font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
+    .fl-name-col { flex: 1; text-align: center; }
+    .fl-name { font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
     .fl-date { font-weight: 400; color: #888; font-size: 14px; }
+    .fl-exp { font-weight: 400; color: #fd7e14; font-size: 12px; margin-top: 2px; }
     .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #e03131; font-size: 17px; }
     .fl-empty { color: #888; font-weight: 400; }
 
@@ -149,6 +151,8 @@
         <input type="number" id="modalQty" placeholder="수량" min="1">
         <label class="modal-label">입고일자</label>
         <input type="date" id="modalDate">
+        <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
+        <input type="date" id="modalExpDate">
       </div>
 
       <div id="editButtons">
@@ -176,6 +180,8 @@
         <input type="number" id="newQty" placeholder="수량" min="1">
         <label class="modal-label">입고일자 <span style="font-weight:400; color:#888; font-size:13px;">(비우면 오늘 날짜)</span></label>
         <input type="date" id="newDate">
+        <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
+        <input type="date" id="newExpDate">
         <div class="modal-buttons">
           <button class="in" onclick="addNewItem('in')">입고 등록</button>
           <button style="background: #28a745;" onclick="addNewItem('normal')">등록</button>
@@ -190,6 +196,8 @@
         <input type="number" id="inQty" placeholder="입고 수량" min="1">
         <label class="modal-label">입고일자 <span style="font-weight:400; color:#888; font-size:13px;">(비우면 오늘 날짜)</span></label>
         <input type="date" id="inDate">
+        <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택, 비우면 기존 값 유지)</span></label>
+        <input type="date" id="inExpDate">
         <div class="modal-buttons">
           <button class="in" onclick="confirmIn()">입고</button>
           <button style="background: #999;" onclick="cancelIn()">취소</button>
@@ -235,11 +243,11 @@
       if (error) { alert('재고 불러오기 오류: ' + error.message); return; }
       const next = { A: {}, B: {}, C: {} };
       rows.forEach(row => {
-        const { id, col, can, floor, name, qty, in_date } = row;
+        const { id, col, can, floor, name, qty, in_date, exp_date } = row;
         if (!next[col]) next[col] = {};
         if (!next[col][can]) next[col][can] = {};
         if (!next[col][can][floor]) next[col][can][floor] = [];
-        next[col][can][floor].push({ id, n: name, q: qty, d: in_date });
+        next[col][can][floor].push({ id, n: name, q: qty, d: in_date, e: exp_date });
       });
       inv = next;
     }
@@ -307,6 +315,7 @@
       document.getElementById('modalName').value = item.n;
       document.getElementById('modalQty').value = item.q;
       document.getElementById('modalDate').value = item.d || getTodayDate();
+      document.getElementById('modalExpDate').value = item.e || '';
       setEditMode();
 
       const floors = getAllFloors();
@@ -326,6 +335,7 @@
       document.getElementById('newName').value = '';
       document.getElementById('newQty').value = '';
       document.getElementById('newDate').value = '';
+      document.getElementById('newExpDate').value = '';
 
       document.getElementById('editModal').classList.add('active');
     }
@@ -348,6 +358,7 @@
       document.getElementById('newName').value = '';
       document.getElementById('newQty').value = '';
       document.getElementById('newDate').value = '';
+      document.getElementById('newExpDate').value = '';
       document.getElementById('editModal').classList.add('active');
     }
 
@@ -363,6 +374,7 @@
       document.getElementById('inSection').style.display = 'block';
       document.getElementById('inQty').value = '';
       document.getElementById('inDate').value = '';
+      document.getElementById('inExpDate').value = '';
     }
 
     function cancelIn() {
@@ -375,10 +387,13 @@
       if (!qty || qty < 1) return alert('수량을 입력해주세요');
       const { col, can, floor, idx, id } = editingItem;
       const date = document.getElementById('inDate').value || getTodayDate();
+      const expDate = document.getElementById('inExpDate').value;
       const item = inv[col][can][floor][idx];
       const newQty = item.q + qty;
 
-      const { error: updErr } = await sb.from('inventory_items').update({ qty: newQty, in_date: date }).eq('id', id);
+      const updatePayload = { qty: newQty, in_date: date };
+      if (expDate) updatePayload.exp_date = expDate;
+      const { error: updErr } = await sb.from('inventory_items').update(updatePayload).eq('id', id);
       if (updErr) return alert('입고 오류: ' + updErr.message);
 
       const { error: logErr } = await sb.from('inventory_logs').insert({ type: '입고', col, can, floor, name: item.n, qty, date });
@@ -426,10 +441,11 @@
       const name = document.getElementById('modalName').value.trim();
       const qty = parseInt(document.getElementById('modalQty').value);
       const date = document.getElementById('modalDate').value || getTodayDate();
+      const expDate = document.getElementById('modalExpDate').value || null;
       if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
       const { id } = editingItem;
 
-      const { error } = await sb.from('inventory_items').update({ floor, name, qty, in_date: date }).eq('id', id);
+      const { error } = await sb.from('inventory_items').update({ floor, name, qty, in_date: date, exp_date: expDate }).eq('id', id);
       if (error) return alert('저장 오류: ' + error.message);
 
       await loadInventory();
@@ -443,10 +459,11 @@
       const name = document.getElementById('newName').value.trim();
       const qty = parseInt(document.getElementById('newQty').value);
       const date = document.getElementById('newDate').value || getTodayDate();
+      const expDate = document.getElementById('newExpDate').value || null;
       if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
       const { col, can } = editingCan;
 
-      const { error } = await sb.from('inventory_items').insert({ col, can, floor, name, qty, in_date: date });
+      const { error } = await sb.from('inventory_items').insert({ col, can, floor, name, qty, in_date: date, exp_date: expDate });
       if (error) return alert('추가 오류: ' + error.message);
 
       if (type === 'in') {
@@ -484,16 +501,20 @@
             if (cd && cd[floor] && cd[floor].length > 0) {
               cd[floor].forEach((it, idx) => {
                 const dateHtml = it.d ? ` <span class="fl-date">[${it.d}]</span>` : '';
+                const expHtml = it.e ? `<div class="fl-exp">유통기한: ${it.e}</div>` : '';
                 rowsHtml += `<div class="floor-line" onclick="openEditModal('${col}',${can},${floor},${idx})">
                   <span class="fl-floor">${floor}층</span>
-                  <span class="fl-name">${it.n}${dateHtml}</span>
+                  <div class="fl-name-col">
+                    <span class="fl-name">${it.n}${dateHtml}</span>
+                    ${expHtml}
+                  </div>
                   <span class="fl-qty">${it.q}개</span>
                 </div>`;
               });
             } else {
               rowsHtml += `<div class="floor-line" onclick="openAddModalFloor('${col}',${can},${floor})">
                 <span class="fl-floor">${floor}층</span>
-                <span class="fl-name fl-empty">+ 추가</span>
+                <div class="fl-name-col"><span class="fl-name fl-empty">+ 추가</span></div>
                 <span class="fl-qty fl-empty">-</span>
               </div>`;
             }
@@ -625,12 +646,12 @@
     }
 
     function downloadCSV() {
-      let csv = '열,칸,층,상품명,수량,입고날짜\n';
+      let csv = '열,칸,층,상품명,수량,입고날짜,유통기한\n';
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
             for (let f = 1; f <= 10; f++) {
-              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q},${it.d}\n`);
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q},${it.d},${it.e || ''}\n`);
             }
           }
         }
@@ -670,7 +691,7 @@
           Object.entries(d.inv || {}).forEach(([col, cans]) => {
             Object.entries(cans).forEach(([can, floors]) => {
               Object.entries(floors).forEach(([floor, items]) => {
-                items.forEach(it => itemRows.push({ col, can: parseInt(can), floor: parseInt(floor), name: it.n, qty: it.q, in_date: it.d }));
+                items.forEach(it => itemRows.push({ col, can: parseInt(can), floor: parseInt(floor), name: it.n, qty: it.q, in_date: it.d, exp_date: it.e || null }));
               });
             });
           });
