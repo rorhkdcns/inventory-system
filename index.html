@@ -582,6 +582,11 @@
       closeModal();
     }
 
+    const FLOOR_COLORS = ['#7F77DD', '#1D9E75', '#D4537E'];
+    function getFloorColor(floor) {
+      return FLOOR_COLORS[(floor - 1) % FLOOR_COLORS.length];
+    }
+
     function render() {
       let html = '';
       const allFloors = getAllFloors();
@@ -599,7 +604,7 @@
                 const dateHtml = it.d ? ` <span class="fl-date">[${it.d}]</span>` : '';
                 const expHtml = it.e ? `<div class="fl-exp">유통기한: ${it.e}</div>` : '';
                 rowsHtml += `<div class="floor-line" onclick="openEditModal('${col}',${can},${floor},${idx})">
-                  <span class="fl-floor">${floor}층</span>
+                  <span class="fl-floor" style="color:${getFloorColor(floor)};">${floor}층</span>
                   <div class="fl-name-col">
                     <span class="fl-name">${it.n}${dateHtml}</span>
                     ${expHtml}
@@ -609,7 +614,7 @@
               });
             } else {
               rowsHtml += `<div class="floor-line" onclick="openAddModalFloor('${col}',${can},${floor})">
-                <span class="fl-floor">${floor}층</span>
+                <span class="fl-floor" style="color:${getFloorColor(floor)};">${floor}층</span>
                 <div class="fl-name-col"><span class="fl-name fl-empty">+ 추가</span></div>
                 <span class="fl-qty fl-empty">-</span>
               </div>`;
