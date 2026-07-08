@@ -92,6 +92,13 @@
     .log-range { display: flex; align-items: center; gap: 6px; }
     .log-date-input { width: auto; margin: 0; padding: 9px 10px; font-size: 14px; }
     .log-range-sep { color: #999; }
+    .log-loc-col { color: #185FA5; font-weight: 500; }
+    .log-loc-can { color: #3B6D11; font-weight: 500; }
+    .log-loc-floor { color: #854F0B; font-weight: 500; }
+    .log-item-name { font-weight: 500; color: #222; }
+
+    .search-result-item { background: white; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; line-height: 1.5; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
+    .search-result-item:hover, .search-result-item:active { background: #f0f6ff; }
 
     /* ===== 모바일 최적화 ===== */
     @media (max-width: 768px) {
@@ -819,6 +826,7 @@
     function renderLogs() {
       updateLogSortDirLabel();
       const filtered = getFilteredSortedLogs();
+      const { prod } = getProductTotals();
       let html = '';
       if (logs.length === 0) {
         html = '<div style="color: #999; text-align: center; padding: 20px;">로그가 없습니다</div>';
@@ -830,10 +838,12 @@
           filtered.forEach(log => {
             const icon = log.type === '입고' ? '📥' : '📤';
             const color = log.type === '입고' ? '#28a745' : '#ffc107';
+            const currentQty = prod[log.name] ? prod[log.name].qty : 0;
+            const qtyColor = getStockStatus(currentQty).color;
             html += `<div class="log-entry" style="border-left-color: ${color};">
               <div>
-                <div>${icon} ${log.type}: ${log.col}열 ${log.can}칸 ${log.floor}층 - ${log.name}</div>
-                <div style="font-weight: bold;">수량: ${log.qty}개</div>
+                <div>${icon} ${log.type}: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span></div>
+                <div>수량: <span style="color:${qtyColor}; font-weight:bold;">${log.qty}개</span></div>
                 <div class="log-date">${log.date}</div>
               </div>
               <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
@@ -868,8 +878,10 @@
           if (inv[col][c]) {
             for (let f = 1; f <= 10; f++) {
               if (inv[col][c][f]) {
-                inv[col][c][f].forEach(it => {
-                  if (it.n.toLowerCase().includes(q)) html += `<div class="card" style="font-size: 16px; cursor: pointer;">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
+                inv[col][c][f].forEach((it, idx) => {
+                  if (it.n.toLowerCase().includes(q)) {
+                    html += `<div class="search-result-item" onclick="openEditModal('${col}',${c},${f},${idx})">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
+                  }
                 });
               }
             }
