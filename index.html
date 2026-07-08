@@ -95,7 +95,8 @@
     .log-loc-col { color: #185FA5; font-weight: 500; }
     .log-loc-can { color: #3B6D11; font-weight: 500; }
     .log-loc-floor { color: #854F0B; font-weight: 500; }
-    .log-item-name { font-weight: 500; color: #222; }
+    .log-item-name { font-weight: bold; color: #000; }
+    .log-qty { color: #C2410C; font-weight: bold; }
 
     .search-result-item { background: white; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; line-height: 1.5; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
     .search-result-item:hover, .search-result-item:active { background: #f0f6ff; }
@@ -826,7 +827,6 @@
     function renderLogs() {
       updateLogSortDirLabel();
       const filtered = getFilteredSortedLogs();
-      const { prod } = getProductTotals();
       let html = '';
       if (logs.length === 0) {
         html = '<div style="color: #999; text-align: center; padding: 20px;">로그가 없습니다</div>';
@@ -838,12 +838,10 @@
           filtered.forEach(log => {
             const icon = log.type === '입고' ? '📥' : '📤';
             const color = log.type === '입고' ? '#28a745' : '#ffc107';
-            const currentQty = prod[log.name] ? prod[log.name].qty : 0;
-            const qtyColor = getStockStatus(currentQty).color;
             html += `<div class="log-entry" style="border-left-color: ${color};">
               <div>
                 <div>${icon} ${log.type}: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span></div>
-                <div>수량: <span style="color:${qtyColor}; font-weight:bold;">${log.qty}개</span></div>
+                <div>수량: <span class="log-qty">${log.qty}개</span></div>
                 <div class="log-date">${log.date}</div>
               </div>
               <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
