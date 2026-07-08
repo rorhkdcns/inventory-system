@@ -870,6 +870,7 @@
 
     function doSearch() {
       const q = document.getElementById('search-input').value.toLowerCase();
+      const { prod } = getProductTotals();
       let html = '';
       ['A','B','C'].forEach(col => {
         for (let c = 1; c <= 20; c++) {
@@ -878,7 +879,12 @@
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach((it, idx) => {
                   if (it.n.toLowerCase().includes(q)) {
-                    html += `<div class="search-result-item" onclick="openEditModal('${col}',${c},${f},${idx})">${it.n}${it.d ? ' [' + it.d + ']' : ''}<br>${col}열 칸${c} ${f}층 | ${it.q}개</div>`;
+                    const totalQty = prod[it.n] ? prod[it.n].qty : it.q;
+                    const qtyColor = getStockStatus(totalQty).color;
+                    html += `<div class="search-result-item" onclick="openEditModal('${col}',${c},${f},${idx})">
+                      <span class="log-item-name">${it.n}</span>${it.d ? ` <span class="fl-date">[${it.d}]</span>` : ''}<br>
+                      <span class="log-loc-col">${col}</span>열 <span class="log-loc-can">${c}</span>칸 <span class="log-loc-floor">${f}</span>층 | <span style="color:${qtyColor}; font-weight:bold;">${it.q}개</span>
+                    </div>`;
                   }
                 });
               }
