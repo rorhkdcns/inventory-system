@@ -84,6 +84,15 @@
     .log-del { background: #dc3545; padding: 8px 14px; margin: 0; flex: none; }
     .log-del:hover { background: #c82333; }
 
+    .log-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .log-type-toggle { display: flex; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+    .log-type-btn { margin: 0; padding: 10px 16px; background: white; color: #333; border: none; border-radius: 0; font-size: 14px; cursor: pointer; }
+    .log-type-btn + .log-type-btn { border-left: 1px solid #ddd; }
+    .log-type-btn.active { background: #0066cc; color: white; font-weight: bold; }
+    .log-range { display: flex; align-items: center; gap: 6px; }
+    .log-date-input { width: auto; margin: 0; padding: 9px 10px; font-size: 14px; }
+    .log-range-sep { color: #999; }
+
     /* ===== 모바일 최적화 ===== */
     @media (max-width: 768px) {
       body { padding: 12px; }
@@ -106,6 +115,10 @@
       .modal-buttons button { padding: 14px 10px; font-size: 15px; }
       .log-entry { flex-direction: column; align-items: stretch; }
       .log-del { width: 100%; padding: 12px; }
+      .log-filter-bar { gap: 8px; }
+      .log-type-btn { padding: 10px 12px; font-size: 13px; }
+      .log-range { width: 100%; }
+      .log-date-input { flex: 1; min-width: 0; }
     }
     @media (max-width: 400px) {
       .can-island { gap: 8px; }
@@ -174,6 +187,21 @@
           <h2 style="margin:0;">입/출고 로그</h2>
           <button onclick="downloadLogsExcel()" style="margin:0;">📊 입출고로그 엑셀</button>
         </div>
+
+        <div class="log-filter-bar">
+          <div class="log-type-toggle">
+            <button class="log-type-btn active" onclick="setLogTypeFilter('all', this)">전체</button>
+            <button class="log-type-btn" onclick="setLogTypeFilter('입고', this)">입고</button>
+            <button class="log-type-btn" onclick="setLogTypeFilter('출고', this)">출고</button>
+          </div>
+          <button id="log-sort-dir" class="sort-dir-btn" onclick="toggleLogSortDir()">↓ 최신순</button>
+          <div class="log-range">
+            <input type="date" id="log-date-from" class="log-date-input" onchange="renderLogs()">
+            <span class="log-range-sep">~</span>
+            <input type="date" id="log-date-to" class="log-date-input" onchange="renderLogs()">
+          </div>
+        </div>
+
         <div id="logs-content"></div>
       </div>
     </div>
@@ -292,6 +320,8 @@
     let editingCan = null;
     let statsSortDir = 'desc';
     let monthlySortDir = 'desc';
+    let logTypeFilter = 'all';
+    let logSortDir = 'desc';
 
     function toggleStatsSortDir() {
       statsSortDir = statsSortDir === 'desc' ? 'asc' : 'desc';
@@ -756,31 +786,66 @@
       document.getElementById('monthly-stats-content').innerHTML = html;
     }
 
+    function setLogTypeFilter(type, btn) {
+      logTypeFilter = type;
+      document.querySelectorAll('.log-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderLogs();
+    }
+
+    function toggleLogSortDir() {
+      logSortDir = logSortDir === 'desc' ? 'asc' : 'desc';
+      renderLogs();
+    }
+
+    function updateLogSortDirLabel() {
+      document.getElementById('log-sort-dir').textContent = logSortDir === 'desc' ? '↓ 최신순' : '↑ 오래된순';
+    }
+
+    function getFilteredSortedLogs() {
+      const from = document.getElementById('log-date-from').value;
+      const to = document.getElementById('log-date-to').value;
+      const filtered = logs.filter(l => {
+        if (logTypeFilter !== 'all' && l.type !== logTypeFilter) return false;
+        if (from && (!l.date || l.date < from)) return false;
+        if (to && (!l.date || l.date > to)) return false;
+        return true;
+      });
+      const mult = logSortDir === 'asc' ? 1 : -1;
+      filtered.sort((a, b) => mult * ((a.date || '').localeCompare(b.date || '')) || mult * (a.id - b.id));
+      return filtered;
+    }
+
     function renderLogs() {
+      updateLogSortDirLabel();
+      const filtered = getFilteredSortedLogs();
       let html = '';
       if (logs.length === 0) {
         html = '<div style="color: #999; text-align: center; padding: 20px;">로그가 없습니다</div>';
       } else {
         html += `<button onclick="clearLogs()" style="background:#dc3545; margin-bottom:15px;">전체 삭제</button>`;
-        logs.map((log, i) => ({ log, i })).reverse().forEach(({ log, i }) => {
-          const icon = log.type === '입고' ? '📥' : '📤';
-          const color = log.type === '입고' ? '#28a745' : '#ffc107';
-          html += `<div class="log-entry" style="border-left-color: ${color};">
-            <div>
-              <div>${icon} ${log.type}: ${log.col}열 칸${log.can} - ${log.name}</div>
-              <div style="font-weight: bold;">수량: ${log.qty}개</div>
-              <div class="log-date">${log.date}</div>
-            </div>
-            <button class="log-del" onclick="deleteLog(${i})">삭제</button>
-          </div>`;
-        });
+        if (filtered.length === 0) {
+          html += '<div style="color: #999; text-align: center; padding: 20px;">조건에 맞는 로그가 없습니다</div>';
+        } else {
+          filtered.forEach(log => {
+            const icon = log.type === '입고' ? '📥' : '📤';
+            const color = log.type === '입고' ? '#28a745' : '#ffc107';
+            html += `<div class="log-entry" style="border-left-color: ${color};">
+              <div>
+                <div>${icon} ${log.type}: ${log.col}열 ${log.can}칸 ${log.floor}층 - ${log.name}</div>
+                <div style="font-weight: bold;">수량: ${log.qty}개</div>
+                <div class="log-date">${log.date}</div>
+              </div>
+              <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
+            </div>`;
+          });
+        }
       }
       document.getElementById('logs-content').innerHTML = html;
     }
 
-    async function deleteLog(idx) {
+    async function deleteLog(id) {
       if (!confirm('이 로그를 삭제할까요?')) return;
-      const id = logs[idx].id;
       const { error } = await sb.from('inventory_logs').delete().eq('id', id);
       if (error) return alert('삭제 오류: ' + error.message);
       await loadLogs();
