@@ -79,9 +79,10 @@
     .modal-buttons { display: flex; gap: 10px; margin-top: 12px; }
     .modal-buttons button { flex: 1; margin: 0; }
     .divider { border-top: 2px solid #ddd; margin: 20px 0; }
-    .log-entry { background: #f9f9f9; padding: 12px; margin: 10px 0; border-left: 4px solid #0066cc; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .log-entry { background: #f9f9f9; padding: 12px; margin: 10px 0; border-left: 4px solid #0066cc; border-radius: 4px; }
+    .log-first-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
     .log-date { color: #666; font-size: 13px; }
-    .log-del { background: #dc3545; padding: 8px 14px; margin: 0; flex: none; }
+    .log-del { background: #dc3545; padding: 6px 12px; margin: 0; flex: none; font-size: 13px; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
     .log-del:hover { background: #c82333; }
 
     .log-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
@@ -121,8 +122,7 @@
       .modal-title { font-size: 20px; }
       button { padding: 14px 18px; }
       .modal-buttons button { padding: 14px 10px; font-size: 15px; }
-      .log-entry { flex-direction: column; align-items: stretch; }
-      .log-del { width: 100%; padding: 12px; }
+      .log-del { padding: 8px 14px; font-size: 14px; }
       .log-filter-bar { gap: 8px; }
       .log-type-btn { padding: 10px 12px; font-size: 13px; }
       .log-range { width: 100%; }
@@ -839,12 +839,12 @@
             const icon = log.type === '입고' ? '📥' : '📤';
             const color = log.type === '입고' ? '#28a745' : '#ffc107';
             html += `<div class="log-entry" style="border-left-color: ${color};">
-              <div>
-                <div>${icon} ${log.type}: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span></div>
-                <div>수량: <span class="log-qty">${log.qty}개</span></div>
-                <div class="log-date">${log.date}</div>
+              <div class="log-first-line">
+                <span>${icon} ${log.type}: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span></span>
+                <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
               </div>
-              <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
+              <div>수량: <span class="log-qty">${log.qty}개</span></div>
+              <div class="log-date">${log.date}</div>
             </div>`;
           });
         }
