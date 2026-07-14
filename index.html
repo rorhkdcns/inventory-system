@@ -278,8 +278,7 @@
         <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
         <input type="date" id="newExpDate">
         <div class="modal-buttons">
-          <button class="in" onclick="addNewItem('in')">입고 등록</button>
-          <button style="background: #28a745;" onclick="addNewItem('normal')">등록</button>
+          <button style="background: #28a745;" onclick="addNewItem()">등록</button>
         </div>
         <div class="modal-buttons">
           <button style="background: #999;" onclick="closeModal()">취소</button>
@@ -307,8 +306,6 @@
         <select id="moveCan"></select>
         <label class="modal-label">이동할 층</label>
         <select id="moveFloor"></select>
-        <label class="modal-label">새 층 직접 입력 <span style="font-weight:400; color:#888; font-size:13px;">(입력하면 위 선택 대신 사용)</span></label>
-        <input type="number" id="moveFloorCustom" placeholder="예: 4" min="1">
         <div class="modal-buttons">
           <button style="background: #6f42c1;" onclick="confirmMove()">이동 확정</button>
           <button style="background: #999;" onclick="cancelMove()">취소</button>
@@ -575,7 +572,6 @@
         const o = document.createElement('option'); o.value = i; o.textContent = i + '층'; mf.appendChild(o);
       }
       mf.value = floor;
-      document.getElementById('moveFloorCustom').value = '';
     }
 
     function updateMoveCanOptions() {
@@ -601,8 +597,7 @@
 
       const toCol = document.getElementById('moveCol').value;
       const toCan = parseInt(document.getElementById('moveCan').value);
-      const customFloor = document.getElementById('moveFloorCustom').value;
-      const toFloor = customFloor ? parseInt(customFloor) : parseInt(document.getElementById('moveFloor').value);
+      const toFloor = parseInt(document.getElementById('moveFloor').value);
 
       if (!toCan || !toFloor || toFloor < 1) return alert('올바른 위치를 선택해주세요');
       if (toCol === fromCol && toCan === fromCan && toFloor === fromFloor) return alert('같은 위치로는 이동할 수 없습니다');
@@ -693,7 +688,7 @@
       closeModal();
     }
 
-    async function addNewItem(type) {
+    async function addNewItem() {
       if (!editingCan) return;
       const floor = parseInt(document.getElementById('newFloor').value);
       const name = document.getElementById('newName').value.trim();
@@ -707,14 +702,6 @@
       const { error } = await sb.from('inventory_items').insert(insertPayload);
       logSb('insert', 'inventory_items', error, insertPayload);
       if (error) { console.error('[Supabase] 상품 추가 실패:', error); return alert('추가 오류: ' + error.message); }
-
-      if (type === 'in') {
-        const logPayload = { type: '입고', col, can, floor, name, qty, date };
-        const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
-        logSb('insert', 'inventory_logs', logErr, logPayload);
-        if (logErr) { console.error('[Supabase] 입고 로그 저장 실패:', logErr); return alert('로그 저장 오류: ' + logErr.message); }
-        await loadLogs();
-      }
 
       await loadInventory();
       render();
@@ -769,7 +756,7 @@
               </div>`;
             }
           });
-          colHtml += `<div class="can-island"><div class="can-num">${can}칸</div><div class="can-box">${rowsHtml}</div></div>`;
+          colHtml += `<div class="can-island"><div class="can-num">${col}${can}칸</div><div class="can-box">${rowsHtml}</div></div>`;
         }
         colHtml += `</div></div>`;
         html += colHtml;
