@@ -475,7 +475,7 @@
       document.getElementById('newDate').value = '';
       document.getElementById('newExpDate').value = '';
 
-      document.getElementById('editModal').classList.add('active');
+      openModalUI();
     }
 
     function openAddModal(col, can) {
@@ -498,7 +498,7 @@
       document.getElementById('newQty').value = '';
       document.getElementById('newDate').value = '';
       document.getElementById('newExpDate').value = '';
-      document.getElementById('editModal').classList.add('active');
+      openModalUI();
     }
 
     function openAddModalFloor(col, can, floor) {
@@ -662,11 +662,33 @@
       alert('출고되었습니다!');
     }
 
+    let modalHistoryPushed = false;
+
+    function openModalUI() {
+      document.getElementById('editModal').classList.add('active');
+      history.pushState({ appModal: true }, '');
+      modalHistoryPushed = true;
+    }
+
     function closeModal() {
+      const wasActive = document.getElementById('editModal').classList.contains('active');
       document.getElementById('editModal').classList.remove('active');
       editingItem = null;
       editingCan = null;
+      if (wasActive && modalHistoryPushed) {
+        modalHistoryPushed = false;
+        history.back();
+      }
     }
+
+    window.addEventListener('popstate', () => {
+      if (document.getElementById('editModal').classList.contains('active')) {
+        modalHistoryPushed = false;
+        document.getElementById('editModal').classList.remove('active');
+        editingItem = null;
+        editingCan = null;
+      }
+    });
 
     async function saveItem() {
       if (!editingItem) return;
