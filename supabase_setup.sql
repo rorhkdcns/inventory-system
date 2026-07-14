@@ -37,3 +37,8 @@ create policy "anon full access" on inventory_items
 
 create policy "anon full access" on inventory_logs
   for all to anon using (true) with check (true);
+
+-- 4) 상품 이동 기능용 컬럼 추가 (이동 전 위치 기록)
+alter table inventory_logs add column if not exists from_col text;
+alter table inventory_logs add column if not exists from_can int;
+alter table inventory_logs add column if not exists from_floor int;

@@ -253,6 +253,9 @@
           <button class="out" onclick="outItem()">출고</button>
         </div>
         <div class="modal-buttons">
+          <button style="background: #6f42c1;" onclick="showMoveModal()">🔀 이동</button>
+        </div>
+        <div class="modal-buttons">
           <button onclick="saveItem()">저장</button>
           <button style="background: #dc3545;" onclick="deleteItem()">삭제</button>
         </div>
@@ -293,6 +296,22 @@
         <div class="modal-buttons">
           <button class="in" onclick="confirmIn()">입고</button>
           <button style="background: #999;" onclick="cancelIn()">취소</button>
+        </div>
+      </div>
+
+      <div id="moveSection" style="display:none;">
+        <h3 style="margin-bottom: 15px;">🔀 상품 이동</h3>
+        <label class="modal-label">이동할 열</label>
+        <select id="moveCol" onchange="updateMoveCanOptions()"></select>
+        <label class="modal-label">이동할 칸</label>
+        <select id="moveCan"></select>
+        <label class="modal-label">이동할 층</label>
+        <select id="moveFloor"></select>
+        <label class="modal-label">새 층 직접 입력 <span style="font-weight:400; color:#888; font-size:13px;">(입력하면 위 선택 대신 사용)</span></label>
+        <input type="number" id="moveFloorCustom" placeholder="예: 4" min="1">
+        <div class="modal-buttons">
+          <button style="background: #6f42c1;" onclick="confirmMove()">이동 확정</button>
+          <button style="background: #999;" onclick="cancelMove()">취소</button>
         </div>
       </div>
     </div>
@@ -374,7 +393,7 @@
       const { data: rows, error } = await sb.from('inventory_logs').select('*').order('id', { ascending: true });
       logSb('select', 'inventory_logs', error, rows);
       if (error) { alert('로그 불러오기 오류: ' + error.message); return; }
-      logs = rows.map(r => ({ id: r.id, type: r.type, col: r.col, can: r.can, floor: r.floor, name: r.name, qty: r.qty, date: r.date }));
+      logs = rows.map(r => ({ id: r.id, type: r.type, col: r.col, can: r.can, floor: r.floor, name: r.name, qty: r.qty, date: r.date, fromCol: r.from_col, fromCan: r.from_can, fromFloor: r.from_floor }));
     }
 
     function subscribeRealtime() {
@@ -426,6 +445,7 @@
       document.getElementById('editButtons').style.display = 'block';
       document.getElementById('addSection').style.display = 'block';
       document.getElementById('inSection').style.display = 'none';
+      document.getElementById('moveSection').style.display = 'none';
     }
 
     function openEditModal(col, can, floor, idx) {
@@ -469,6 +489,7 @@
       document.getElementById('editButtons').style.display = 'none';
       document.getElementById('addSection').style.display = 'block';
       document.getElementById('inSection').style.display = 'none';
+      document.getElementById('moveSection').style.display = 'none';
 
       const floors = getAllFloors();
       const nfs = document.getElementById('newFloor');
@@ -528,6 +549,96 @@
       render();
       closeModal();
       alert('입고되었습니다!');
+    }
+
+    function showMoveModal() {
+      if (!editingItem) return;
+      document.getElementById('editFields').style.display = 'none';
+      document.getElementById('editButtons').style.display = 'none';
+      document.getElementById('addSection').style.display = 'none';
+      document.getElementById('inSection').style.display = 'none';
+      document.getElementById('moveSection').style.display = 'block';
+
+      const { col, can, floor } = editingItem;
+      const mc = document.getElementById('moveCol');
+      mc.innerHTML = ['A', 'B', 'C'].map(c => `<option value="${c}">${c}열</option>`).join('');
+      mc.value = col;
+
+      updateMoveCanOptions();
+      document.getElementById('moveCan').value = can;
+
+      const floors = getAllFloors();
+      const maxF = Math.max(...floors, 3, floor);
+      const mf = document.getElementById('moveFloor');
+      mf.innerHTML = '';
+      for (let i = 1; i <= maxF; i++) {
+        const o = document.createElement('option'); o.value = i; o.textContent = i + '층'; mf.appendChild(o);
+      }
+      mf.value = floor;
+      document.getElementById('moveFloorCustom').value = '';
+    }
+
+    function updateMoveCanOptions() {
+      const col = document.getElementById('moveCol').value;
+      const maxCan = COL_MAX[col];
+      const sel = document.getElementById('moveCan');
+      const keep = parseInt(sel.value);
+      sel.innerHTML = '';
+      for (let i = 1; i <= maxCan; i++) {
+        const o = document.createElement('option'); o.value = i; o.textContent = i + '칸'; sel.appendChild(o);
+      }
+      if (keep && keep <= maxCan) sel.value = keep;
+    }
+
+    function cancelMove() {
+      setEditMode();
+    }
+
+    async function confirmMove() {
+      if (!editingItem) return;
+      const { col: fromCol, can: fromCan, floor: fromFloor, idx, id } = editingItem;
+      const item = inv[fromCol][fromCan][fromFloor][idx];
+
+      const toCol = document.getElementById('moveCol').value;
+      const toCan = parseInt(document.getElementById('moveCan').value);
+      const customFloor = document.getElementById('moveFloorCustom').value;
+      const toFloor = customFloor ? parseInt(customFloor) : parseInt(document.getElementById('moveFloor').value);
+
+      if (!toCan || !toFloor || toFloor < 1) return alert('올바른 위치를 선택해주세요');
+      if (toCol === fromCol && toCan === fromCan && toFloor === fromFloor) return alert('같은 위치로는 이동할 수 없습니다');
+
+      const destItems = (inv[toCol] && inv[toCol][toCan] && inv[toCol][toCan][toFloor]) || [];
+      const existing = destItems.find(d => d.n === item.n);
+
+      let merge = false;
+      if (existing) {
+        merge = confirm(`이동할 위치에 이미 "${item.n}"이(가) 있습니다. 수량을 합칠까요?\n(확인: 합치기 / 취소: 별도 항목으로 유지)`);
+      }
+
+      if (merge) {
+        const { error: updErr } = await sb.from('inventory_items').update({ qty: existing.q + item.q }).eq('id', existing.id);
+        logSb('update', 'inventory_items', updErr, { id: existing.id, qty: existing.q + item.q });
+        if (updErr) return alert('이동 오류: ' + updErr.message);
+
+        const { error: delErr } = await sb.from('inventory_items').delete().eq('id', id);
+        logSb('delete', 'inventory_items', delErr, { id });
+        if (delErr) return alert('이동 오류: ' + delErr.message);
+      } else {
+        const { error: updErr } = await sb.from('inventory_items').update({ col: toCol, can: toCan, floor: toFloor }).eq('id', id);
+        logSb('update', 'inventory_items', updErr, { id, col: toCol, can: toCan, floor: toFloor });
+        if (updErr) return alert('이동 오류: ' + updErr.message);
+      }
+
+      const logPayload = { type: '이동', col: toCol, can: toCan, floor: toFloor, name: item.n, qty: item.q, date: getTodayDate(), from_col: fromCol, from_can: fromCan, from_floor: fromFloor };
+      const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
+      logSb('insert', 'inventory_logs', logErr, logPayload);
+      if (logErr) return alert('로그 저장 오류: ' + logErr.message);
+
+      await loadInventory();
+      await loadLogs();
+      render();
+      closeModal();
+      alert('이동되었습니다!');
     }
 
     async function outItem() {
@@ -836,11 +947,19 @@
           html += '<div style="color: #999; text-align: center; padding: 20px;">조건에 맞는 로그가 없습니다</div>';
         } else {
           filtered.forEach(log => {
-            const icon = log.type === '입고' ? '📥' : '📤';
-            const color = log.type === '입고' ? '#28a745' : '#ffc107';
+            let icon, color, lineHtml;
+            if (log.type === '이동') {
+              icon = '🔀';
+              color = '#6f42c1';
+              lineHtml = `${icon} 이동: <span class="log-loc-col">${log.fromCol}</span>열 <span class="log-loc-can">${log.fromCan}</span>칸 <span class="log-loc-floor">${log.fromFloor}</span>층 → <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span>`;
+            } else {
+              icon = log.type === '입고' ? '📥' : '📤';
+              color = log.type === '입고' ? '#28a745' : '#ffc107';
+              lineHtml = `${icon} ${log.type}: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span>`;
+            }
             html += `<div class="log-entry" style="border-left-color: ${color};">
               <div class="log-first-line">
-                <span>${icon} ${log.type}: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span></span>
+                <span>${lineHtml}</span>
                 <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
               </div>
               <div>수량: <span class="log-qty">${log.qty}개</span></div>
