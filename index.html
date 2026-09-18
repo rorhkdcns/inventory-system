@@ -369,11 +369,14 @@
       return rows;
     }
 
+    let invReqSeq = 0;
     async function loadInventory() {
+      const seq = ++invReqSeq;
       console.log('[Supabase] inventory_items select 요청 중...');
       const { data: rows, error } = await sb.from('inventory_items').select('*');
       logSb('select', 'inventory_items', error, rows);
       if (error) { alert('재고 불러오기 오류: ' + error.message); return; }
+      if (seq !== invReqSeq) return; // 이후에 시작된 더 최신 요청이 있으면 이 응답(구버전)은 버림
       const next = { A: {}, B: {}, C: {} };
       rows.forEach(row => {
         const { id, col, can, floor, name, qty, in_date, exp_date } = row;
@@ -645,21 +648,31 @@
       const item = inv[col][can][floor][idx];
       if (item.q < qty) return alert('재고가 부족합니다');
       const newQty = item.q - qty;
+      const depleted = newQty === 0;
 
-      const { error: updErr } = await sb.from('inventory_items').update({ qty: newQty }).eq('id', id);
-      logSb('update', 'inventory_items', updErr, { id, qty: newQty });
-      if (updErr) { console.error('[Supabase] 출고 실패:', updErr); return alert('출고 오류: ' + updErr.message); }
+      if (depleted) {
+        const { error: delErr } = await sb.from('inventory_items').delete().eq('id', id);
+        logSb('delete', 'inventory_items', delErr, { id });
+        if (delErr) { console.error('[Supabase] 출고(소진) 실패:', delErr); return alert('출고 오류: ' + delErr.message); }
+      } else {
+        const { error: updErr } = await sb.from('inventory_items').update({ qty: newQty }).eq('id', id);
+        logSb('update', 'inventory_items', updErr, { id, qty: newQty });
+        if (updErr) { console.error('[Supabase] 출고 실패:', updErr); return alert('출고 오류: ' + updErr.message); }
+      }
 
       const logPayload = { type: '출고', col, can, floor, name: item.n, qty, date: today };
       const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
       logSb('insert', 'inventory_logs', logErr, logPayload);
-      if (logErr) { console.error('[Supabase] 출고 로그 저장 실패:', logErr); return alert('로그 저장 오류: ' + logErr.message); }
 
+      // 재고 변경(update/delete)은 이미 성공했으므로, 로그 저장 성공 여부와 무관하게
+      // 화면은 항상 최신 DB 상태로 갱신한다 (delete 완료 → loadInventory 완료 → render 순서 유지).
       await loadInventory();
       await loadLogs();
       render();
       closeModal();
-      alert('출고되었습니다!');
+
+      if (logErr) { console.error('[Supabase] 출고 로그 저장 실패:', logErr); return alert('로그 저장 오류: ' + logErr.message); }
+      alert(depleted ? '출고되었습니다! (재고 소진으로 삭제됨)' : '출고되었습니다!');
     }
 
     let modalHistoryPushed = false;
