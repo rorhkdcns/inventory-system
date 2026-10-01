@@ -110,6 +110,18 @@
     .ship-date { color: #666; font-size: 13px; white-space: nowrap; }
     .ship-del { background: #dc3545; padding: 6px 12px; margin: 0; flex: none; font-size: 13px; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
     .ship-del:hover { background: #c82333; }
+    .ship-search-input { margin: 0 0 10px; padding: 14px; font-size: 17px; min-height: 50px; }
+    .ship-search-results { margin-bottom: 16px; }
+    .ship-sr { border: 1px solid #ddd; border-left: 4px solid #0066cc; border-radius: 6px; background: #fff; margin-bottom: 8px; overflow: hidden; }
+    .ship-sr.open { border-color: #0066cc; }
+    .ship-sr-line { display: flex; align-items: center; gap: 10px; padding: 14px; min-height: 52px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .ship-sr-line:hover, .ship-sr-line:active { background: #f0f6ff; }
+    .ship-sr-stock { color: #0066cc; font-weight: bold; font-size: 16px; white-space: nowrap; }
+    .ship-sr-form { display: flex; gap: 8px; padding: 0 14px 14px; }
+    .ship-sr-form input { flex: 1; min-width: 0; margin: 0; padding: 12px; font-size: 17px; min-height: 50px; }
+    .ship-sr-form button { margin: 0; flex: none; min-height: 50px; padding: 12px 16px; background: #0d9488; font-weight: bold; white-space: nowrap; }
+    .ship-sr-form button:hover { background: #0b7d73; }
+    .ship-sr-empty { color: #999; text-align: center; padding: 16px; font-size: 16px; }
 
     .search-result-item { background: white; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; line-height: 1.5; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
     .search-result-item:hover, .search-result-item:active { background: #f0f6ff; }
@@ -146,6 +158,7 @@
       .ship-name { font-size: 15px; }
       .ship-qty { font-size: 15px; }
       .ship-del { padding: 8px 14px; font-size: 14px; }
+      .ship-sr-line { flex-wrap: wrap; gap: 4px 10px; }
     }
     @media (max-width: 400px) {
       .can-island { gap: 8px; }
@@ -241,6 +254,8 @@
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
           <h2 style="margin:0;">📄 출고표</h2>
         </div>
+        <input type="search" id="ship-search-input" class="ship-search-input" placeholder="출고할 상품 검색" autocomplete="off" oninput="onShipSearchInput()">
+        <div id="ship-search-results" class="ship-search-results"></div>
         <div class="ship-toolbar">
           <button onclick="downloadShippingExcel()" style="margin:0;">📊 엑셀 다운로드</button>
           <button onclick="completeShipping()" style="margin:0; background:#198754;">✅ 출고 완료</button>
@@ -516,6 +531,7 @@
           console.log('[Realtime] inventory_items 변경 감지:', payload);
           await loadInventory();
           render();
+          renderShipSearch();
         })
         .subscribe((status) => console.log('[Realtime] inventory_items 채널 상태:', status));
 
@@ -778,8 +794,9 @@
 
     // 출고 공통 처리: 재고 차감(차감 후 0이면 상품 삭제) + '출고' 로그 기록
     // 일반 출고와 출고표입력이 똑같은 규칙을 쓰도록 한 곳에 모아 둔다.
-    async function applyOutflow(item, qty) {
-      const { col, can, floor, id } = editingItem;
+    // loc: { col, can, floor, id } (생략하면 모달에서 선택한 상품)
+    async function applyOutflow(item, qty, loc = editingItem) {
+      const { col, can, floor, id } = loc;
       const today = getTodayDate();
       const newQty = roundQty(item.q - qty);
       const depleted = newQty <= 0;
@@ -852,16 +869,26 @@
       if (qty === null) return alert('출고표 수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
       if (qty > item.q) return alert(`재고가 부족합니다 (현재 재고 ${fmtQty(item.q)}개)`);
 
-      const { col, can, floor } = editingItem;
+      const { col, can, floor, id } = editingItem;
+      const result = await addToShippingSheet(item, qty, { col, can, floor, id });
+      if (result.shipErr) return;
+      closeModal();
+      alertShipResult(result);
+    }
+
+    // 출고표입력 공통 처리 (모달 "출고표입력"과 출고표 탭 검색 추가가 같이 쓴다)
+    // 출고표 기록 → 재고 차감(0이면 상품 삭제) → '출고' 로그 → 화면 갱신
+    async function addToShippingSheet(item, qty, loc) {
+      const { col, can, floor } = loc;
 
       // 1) 출고표에 먼저 기록한다. (재고가 0이 되어 상품이 삭제되어도 출고표 기록은 남아야 함)
       const shipPayload = { col, can, floor, name: item.n, qty, date: getTodayDate() };
       const { error: shipErr } = await sb.from('shipping_sheet').insert(shipPayload);
       logSb('insert', 'shipping_sheet', shipErr, shipPayload);
-      if (shipErr) { console.error('[Supabase] 출고표 기록 실패:', shipErr); return alert('출고표 기록 오류: ' + shipErr.message); }
+      if (shipErr) { console.error('[Supabase] 출고표 기록 실패:', shipErr); alert('출고표 기록 오류: ' + shipErr.message); return { shipErr }; }
 
       // 2) 재고 차감 + '출고' 로그 (기존 출고와 동일한 처리)
-      const { error, depleted, logErr } = await applyOutflow(item, qty);
+      const { error, depleted, logErr } = await applyOutflow(item, qty, loc);
       if (error) console.error('[Supabase] 출고표 등록 중 재고 차감 실패:', error);
 
       await loadInventory();
@@ -869,8 +896,11 @@
       await loadShippingSheet();
       render();
       renderShippingSheet();
-      closeModal();
+      renderShipSearch();
+      return { error, depleted, logErr };
+    }
 
+    function alertShipResult({ error, depleted, logErr }) {
       if (error) return alert('출고표에는 기록됐지만 재고 차감에 실패했습니다: ' + error.message);
       if (logErr) { console.error('[Supabase] 출고표 출고 로그 저장 실패:', logErr); return alert('로그 저장 오류: ' + logErr.message); }
       alert(depleted ? '출고표에 등록되었습니다! (재고 소진으로 상품 삭제됨)' : '출고표에 등록되었습니다!');
@@ -1223,6 +1253,106 @@
     }
     function shipLocText(r) {
       return `${r.col}열 ${r.can}칸 ${r.floor}층`;
+    }
+
+    // ===== 출고표 탭: 상품 검색 후 바로 출고표에 추가 =====
+    let shipSearchOpenId = null; // 수량 입력칸이 열려 있는 재고 id
+    let shipSearchBusy = false;
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    // 재고 id로 현재 위치/상품을 찾는다 (실시간 갱신으로 순서가 바뀌어도 안전)
+    function findInvItemById(id) {
+      for (const col of Object.keys(inv)) {
+        for (const can of Object.keys(inv[col])) {
+          for (const floor of Object.keys(inv[col][can])) {
+            const item = inv[col][can][floor].find(it => it.id === id);
+            if (item) return { col, can: parseInt(can), floor: parseInt(floor), id, item };
+          }
+        }
+      }
+      return null;
+    }
+
+    function onShipSearchInput() {
+      shipSearchOpenId = null;
+      renderShipSearch();
+    }
+
+    function renderShipSearch() {
+      const box = document.getElementById('ship-search-results');
+      const q = document.getElementById('ship-search-input').value.trim().toLowerCase();
+      if (!q) { box.innerHTML = ''; return; }
+
+      // 실시간 갱신으로 다시 그려도 입력 중이던 수량은 유지
+      const prevQtyInput = document.getElementById('ship-search-qty');
+      const prevQty = prevQtyInput ? prevQtyInput.value : '';
+
+      const rows = [];
+      Object.keys(inv).forEach(col => Object.keys(inv[col]).forEach(can => Object.keys(inv[col][can]).forEach(floor => {
+        inv[col][can][floor].forEach(it => {
+          if (it.n.toLowerCase().includes(q)) rows.push({ col, can: parseInt(can), floor: parseInt(floor), id: it.id, name: it.n, qty: it.q });
+        });
+      })));
+
+      if (rows.length === 0) { box.innerHTML = '<div class="ship-sr-empty">재고에 없는 상품이에요</div>'; return; }
+      if (shipSearchOpenId !== null && !rows.some(r => r.id === shipSearchOpenId)) shipSearchOpenId = null;
+
+      // 위치순 정렬 (열 → 칸 숫자순 → 층)
+      box.innerHTML = sortShippingRows(rows).map(r => {
+        const open = r.id === shipSearchOpenId;
+        return `<div class="ship-sr${open ? ' open' : ''}" style="border-left-color:${getFloorColor(r.floor)};">
+          <div class="ship-sr-line" onclick="toggleShipSearchRow(${r.id})">
+            <span class="ship-loc">${shipLocHtml(r)}</span>
+            <span class="ship-name">${escapeHtml(r.name)}</span>
+            <span class="ship-sr-stock">재고 ${fmtQty(r.qty)}개</span>
+          </div>
+          ${open ? `<div class="ship-sr-form">
+            <input type="number" id="ship-search-qty" inputmode="decimal" placeholder="출고 수량" min="0.01" step="0.01" value="${escapeHtml(prevQty)}" onkeydown="if(event.key==='Enter')addShipFromSearch(${r.id})">
+            <button onclick="addShipFromSearch(${r.id})">출고표에 추가</button>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    // 한 줄을 누르면 그 줄 아래에 수량 입력칸을 연다 (다른 줄의 입력칸은 닫힘)
+    function toggleShipSearchRow(id) {
+      const opening = shipSearchOpenId !== id;
+      shipSearchOpenId = opening ? id : null;
+      const prev = document.getElementById('ship-search-qty');
+      if (prev) prev.value = '';
+      renderShipSearch();
+      if (opening) document.getElementById('ship-search-qty').focus();
+    }
+
+    async function addShipFromSearch(id) {
+      if (shipSearchBusy) return;
+      const found = findInvItemById(id);
+      if (!found) {
+        shipSearchOpenId = null;
+        renderShipSearch();
+        return alert('재고에서 상품을 찾을 수 없습니다 (이미 삭제되었을 수 있어요)');
+      }
+      const { item } = found;
+      const qty = readQtyInput('ship-search-qty');
+      if (qty === null) return alert('출고표 수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
+      if (qty > item.q) return alert(`재고가 부족합니다 (현재 재고 ${fmtQty(item.q)}개)`);
+
+      shipSearchBusy = true;
+      try {
+        const result = await addToShippingSheet(item, qty, found);
+        if (result.shipErr) return;
+        // 추가 후에는 입력칸을 닫고, 검색어는 그대로 두고 줄어든 재고로 다시 그린다
+        const qtyInput = document.getElementById('ship-search-qty');
+        if (qtyInput) qtyInput.value = '';
+        shipSearchOpenId = null;
+        renderShipSearch();
+        alertShipResult(result);
+      } finally {
+        shipSearchBusy = false;
+      }
     }
 
     function renderShippingSheet() {
