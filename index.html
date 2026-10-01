@@ -133,40 +133,45 @@
     .ship-photo-status:empty { display: none; }
     .ship-photo-status.err { color: #b02a37; }
     .pr-card { border: 2px solid #6f42c1; border-radius: 10px; background: #fff; padding: 14px; margin-bottom: 16px; }
-    .pr-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-    .pr-row { border: 1px solid #ddd; border-left: 6px solid #bbb; border-radius: 6px; padding: 12px; margin-bottom: 10px; background: #fff; }
-    .pr-row.red { border-left-color: #dc3545; background: #fff8f8; }
-    .pr-top { display: flex; align-items: center; gap: 10px; }
-    .pr-sheet-name { flex: 1; min-width: 0; font-weight: bold; font-size: 16px; word-break: break-all; }
-    .pr-qty { width: 96px; flex: none; margin: 0; padding: 10px; font-size: 17px; min-height: 48px; text-align: right; }
-    .pr-unit { color: #666; font-size: 14px; }
-    .pr-match { margin-top: 8px; font-size: 15px; line-height: 1.5; }
-    .pr-match .ship-sr-stock { font-size: 15px; }
-    .pr-need { color: #b02a37; font-weight: bold; font-size: 14px; margin-top: 8px; }
-    .pr-select { width: 100%; margin-top: 6px; padding: 12px; font-size: 16px; min-height: 50px; border: 1px solid #ccc; border-radius: 6px; background: #fff; }
-    .pr-remember { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 15px; cursor: pointer; min-height: 40px; }
-    .pr-remember input { width: 22px; height: 22px; margin: 0; flex: none; }
-    .pr-warn { color: #fff; background: #dc3545; border-radius: 4px; padding: 6px 10px; font-size: 14px; font-weight: bold; margin-top: 8px; }
-    .pr-warn:empty { display: none; }
-    .pr-line { border: 1px solid #e3e3e3; border-left: 6px solid #198754; border-radius: 6px; padding: 10px 12px; margin-top: 8px; background: #fff; }
-    .pr-line.yellow { border-left-color: #f0ad00; background: #fffbea; }
-    .pr-line.manual { border-left-color: #0066cc; }
-    .pr-line-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 15px; }
-    .pr-line-loc { font-weight: bold; white-space: nowrap; }
-    .pr-line-name { flex: 1; min-width: 0; word-break: break-all; }
-    .pr-line-out { color: #C2410C; font-weight: bold; white-space: nowrap; }
-    .pr-line-sub { color: #666; font-size: 14px; margin-top: 4px; }
-    .pr-badge { display: inline-block; background: #f0ad00; color: #000; font-weight: bold; font-size: 12px; border-radius: 4px; padding: 2px 8px; margin-right: 6px; }
-    .pr-badge.manual { background: #0066cc; color: #fff; }
-    .pr-change { margin: 8px 0 0; padding: 8px 14px; min-height: 40px; font-size: 14px; background: #fff; color: #0066cc; border: 1px solid #9bbbe0; }
-    .pr-change:hover { background: #f0f6ff; }
+    .pr-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+    /* 확인 화면 표: 모든 글씨 13px */
+    .pt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; }
+    .pt-table { width: 100%; min-width: 580px; border-collapse: collapse; font-size: 13px; }
+    .pt-table th, .pt-table td { border: 1px solid #ccc; padding: 6px 8px; font-size: 13px; vertical-align: middle; text-align: left; }
+    .pt-table th { background: #f1f3f5; font-weight: bold; white-space: nowrap; }
+    .pt-table tfoot td { background: #f8f9fa; font-weight: bold; }
+    .pt-table tr.red td { background: #fff5f5; }
+    .pt-table tr.yellow td { background: #fffbea; }
+    .pt-table tr.pt-sub td { border-top-style: dashed; }
+    .pt-num { text-align: right !important; white-space: nowrap; }
+    .pt-muted { color: #777; }
+    .pt-name { max-width: 220px; }
+    .pt-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pt-qty { width: 76px; margin: 0; padding: 6px 8px; font-size: 13px; min-height: 34px; text-align: right; }
+    .pt-select { width: 100%; min-width: 120px; margin: 0; padding: 6px 4px; font-size: 13px; min-height: 34px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    .pt-badge { display: inline-block; font-size: 13px; font-weight: bold; border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
+    .pt-badge.green { background: #d1f0dc; color: #146c43; }
+    .pt-badge.yellow { background: #ffe69c; color: #664d03; }
+    .pt-badge.red { background: #dc3545; color: #fff; }
+    .pt-remember { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; color: #555; cursor: pointer; white-space: nowrap; }
+    .pt-remember input { width: 14px; height: 14px; margin: 0; flex: none; }
     .pr-footer { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; }
-    .pr-footer button { margin: 0; min-height: 52px; font-size: 16px; font-weight: bold; }
+    .pr-footer button { margin: 0; min-height: 48px; font-size: 15px; font-weight: bold; }
     .pr-footer .pr-add { flex: 2 1 200px; background: #0d9488; }
     .pr-footer .pr-add:disabled { background: #9ccfca; cursor: not-allowed; }
     .pr-footer .pr-cancel { flex: 1 1 100px; background: #999; }
-    .pr-block-msg { width: 100%; color: #b02a37; font-weight: bold; font-size: 15px; }
+    .pr-block-msg { width: 100%; color: #b02a37; font-weight: bold; font-size: 13px; }
     .pr-block-msg:empty { display: none; }
+    /* 차감 전 최종 확인창: 글씨 13px */
+    .pr-confirm, .pr-confirm * { font-size: 13px; }
+    .pr-confirm { padding: 20px; }
+    .pr-confirm-title { font-weight: bold; margin-bottom: 10px; }
+    .pr-confirm-list { list-style: none; border: 1px solid #ddd; border-radius: 6px; max-height: 50vh; overflow-y: auto; }
+    .pr-confirm-list li { padding: 7px 10px; border-bottom: 1px solid #eee; }
+    .pr-confirm-list li:last-child { border-bottom: none; }
+    .pr-confirm-total { font-weight: bold; margin-top: 10px; }
+    .pr-confirm .modal-buttons button { min-height: 44px; font-weight: bold; }
+    .pr-confirm .modal-buttons button:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .search-result-item { background: white; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; line-height: 1.5; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
     .search-result-item:hover, .search-result-item:active { background: #f0f6ff; }
@@ -1498,12 +1503,13 @@
       }
     }
 
-    // 이름 짝 기억 테이블: { 사장님제품명: 재고상품명 }
+    // 이름 짝 기억 테이블: { 정규화된 사장님제품명: 재고상품명 }
+    // (띄어쓰기·용량 표기 차이가 있어도 같은 짝으로 찾도록 키를 정규화한다)
     async function loadNameAliases() {
       const { data, error } = await sb.from('name_alias').select('sheet_name, item_name');
       logSb('select', 'name_alias', error, data);
       const aliases = {};
-      (data || []).forEach(r => { aliases[r.sheet_name] = r.item_name; });
+      (data || []).forEach(r => { aliases[sheetKey(r.sheet_name)] = r.item_name; });
       return { aliases, error };
     }
 
@@ -1512,25 +1518,59 @@
       return String(s || '').replace(/\s+/g, '').toLowerCase();
     }
 
-    // "6/3" 과 "6/30" 이 둘 다 포함되면 더 긴(구체적인) 이름만 남긴다
-    function longestNameOnly(rows) {
-      if (rows.length === 0) return rows;
-      const maxLen = Math.max(...rows.map(r => normName(r.name).length));
-      return rows.filter(r => normName(r.name).length === maxLen);
+    // 사장님 제품명에서 용량 표기([600㎖] 등)를 뺀다
+    function stripCapacity(s) {
+      return String(s || '').replace(/\[[^\]]*\]/g, ' ');
     }
 
-    // 사진 한 줄의 제품명 → 재고 상품명 결정
-    // 1) 기억된 이름 짝  2) 사진 위치 안에서 "재고 상품명이 사장님 제품명에 포함"  3) 전체 재고에서 같은 방식
-    // 상품명이 하나로 정해지지 않으면 itemName = null (빨간 줄, 직접 고르기)
+    // 이름 짝 찾기용 키: 용량 표기·띄어쓰기 무시
+    function sheetKey(s) {
+      return normName(stripCapacity(s));
+    }
+
+    // 괄호 안의 제품 번호 (예: "칼라 컬러크림 (6/04)" → ["6/04"])
+    function sheetCodes(s) {
+      const codes = [];
+      stripCapacity(s).replace(/\(([^)]*)\)/g, (m, inner) => {
+        const v = normName(inner);
+        if (/^\d+\/\d+$/.test(v)) codes.push(v);
+        return m;
+      });
+      return codes;
+    }
+
+    // 핵심어: 괄호·공백으로 나눈 낱말 (예: "칼라 볼륨 매직 (2제) (크림)" → 칼라, 볼륨, 매직, 2제, 크림)
+    function sheetWords(s) {
+      return stripCapacity(s).split(/[\s()]+/).map(normName).filter(Boolean);
+    }
+
+    // 재고 상품명이 사장님 제품명의 핵심어와 맞는지
+    // - 낱말 하나와 정확히 같으면 매칭
+    // - 세 글자 이상이면 붙여 쓴 이름 안에 들어 있어도 매칭 (예: "매직1제" ⊂ "칼라볼륨매직1제")
+    // - 두 글자 이하("크림")는 낱말이 정확히 같을 때만 ("컬러크림"의 일부로는 매칭 안 함)
+    function matchesCoreWord(itemName, words, joined) {
+      const n = normName(itemName);
+      if (!n) return false;
+      if (words.includes(n)) return true;
+      return n.length >= 3 && joined.includes(n);
+    }
+
+    // 사진 한 줄의 제품명 → 재고 상품명 결정 (애매하면 null = 선택필요)
+    // 1) 이름 짝 기억  2) 괄호 안 번호와 정확히 같은 재고  3) 핵심어가 맞는 재고
     function resolveProductName(it, aliases, all) {
-      const aliasName = aliases[it.name];
+      const aliasName = aliases[sheetKey(it.name)];
       if (aliasName && all.some(r => r.name === aliasName)) return { itemName: aliasName, nameCandidates: [] };
 
-      const sheet = normName(it.name);
-      const contains = all.filter(r => normName(r.name) !== '' && sheet.includes(normName(r.name)));
-      const loc = photoLocOf(it);
-      const inLoc = loc ? contains.filter(r => atPhotoLoc(r, loc)) : [];
-      const pool = longestNameOnly(inLoc.length > 0 && distinctNames(longestNameOnly(inLoc)).length === 1 ? inLoc : contains);
+      let pool;
+      const codes = sheetCodes(it.name);
+      if (codes.length > 0) {
+        // 번호가 있으면 그 번호와 정확히 같은 재고만. 없으면 다른 상품으로 대체하지 않는다.
+        pool = all.filter(r => codes.includes(normName(r.name)));
+      } else {
+        const words = sheetWords(it.name);
+        const joined = words.join('');
+        pool = all.filter(r => matchesCoreWord(r.name, words, joined));
+      }
       const names = distinctNames(pool);
       if (names.length === 1) return { itemName: names[0], nameCandidates: [] };
       return { itemName: null, nameCandidates: sortShippingRows(pool) };
@@ -1593,7 +1633,7 @@
           sheetName: it.name,
           sheetLoc: photoLocOf(it),
           prefLoc: photoLocOf(it), // 배정할 때 먼저 쓰는 위치 (직접 고르면 그 위치로 바뀜)
-          qtyText: String(roundQty(it.qty)),
+          qtyText: fmtQty(it.qty),
           itemName,
           nameCandidates,
           namePicked: false, // 상품을 직접 골랐는지 (이름 짝 기억 대상)
@@ -1623,28 +1663,33 @@
     }
 
     // 확인 화면 검사
-    //  - unresolved: 상품을 못 정한 줄 (빨강, 직접 고르기)
-    //  - shortage: 모든 위치를 합쳐도 재고 부족 (빨강)
+    //  - unresolved: 상품을 못 정한 줄 (선택필요)
+    //  - shortage: 모든 위치를 합쳐도 재고 부족
     //  - badQty: 박스 수가 비었거나 0 이하
     //  - over: 위치를 직접 바꿔서 한 위치에서 재고보다 많이 빼게 된 줄
     function photoReviewCheck() {
       const byId = new Map(listInvRows().map(r => [r.id, r]));
       const totals = new Map();
       photoReview.groups.forEach(g => addUsed(totals, g.lines));
-      const groups = photoReview.groups.map(g => ({
-        badQty: parseQtyValue(g.qtyText) === null,
-        unresolved: !g.itemName,
-        shortage: g.shortage,
-        lines: g.lines.map(l => {
-          const item = byId.get(l.id) || null;
-          const total = totals.get(l.id) || 0;
-          return { item, total, over: !item || total > item.qty };
-        })
-      }));
+      const groups = photoReview.groups.map(g => {
+        const x = {
+          badQty: parseQtyValue(g.qtyText) === null,
+          unresolved: !g.itemName,
+          shortage: g.shortage,
+          lines: g.lines.map(l => {
+            const item = byId.get(l.id) || null;
+            const total = totals.get(l.id) || 0;
+            return { item, total, over: !item || total > item.qty };
+          })
+        };
+        x.red = x.unresolved || x.badQty || x.shortage > 0 || x.lines.some(l => l.over);
+        return x;
+      });
       const lineCount = photoReview.groups.reduce((n, g) => n + g.lines.length, 0);
       return {
         groups,
         lineCount,
+        redCount: groups.filter(x => x.red).length,
         unresolvedCount: groups.filter(x => x.unresolved).length,
         shortageCount: groups.filter(x => x.shortage > 0).length,
         badQtyCount: groups.filter(x => x.badQty && !x.unresolved).length,
@@ -1652,8 +1697,8 @@
       };
     }
 
-    function photoLocText(loc) {
-      return [loc.col && loc.col + '열', loc.can && loc.can + '칸', loc.floor && loc.floor + '층'].filter(Boolean).join(' ');
+    function prBadge(color, text) {
+      return `<span class="pt-badge ${color}">${text}</span>`;
     }
 
     function renderPhotoReview() {
@@ -1662,93 +1707,98 @@
 
       const all = sortShippingRows(listInvRows());
       const byId = new Map(all.map(r => [r.id, r]));
-      const optText = r => escapeHtml(`${shipLocText(r)} · ${r.name} · 재고 ${fmtQty(r.qty)}개${r.exp ? ' · 유통 ' + r.exp : ''}`);
-      // 선택칸: 같은 상품의 다른 위치를 먼저, 그 아래 전체 재고
-      const selectHtml = (onchange, selectedId, firstRows, firstLabel, placeholder) => {
-        let done = false;
-        const opt = r => {
-          const sel = !done && r.id === selectedId;
-          if (sel) done = true;
-          return `<option value="${r.id}"${sel ? ' selected' : ''}>${optText(r)}</option>`;
-        };
-        return `<select class="pr-select" onchange="${onchange}">
-          ${placeholder ? `<option value="">${placeholder}</option>` : ''}
-          ${firstRows.length > 0 ? `<optgroup label="${firstLabel}">${firstRows.map(opt).join('')}</optgroup>` : ''}
-          <optgroup label="전체 재고">${all.map(opt).join('')}</optgroup>
+      const check = photoReviewCheck();
+      // 위치 선택칸 (같은 상품의 위치만, 위치만 표시)
+      const locSelect = (rows, selectedId, onchange) => `<select class="pt-select" onchange="${onchange}">
+          ${rows.map(r => `<option value="${r.id}"${r.id === selectedId ? ' selected' : ''}>${escapeHtml(shipLocText(r))}</option>`).join('')}
         </select>`;
-      };
 
-      let html = `<div class="pr-card"><div class="pr-title">📷 사진에서 읽은 출고 목록 (${photoReview.groups.length}건)</div>`;
-      if (photoReview.aliasError) {
-        html += `<div class="pr-need" style="margin:0 0 10px;">이름 짝 기억 테이블(name_alias)을 읽지 못했어요. supabase_update_name_alias.sql 을 실행해 주세요.</div>`;
-      }
+      let body = '';
+      let qtySum = 0;
       photoReview.groups.forEach((group, g) => {
-        const red = !group.itemName || group.shortage > 0;
-        const sheetLoc = group.sheetLoc ? ` <span class="ship-date">(사진 위치: ${photoLocText(group.sheetLoc)})</span>` : '';
-        html += `<div class="pr-row${red ? ' red' : ''}">
-          <div class="pr-top">
-            <span class="pr-sheet-name">${escapeHtml(group.sheetName)}${sheetLoc}</span>
-            <input type="text" class="pr-qty" id="pr-qty-${g}" inputmode="decimal" autocomplete="off" value="${escapeHtml(group.qtyText)}" oninput="onPhotoQtyInput(${g}, this.value)">
-            <span class="pr-unit">박스</span>
-          </div>`;
+        const gx = check.groups[g];
+        const q = parseQtyValue(group.qtyText);
+        if (q !== null) qtySum = roundQty(qtySum + q);
 
-        if (!group.itemName) {
-          const n = distinctNames(group.nameCandidates).length;
-          html += `<div class="pr-need">${n > 1 ? `비슷한 상품이 ${n}가지 있어요. 하나를 골라주세요` : '재고에서 못 찾았어요. 직접 골라주세요'}</div>`;
-          html += selectHtml(`onPhotoPickProduct(${g}, this.value)`, null, group.nameCandidates, '후보', '-- 재고에서 고르기 --');
+        const nameCell = `<td class="pt-name" title="${escapeHtml(group.sheetName)}"><div class="pt-ellipsis">${escapeHtml(group.sheetName)}</div></td>`;
+        const qtyCell = `<td class="pt-num"><input type="text" class="pt-qty" id="pr-qty-${g}" inputmode="decimal" autocomplete="off" value="${escapeHtml(group.qtyText)}" oninput="onPhotoQtyInput(${g}, this.value)" onblur="onPhotoQtyBlur(${g})"></td>`;
+        const remember = group.namePicked
+          ? `<label class="pt-remember"><input type="checkbox"${group.remember ? ' checked' : ''} onchange="photoReview.groups[${g}].remember = this.checked"> 다음부터 자동으로 맞추기</label>`
+          : '';
+        const groupRedBadge = gx.unresolved ? prBadge('red', '선택필요')
+          : gx.badQty ? prBadge('red', '박스 확인')
+          : gx.shortage > 0 ? prBadge('red', `재고부족 ${fmtQty(gx.shortage)}`)
+          : '';
+
+        // 상품을 못 정한 줄: 위치 칸에서 재고를 직접 고른다 (같은 위치에 여러 상품이 있을 수 있어 상품명도 함께 표시)
+        if (gx.unresolved || group.lines.length === 0) {
+          const opt = r => `<option value="${r.id}">${escapeHtml(`${shipLocText(r)} · ${r.name}`)}</option>`;
+          const locCell = gx.unresolved
+            ? `<select class="pt-select" onchange="onPhotoPickProduct(${g}, this.value)">
+                <option value="">선택</option>
+                ${group.nameCandidates.length > 0 ? `<optgroup label="후보">${group.nameCandidates.map(opt).join('')}</optgroup>` : ''}
+                <optgroup label="전체 재고">${all.map(opt).join('')}</optgroup>
+              </select>`
+            : '-';
+          body += `<tr class="red">${nameCell}${qtyCell}<td>${locCell}</td><td class="pt-num">-</td><td>${groupRedBadge || prBadge('red', '선택필요')}${remember}</td></tr>`;
+          return;
         }
 
-        group.lines.forEach((line, l) => {
+        const sameProduct = all.filter(r => r.name === group.itemName);
+        const lineCells = group.lines.map((line, l) => {
           const item = byId.get(line.id);
-          if (!item) return;
-          const sameProduct = all.filter(r => r.name === group.itemName && r.id !== line.id);
-          html += `<div class="pr-line ${line.kind}">
-            <div class="pr-line-top">
-              <span class="pr-line-loc">${shipLocHtml(item)}</span>
-              <b class="pr-line-name">${escapeHtml(item.name)}</b>
-              <span class="pr-line-out">${fmtQty(line.qty)}개 출고</span>
-            </div>
-            <div class="pr-line-sub">
-              ${line.kind === 'yellow' ? '<span class="pr-badge">자동 배정</span>' : ''}${line.kind === 'manual' ? '<span class="pr-badge manual">직접 선택</span>' : ''}
-              재고 ${fmtQty(item.qty)}개${item.exp ? ` · 유통기한 ${escapeHtml(item.exp)}` : ''}
-            </div>`;
-          if (line.kind === 'yellow' || line.open) {
-            html += selectHtml(`onPhotoPickLine(${g}, ${l}, this.value)`, line.id, [item, ...sameProduct], '같은 상품 위치');
-          } else {
-            html += `<button type="button" class="pr-change" onclick="openPhotoLine(${g}, ${l})">다른 위치로 바꾸기</button>`;
-          }
-          html += `<div class="pr-warn" id="pr-warn-${g}-${l}"></div></div>`;
+          const lx = gx.lines[l];
+          const editable = line.kind === 'yellow' || line.kind === 'manual';
+          const options = item && !sameProduct.includes(item) ? [item, ...sameProduct] : sameProduct;
+          return {
+            loc: editable ? locSelect(options, line.id, `onPhotoPickLine(${g}, ${l}, this.value)`) : escapeHtml(item ? shipLocText(item) : '-'),
+            stock: item ? fmtQty(item.qty) : '-',
+            badge: lx.over ? prBadge('red', '재고초과') : line.kind === 'yellow' ? prBadge('yellow', '자동배정') : prBadge('green', '매칭'),
+            yellow: line.kind === 'yellow'
+          };
         });
 
-        if (group.shortage > 0) {
-          html += `<div class="pr-warn">재고 부족 (부족 수량 ${fmtQty(group.shortage)})</div>`;
+        if (lineCells.length === 1) {
+          const c = lineCells[0];
+          const cls = gx.red ? 'red' : c.yellow ? 'yellow' : '';
+          body += `<tr class="${cls}">${nameCell}${qtyCell}<td>${c.loc}</td><td class="pt-num">${c.stock}</td><td>${groupRedBadge || c.badge}${remember}</td></tr>`;
+        } else {
+          // 여러 위치에서 나눠 빼는 경우: 제품 줄 + 위치별 줄
+          const anyYellow = lineCells.some(c => c.yellow);
+          const cls = gx.red ? 'red' : anyYellow ? 'yellow' : '';
+          const headBadge = groupRedBadge || (gx.red ? prBadge('red', '재고초과') : anyYellow ? prBadge('yellow', '자동배정') : prBadge('green', '매칭'));
+          body += `<tr class="${cls}">${nameCell}${qtyCell}<td class="pt-muted">${lineCells.length}곳에서 나눠 빼기</td><td class="pt-num">-</td><td>${headBadge}${remember}</td></tr>`;
+          lineCells.forEach((c, l) => {
+            body += `<tr class="pt-sub ${cls}"><td class="pt-muted">↳ 나눔 ${l + 1}</td><td class="pt-num">${fmtQty(group.lines[l].qty)}</td><td>${c.loc}</td><td class="pt-num">${c.stock}</td><td>${c.badge}</td></tr>`;
+          });
         }
-        if (group.namePicked) {
-          html += `<label class="pr-remember"><input type="checkbox"${group.remember ? ' checked' : ''} onchange="photoReview.groups[${g}].remember = this.checked"> 다음부터 이 이름은 자동으로 맞추기</label>`;
-        }
-        html += `<div class="pr-warn" id="pr-qtywarn-${g}"></div></div>`;
       });
-      html += `<div class="pr-footer">
+
+      let html = `<div class="pr-card">
+        <div class="pr-title">📷 사진에서 읽은 출고 목록</div>`;
+      if (photoReview.aliasError) {
+        html += `<div class="pr-block-msg" style="margin-bottom:8px;">이름 짝 기억 테이블(name_alias)을 읽지 못했어요. supabase_update_name_alias.sql 을 실행해 주세요.</div>`;
+      }
+      html += `<div class="pt-wrap"><table class="pt-table">
+          <thead><tr><th>제품(사장님)</th><th>박스</th><th>위치</th><th>재고</th><th>상태</th></tr></thead>
+          <tbody>${body}</tbody>
+          <tfoot><tr><td>합계</td><td class="pt-num">${fmtQty(qtySum)}</td><td colspan="3">${photoReview.groups.length}건 · 선택필요 ${check.redCount}건</td></tr></tfoot>
+        </table></div>
+        <div class="pr-footer">
           <div class="pr-block-msg" id="pr-block-msg"></div>
-          <button type="button" class="pr-add" id="pr-add-btn" onclick="confirmPhotoReview()">✅ 전체 출고표에 추가</button>
+          <button type="button" class="pr-add" id="pr-add-btn" onclick="openPhotoConfirm()">✅ 전체 출고표에 추가</button>
           <button type="button" class="pr-cancel" onclick="cancelPhotoReview()">취소</button>
-        </div></div>`;
+        </div>
+      </div>`;
+      if (photoReview.confirmOpen) html += photoConfirmHtml();
       box.innerHTML = html;
       updatePhotoReviewStatus();
     }
 
-    // 경고 문구 / 추가 버튼 상태 갱신 (노란 줄은 막지 않음)
+    // 추가 버튼 상태 / 막힌 이유 (노란 줄은 막지 않음)
     function updatePhotoReviewStatus() {
       if (!photoReview) return;
       const check = photoReviewCheck();
-      check.groups.forEach((x, g) => {
-        const qw = document.getElementById('pr-qtywarn-' + g);
-        if (qw) qw.textContent = x.badQty && !x.unresolved ? '⚠ 박스 수를 0보다 큰 숫자로 입력해 주세요' : '';
-        x.lines.forEach((lx, l) => {
-          const el = document.getElementById(`pr-warn-${g}-${l}`);
-          if (el) el.textContent = lx.over && lx.item ? `⚠ 이 위치 재고(${fmtQty(lx.item.qty)}개)보다 많이 빼게 돼요 (합계 ${fmtQty(lx.total)}개)` : '';
-        });
-      });
       let msg = '';
       if (check.unresolvedCount > 0) msg = `빨간 항목 ${check.unresolvedCount}건 먼저 골라주세요`;
       else if (check.shortageCount > 0) msg = `재고 부족 항목 ${check.shortageCount}건: 박스 수를 줄이거나 재고를 확인해 주세요`;
@@ -1758,6 +1808,8 @@
       const btn = document.getElementById('pr-add-btn');
       btn.disabled = !!msg || photoBusy;
       btn.textContent = photoBusy ? '⏳ 추가 중...' : `✅ 전체 출고표에 추가 (${check.lineCount}건)`;
+      const okBtn = document.getElementById('pr-confirm-ok');
+      if (okBtn) { okBtn.disabled = photoBusy; okBtn.textContent = photoBusy ? '처리 중...' : '확인'; }
     }
 
     // 박스 수를 바꾸면 그 줄을 다시 배정하고, 입력칸 포커스는 유지
@@ -1769,7 +1821,18 @@
       if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
     }
 
-    // 빨간 줄(상품을 못 정함)에서 재고를 고름 → 그 상품으로, 고른 위치를 먼저 쓰도록 배정
+    // 입력을 마치면 소수점 두 자리로 맞춘다 (다시 그리지 않음 → 버튼 클릭이 끊기지 않게)
+    function onPhotoQtyBlur(g) {
+      if (!photoReview) return;
+      const group = photoReview.groups[g];
+      const v = parseQtyValue(group.qtyText);
+      if (v === null) return;
+      group.qtyText = fmtQty(v);
+      const input = document.getElementById('pr-qty-' + g);
+      if (input) input.value = group.qtyText;
+    }
+
+    // 선택필요 줄에서 재고를 고름 → 그 상품으로, 고른 위치를 먼저 쓰도록 배정
     function onPhotoPickProduct(g, value) {
       const group = photoReview.groups[g];
       const row = value === '' ? null : listInvRows().find(r => r.id === Number(value));
@@ -1780,23 +1843,13 @@
       renderPhotoReview();
     }
 
-    // 위치 줄의 선택칸을 바꿈
-    // - 같은 상품의 다른 위치 → 그 줄만 그 위치로 (직접 선택)
-    // - 다른 상품 → 매칭이 틀린 것이므로 그 상품으로 전체 다시 배정 (이름 짝 기억 대상)
+    // 위치 선택칸을 바꿈 → 그 줄만 고른 위치로 (직접 선택)
     function onPhotoPickLine(g, l, value) {
       const group = photoReview.groups[g];
       const row = listInvRows().find(r => r.id === Number(value));
       if (!row) return;
-      if (row.name !== group.itemName) {
-        onPhotoPickProduct(g, value);
-        return;
-      }
-      group.lines[l] = { id: row.id, qty: group.lines[l].qty, kind: 'manual', open: true };
-      renderPhotoReview();
-    }
-
-    function openPhotoLine(g, l) {
-      photoReview.groups[g].lines[l].open = true;
+      if (row.name !== group.itemName) { onPhotoPickProduct(g, value); return; }
+      group.lines[l] = { id: row.id, qty: group.lines[l].qty, kind: 'manual' };
       renderPhotoReview();
     }
 
@@ -1807,13 +1860,59 @@
       setPhotoStatus('');
     }
 
-    async function confirmPhotoReview() {
+    // ----- 차감 전 최종 확인창 -----
+    // 차감할 목록 (위치순): [{ col, can, floor, id, name, qty }]
+    function photoCommitList() {
+      const byId = new Map(listInvRows().map(r => [r.id, r]));
+      const list = [];
+      photoReview.groups.forEach(group => group.lines.forEach(line => {
+        const item = byId.get(line.id);
+        if (item) list.push({ col: item.col, can: item.can, floor: item.floor, id: item.id, name: item.name, qty: line.qty });
+      }));
+      return sortShippingRows(list);
+    }
+
+    function photoConfirmHtml() {
+      const list = photoCommitList();
+      const total = list.reduce((s, r) => roundQty(s + r.qty), 0);
+      return `<div class="modal active pr-confirm-modal">
+        <div class="modal-content pr-confirm">
+          <div class="pr-confirm-title">차감 전 최종 확인</div>
+          <ul class="pr-confirm-list">
+            ${list.map(r => `<li>${escapeHtml(`${shipLocText(r)} · ${r.name} · ${fmtQty(r.qty)}박스`)}</li>`).join('')}
+          </ul>
+          <div class="pr-confirm-total">총 ${list.length}건, ${fmtQty(total)}박스를 재고에서 차감합니다.</div>
+          <div class="modal-buttons">
+            <button type="button" id="pr-confirm-ok" style="background:#0d9488;" onclick="confirmPhotoReview()">확인</button>
+            <button type="button" style="background:#999;" onclick="closePhotoConfirm()">취소</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function openPhotoConfirm() {
       if (!photoReview || photoBusy) return;
       const check = photoReviewCheck();
       if (check.unresolvedCount || check.shortageCount || check.badQtyCount || check.overCount) return updatePhotoReviewStatus();
+      photoReview.confirmOpen = true;
+      renderPhotoReview();
+    }
+
+    function closePhotoConfirm() {
+      if (!photoReview || photoBusy) return;
+      photoReview.confirmOpen = false;
+      renderPhotoReview();
+    }
+
+    // 확인창의 "확인": 이때만 실제로 차감한다
+    async function confirmPhotoReview() {
+      if (!photoReview || photoBusy) return;
+      const check = photoReviewCheck();
+      if (check.unresolvedCount || check.shortageCount || check.badQtyCount || check.overCount) {
+        photoReview.confirmOpen = false;
+        return renderPhotoReview();
+      }
       const groups = photoReview.groups;
-      const totalQty = groups.reduce((s, g) => roundQty(s + g.lines.reduce((t, l) => roundQty(t + l.qty), 0)), 0);
-      if (!confirm(`${check.lineCount}건 (합계 ${fmtQtyComma(totalQty)}박스)을 출고표에 추가할까요?`)) return;
 
       photoBusy = true;
       updatePhotoReviewStatus();
