@@ -134,7 +134,7 @@
     .ship-photo-status.err { color: #b02a37; }
     .pr-card { border: 2px solid #6f42c1; border-radius: 10px; background: #fff; padding: 14px; margin-bottom: 16px; }
     .pr-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-    .pr-row { border: 1px solid #ddd; border-left: 6px solid #198754; border-radius: 6px; padding: 12px; margin-bottom: 10px; background: #fff; }
+    .pr-row { border: 1px solid #ddd; border-left: 6px solid #bbb; border-radius: 6px; padding: 12px; margin-bottom: 10px; background: #fff; }
     .pr-row.red { border-left-color: #dc3545; background: #fff8f8; }
     .pr-top { display: flex; align-items: center; gap: 10px; }
     .pr-sheet-name { flex: 1; min-width: 0; font-weight: bold; font-size: 16px; word-break: break-all; }
@@ -148,6 +148,16 @@
     .pr-remember input { width: 22px; height: 22px; margin: 0; flex: none; }
     .pr-warn { color: #fff; background: #dc3545; border-radius: 4px; padding: 6px 10px; font-size: 14px; font-weight: bold; margin-top: 8px; }
     .pr-warn:empty { display: none; }
+    .pr-line { border: 1px solid #e3e3e3; border-left: 6px solid #198754; border-radius: 6px; padding: 10px 12px; margin-top: 8px; background: #fff; }
+    .pr-line.yellow { border-left-color: #f0ad00; background: #fffbea; }
+    .pr-line.manual { border-left-color: #0066cc; }
+    .pr-line-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 15px; }
+    .pr-line-loc { font-weight: bold; white-space: nowrap; }
+    .pr-line-name { flex: 1; min-width: 0; word-break: break-all; }
+    .pr-line-out { color: #C2410C; font-weight: bold; white-space: nowrap; }
+    .pr-line-sub { color: #666; font-size: 14px; margin-top: 4px; }
+    .pr-badge { display: inline-block; background: #f0ad00; color: #000; font-weight: bold; font-size: 12px; border-radius: 4px; padding: 2px 8px; margin-right: 6px; }
+    .pr-badge.manual { background: #0066cc; color: #fff; }
     .pr-change { margin: 8px 0 0; padding: 8px 14px; min-height: 40px; font-size: 14px; background: #fff; color: #0066cc; border: 1px solid #9bbbe0; }
     .pr-change:hover { background: #f0f6ff; }
     .pr-footer { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; }
@@ -1325,7 +1335,7 @@
     function listInvRows() {
       const rows = [];
       Object.keys(inv).forEach(col => Object.keys(inv[col]).forEach(can => Object.keys(inv[col][can]).forEach(floor => {
-        inv[col][can][floor].forEach(it => rows.push({ col, can: parseInt(can), floor: parseInt(floor), id: it.id, name: it.n, qty: it.q }));
+        inv[col][can][floor].forEach(it => rows.push({ col, can: parseInt(can), floor: parseInt(floor), id: it.id, name: it.n, qty: it.q, exp: it.e || null }));
       })));
       return rows;
     }
@@ -1477,7 +1487,7 @@
         if (items.length === 0) throw new Error('사진에서 출고 항목을 찾지 못했어요. 표가 잘 보이게 다시 찍어 주세요.');
 
         const { aliases, error: aliasError } = await loadNameAliases();
-        photoReview = { rows: items.map(it => buildPhotoRow(it, aliases)), aliasError };
+        photoReview = { groups: buildPhotoGroups(items, aliases), aliasError };
         setPhotoStatus('');
         renderPhotoReview();
       } catch (err) {
@@ -1509,59 +1519,141 @@
       return rows.filter(r => normName(r.name).length === maxLen);
     }
 
-    // 사진 한 줄 → 재고 매칭
+    // 사진 한 줄의 제품명 → 재고 상품명 결정
     // 1) 기억된 이름 짝  2) 사진 위치 안에서 "재고 상품명이 사장님 제품명에 포함"  3) 전체 재고에서 같은 방식
-    function buildPhotoRow(it, aliases) {
-      const all = listInvRows();
-      const hasLoc = !!(it.col || it.can || it.floor);
-      const atLoc = r => (!it.col || r.col === it.col) && (!it.can || r.can === it.can) && (!it.floor || r.floor === it.floor);
-      let candidates = [];
-
+    // 상품명이 하나로 정해지지 않으면 itemName = null (빨간 줄, 직접 고르기)
+    function resolveProductName(it, aliases, all) {
       const aliasName = aliases[it.name];
-      if (aliasName) {
-        const same = all.filter(r => r.name === aliasName);
-        candidates = hasLoc && same.some(atLoc) ? same.filter(atLoc) : same;
-      }
-      if (candidates.length === 0) {
-        const sheet = normName(it.name);
-        const contains = all.filter(r => normName(r.name) !== '' && sheet.includes(normName(r.name)));
-        const inLoc = hasLoc ? contains.filter(atLoc) : [];
-        candidates = longestNameOnly(inLoc.length > 0 ? inLoc : contains);
-      }
-      candidates = sortShippingRows(candidates);
+      if (aliasName && all.some(r => r.name === aliasName)) return { itemName: aliasName, nameCandidates: [] };
 
-      const auto = candidates.length === 1;
+      const sheet = normName(it.name);
+      const contains = all.filter(r => normName(r.name) !== '' && sheet.includes(normName(r.name)));
+      const loc = photoLocOf(it);
+      const inLoc = loc ? contains.filter(r => atPhotoLoc(r, loc)) : [];
+      const pool = longestNameOnly(inLoc.length > 0 && distinctNames(longestNameOnly(inLoc)).length === 1 ? inLoc : contains);
+      const names = distinctNames(pool);
+      if (names.length === 1) return { itemName: names[0], nameCandidates: [] };
+      return { itemName: null, nameCandidates: sortShippingRows(pool) };
+    }
+
+    function distinctNames(rows) {
+      return Array.from(new Set(rows.map(r => r.name)));
+    }
+
+    // 사진에 적힌 위치 (하나도 없으면 null)
+    function photoLocOf(it) {
+      return (it.col || it.can || it.floor) ? { col: it.col || null, can: it.can || null, floor: it.floor || null } : null;
+    }
+    function atPhotoLoc(r, loc) {
+      return (!loc.col || r.col === loc.col) && (!loc.can || r.can === loc.can) && (!loc.floor || r.floor === loc.floor);
+    }
+
+    // 자동 배정 순서: 유통기한 빠른 곳 → (같거나 없으면) 수량 적은 곳 → 위치순
+    function allocOrder(a, b) {
+      const ea = a.exp || '9999-99-99', eb = b.exp || '9999-99-99';
+      if (ea !== eb) return ea < eb ? -1 : 1;
+      if (a.avail !== b.avail) return a.avail - b.avail;
+      return sortShippingRows([a, b])[0] === a ? -1 : 1;
+    }
+
+    // 상품 하나를 qty 만큼 재고 위치에 배정한다.
+    // used: 다른 줄들이 이미 가져간 수량 { 재고id → 수량 } (같은 상품이 여러 줄에 있을 때 겹치지 않게)
+    // 결과 lines: [{ id, qty, kind }]  kind = 'green'(사진 위치 / 한 곳뿐) | 'yellow'(자동 배정)
+    function allocateProduct(itemName, qty, prefLoc, used) {
+      const rows = listInvRows()
+        .filter(r => r.name === itemName)
+        .map(r => ({ ...r, avail: roundQty(r.qty - (used.get(r.id) || 0)) }))
+        .filter(r => r.avail > 0);
+      const pref = prefLoc ? rows.filter(r => atPhotoLoc(r, prefLoc)).sort(allocOrder) : [];
+      const rest = rows.filter(r => !pref.includes(r)).sort(allocOrder);
+      const onlyOnePlace = !prefLoc && rows.length === 1;
+
+      const lines = [];
+      let remaining = qty;
+      [...pref, ...rest].forEach(r => {
+        if (remaining <= 0) return;
+        const take = roundQty(Math.min(r.avail, remaining));
+        remaining = roundQty(remaining - take);
+        lines.push({ id: r.id, qty: take, kind: (pref.includes(r) || onlyOnePlace) ? 'green' : 'yellow' });
+      });
+      return { lines, shortage: roundQty(Math.max(0, remaining)) };
+    }
+
+    function addUsed(used, lines) {
+      lines.forEach(l => used.set(l.id, roundQty((used.get(l.id) || 0) + l.qty)));
+    }
+
+    // 사진 한 줄(사장님 표의 한 행) = 그룹 하나. 배정 결과에 따라 위치별 줄(lines)로 나뉜다.
+    function buildPhotoGroups(items, aliases) {
+      const all = listInvRows();
+      const used = new Map();
+      return items.map(it => {
+        const { itemName, nameCandidates } = resolveProductName(it, aliases, all);
+        const group = {
+          sheetName: it.name,
+          sheetLoc: photoLocOf(it),
+          prefLoc: photoLocOf(it), // 배정할 때 먼저 쓰는 위치 (직접 고르면 그 위치로 바뀜)
+          qtyText: String(roundQty(it.qty)),
+          itemName,
+          nameCandidates,
+          namePicked: false, // 상품을 직접 골랐는지 (이름 짝 기억 대상)
+          remember: true,
+          lines: [],
+          shortage: 0
+        };
+        allocateGroup(group, used);
+        addUsed(used, group.lines);
+        return group;
+      });
+    }
+
+    function allocateGroup(group, used) {
+      const qty = parseQtyValue(group.qtyText);
+      if (!group.itemName || qty === null) { group.lines = []; group.shortage = 0; return; }
+      const { lines, shortage } = allocateProduct(group.itemName, qty, group.prefLoc, used);
+      group.lines = lines;
+      group.shortage = shortage;
+    }
+
+    // 그룹 하나만 다시 배정 (다른 그룹이 가져간 수량은 빼고)
+    function reallocateGroup(g) {
+      const used = new Map();
+      photoReview.groups.forEach((other, k) => { if (k !== g) addUsed(used, other.lines); });
+      allocateGroup(photoReview.groups[g], used);
+    }
+
+    // 확인 화면 검사
+    //  - unresolved: 상품을 못 정한 줄 (빨강, 직접 고르기)
+    //  - shortage: 모든 위치를 합쳐도 재고 부족 (빨강)
+    //  - badQty: 박스 수가 비었거나 0 이하
+    //  - over: 위치를 직접 바꿔서 한 위치에서 재고보다 많이 빼게 된 줄
+    function photoReviewCheck() {
+      const byId = new Map(listInvRows().map(r => [r.id, r]));
+      const totals = new Map();
+      photoReview.groups.forEach(g => addUsed(totals, g.lines));
+      const groups = photoReview.groups.map(g => ({
+        badQty: parseQtyValue(g.qtyText) === null,
+        unresolved: !g.itemName,
+        shortage: g.shortage,
+        lines: g.lines.map(l => {
+          const item = byId.get(l.id) || null;
+          const total = totals.get(l.id) || 0;
+          return { item, total, over: !item || total > item.qty };
+        })
+      }));
+      const lineCount = photoReview.groups.reduce((n, g) => n + g.lines.length, 0);
       return {
-        sheetName: it.name,
-        sheetLoc: hasLoc ? it : null,
-        qtyText: String(roundQty(it.qty)),
-        candidateIds: candidates.map(r => r.id),
-        matchId: auto ? candidates[0].id : null,
-        auto,          // 자동 매칭된 줄 (초록)
-        remember: true // 직접 고른 줄: 다음부터 자동으로 맞추기
+        groups,
+        lineCount,
+        unresolvedCount: groups.filter(x => x.unresolved).length,
+        shortageCount: groups.filter(x => x.shortage > 0).length,
+        badQtyCount: groups.filter(x => x.badQty && !x.unresolved).length,
+        overCount: groups.reduce((n, x) => n + x.lines.filter(l => l.over).length, 0)
       };
     }
 
-    // 확인 화면 검사: 빨간 줄 / 잘못된 수량 / 재고 부족
-    function photoReviewCheck() {
-      const byId = new Map(listInvRows().map(r => [r.id, r]));
-      const info = photoReview.rows.map(row => ({
-        item: row.matchId == null ? null : (byId.get(row.matchId) || null),
-        qty: parseQtyValue(row.qtyText)
-      }));
-      // 같은 재고 상품이 여러 줄에 매칭될 수 있으니 상품별 합계로 비교
-      const totals = new Map();
-      info.forEach(x => { if (x.item && x.qty !== null) totals.set(x.item.id, roundQty((totals.get(x.item.id) || 0) + x.qty)); });
-      info.forEach(x => {
-        x.total = x.item ? (totals.get(x.item.id) || 0) : 0;
-        x.over = !!x.item && x.qty !== null && x.total > x.item.qty;
-      });
-      return {
-        info,
-        redCount: info.filter(x => !x.item).length,
-        badQtyCount: info.filter(x => x.qty === null).length,
-        overCount: info.filter(x => x.over).length
-      };
+    function photoLocText(loc) {
+      return [loc.col && loc.col + '열', loc.can && loc.can + '칸', loc.floor && loc.floor + '층'].filter(Boolean).join(' ');
     }
 
     function renderPhotoReview() {
@@ -1570,46 +1662,71 @@
 
       const all = sortShippingRows(listInvRows());
       const byId = new Map(all.map(r => [r.id, r]));
-      const optText = r => escapeHtml(`${shipLocText(r)} · ${r.name} · 재고 ${fmtQty(r.qty)}개`);
+      const optText = r => escapeHtml(`${shipLocText(r)} · ${r.name} · 재고 ${fmtQty(r.qty)}개${r.exp ? ' · 유통 ' + r.exp : ''}`);
+      // 선택칸: 같은 상품의 다른 위치를 먼저, 그 아래 전체 재고
+      const selectHtml = (onchange, selectedId, firstRows, firstLabel, placeholder) => {
+        let done = false;
+        const opt = r => {
+          const sel = !done && r.id === selectedId;
+          if (sel) done = true;
+          return `<option value="${r.id}"${sel ? ' selected' : ''}>${optText(r)}</option>`;
+        };
+        return `<select class="pr-select" onchange="${onchange}">
+          ${placeholder ? `<option value="">${placeholder}</option>` : ''}
+          ${firstRows.length > 0 ? `<optgroup label="${firstLabel}">${firstRows.map(opt).join('')}</optgroup>` : ''}
+          <optgroup label="전체 재고">${all.map(opt).join('')}</optgroup>
+        </select>`;
+      };
 
-      let html = `<div class="pr-card"><div class="pr-title">📷 사진에서 읽은 출고 목록 (${photoReview.rows.length}건)</div>`;
+      let html = `<div class="pr-card"><div class="pr-title">📷 사진에서 읽은 출고 목록 (${photoReview.groups.length}건)</div>`;
       if (photoReview.aliasError) {
         html += `<div class="pr-need" style="margin:0 0 10px;">이름 짝 기억 테이블(name_alias)을 읽지 못했어요. supabase_update_name_alias.sql 을 실행해 주세요.</div>`;
       }
-      photoReview.rows.forEach((row, i) => {
-        const item = row.matchId == null ? null : (byId.get(row.matchId) || null);
-        const sheetLoc = row.sheetLoc ? ` <span class="ship-date">(사진 위치: ${[row.sheetLoc.col && row.sheetLoc.col + '열', row.sheetLoc.can && row.sheetLoc.can + '칸', row.sheetLoc.floor && row.sheetLoc.floor + '층'].filter(Boolean).join(' ')})</span>` : '';
-        html += `<div class="pr-row${item ? '' : ' red'}">
+      photoReview.groups.forEach((group, g) => {
+        const red = !group.itemName || group.shortage > 0;
+        const sheetLoc = group.sheetLoc ? ` <span class="ship-date">(사진 위치: ${photoLocText(group.sheetLoc)})</span>` : '';
+        html += `<div class="pr-row${red ? ' red' : ''}">
           <div class="pr-top">
-            <span class="pr-sheet-name">${escapeHtml(row.sheetName)}${sheetLoc}</span>
-            <input type="number" class="pr-qty" inputmode="decimal" min="0.01" step="0.01" value="${escapeHtml(row.qtyText)}" oninput="onPhotoQtyInput(${i}, this.value)">
+            <span class="pr-sheet-name">${escapeHtml(group.sheetName)}${sheetLoc}</span>
+            <input type="text" class="pr-qty" id="pr-qty-${g}" inputmode="decimal" autocomplete="off" value="${escapeHtml(group.qtyText)}" oninput="onPhotoQtyInput(${g}, this.value)">
             <span class="pr-unit">박스</span>
           </div>`;
-        if (item) {
-          html += `<div class="pr-match">→ ${shipLocHtml(item)} · <b>${escapeHtml(item.name)}</b> · <span class="ship-sr-stock">재고 ${fmtQty(item.qty)}개</span></div>`;
+
+        if (!group.itemName) {
+          const n = distinctNames(group.nameCandidates).length;
+          html += `<div class="pr-need">${n > 1 ? `비슷한 상품이 ${n}가지 있어요. 하나를 골라주세요` : '재고에서 못 찾았어요. 직접 골라주세요'}</div>`;
+          html += selectHtml(`onPhotoPickProduct(${g}, this.value)`, null, group.nameCandidates, '후보', '-- 재고에서 고르기 --');
         }
-        if (row.auto) {
-          html += `<button type="button" class="pr-change" onclick="unlockPhotoRow(${i})">다른 상품으로 바꾸기</button>`;
-        } else {
-          if (!item) {
-            const n = row.candidateIds.length;
-            html += `<div class="pr-need">${n > 1 ? `재고 ${n}곳에 있어요. 하나를 골라주세요` : '재고에서 못 찾았어요. 직접 골라주세요'}</div>`;
+
+        group.lines.forEach((line, l) => {
+          const item = byId.get(line.id);
+          if (!item) return;
+          const sameProduct = all.filter(r => r.name === group.itemName && r.id !== line.id);
+          html += `<div class="pr-line ${line.kind}">
+            <div class="pr-line-top">
+              <span class="pr-line-loc">${shipLocHtml(item)}</span>
+              <b class="pr-line-name">${escapeHtml(item.name)}</b>
+              <span class="pr-line-out">${fmtQty(line.qty)}개 출고</span>
+            </div>
+            <div class="pr-line-sub">
+              ${line.kind === 'yellow' ? '<span class="pr-badge">자동 배정</span>' : ''}${line.kind === 'manual' ? '<span class="pr-badge manual">직접 선택</span>' : ''}
+              재고 ${fmtQty(item.qty)}개${item.exp ? ` · 유통기한 ${escapeHtml(item.exp)}` : ''}
+            </div>`;
+          if (line.kind === 'yellow' || line.open) {
+            html += selectHtml(`onPhotoPickLine(${g}, ${l}, this.value)`, line.id, [item, ...sameProduct], '같은 상품 위치');
+          } else {
+            html += `<button type="button" class="pr-change" onclick="openPhotoLine(${g}, ${l})">다른 위치로 바꾸기</button>`;
           }
-          let selectedDone = false;
-          const opt = r => {
-            const sel = !selectedDone && r.id === row.matchId;
-            if (sel) selectedDone = true;
-            return `<option value="${r.id}"${sel ? ' selected' : ''}>${optText(r)}</option>`;
-          };
-          const cands = row.candidateIds.map(id => byId.get(id)).filter(Boolean);
-          html += `<select class="pr-select" onchange="onPhotoPick(${i}, this.value)">
-            <option value="">-- 재고에서 고르기 --</option>
-            ${cands.length > 0 ? `<optgroup label="후보">${cands.map(opt).join('')}</optgroup>` : ''}
-            <optgroup label="전체 재고">${all.map(opt).join('')}</optgroup>
-          </select>
-          <label class="pr-remember"><input type="checkbox"${row.remember ? ' checked' : ''} onchange="photoReview.rows[${i}].remember = this.checked"> 다음부터 이 이름은 자동으로 맞추기</label>`;
+          html += `<div class="pr-warn" id="pr-warn-${g}-${l}"></div></div>`;
+        });
+
+        if (group.shortage > 0) {
+          html += `<div class="pr-warn">재고 부족 (부족 수량 ${fmtQty(group.shortage)})</div>`;
         }
-        html += `<div class="pr-warn" id="pr-warn-${i}"></div></div>`;
+        if (group.namePicked) {
+          html += `<label class="pr-remember"><input type="checkbox"${group.remember ? ' checked' : ''} onchange="photoReview.groups[${g}].remember = this.checked"> 다음부터 이 이름은 자동으로 맞추기</label>`;
+        }
+        html += `<div class="pr-warn" id="pr-qtywarn-${g}"></div></div>`;
       });
       html += `<div class="pr-footer">
           <div class="pr-block-msg" id="pr-block-msg"></div>
@@ -1620,41 +1737,66 @@
       updatePhotoReviewStatus();
     }
 
-    // 전체를 다시 그리지 않고 경고 문구/버튼 상태만 갱신 (수량 입력 중 포커스 유지)
+    // 경고 문구 / 추가 버튼 상태 갱신 (노란 줄은 막지 않음)
     function updatePhotoReviewStatus() {
       if (!photoReview) return;
-      const { info, redCount, badQtyCount, overCount } = photoReviewCheck();
-      info.forEach((x, i) => {
-        const el = document.getElementById('pr-warn-' + i);
-        if (!el) return;
-        if (x.qty === null) el.textContent = '⚠ 박스 수를 0보다 큰 숫자로 입력해 주세요';
-        else if (x.over) el.textContent = x.total > x.qty
-          ? `⚠ 재고 부족: 같은 상품 합계 ${fmtQty(x.total)}개 > 재고 ${fmtQty(x.item.qty)}개`
-          : `⚠ 재고 부족: 재고 ${fmtQty(x.item.qty)}개보다 많아요`;
-        else el.textContent = '';
+      const check = photoReviewCheck();
+      check.groups.forEach((x, g) => {
+        const qw = document.getElementById('pr-qtywarn-' + g);
+        if (qw) qw.textContent = x.badQty && !x.unresolved ? '⚠ 박스 수를 0보다 큰 숫자로 입력해 주세요' : '';
+        x.lines.forEach((lx, l) => {
+          const el = document.getElementById(`pr-warn-${g}-${l}`);
+          if (el) el.textContent = lx.over && lx.item ? `⚠ 이 위치 재고(${fmtQty(lx.item.qty)}개)보다 많이 빼게 돼요 (합계 ${fmtQty(lx.total)}개)` : '';
+        });
       });
       let msg = '';
-      if (redCount > 0) msg = `빨간 항목 ${redCount}건 먼저 골라주세요`;
-      else if (badQtyCount > 0) msg = `박스 수가 비었거나 0 이하인 항목 ${badQtyCount}건을 고쳐주세요`;
-      else if (overCount > 0) msg = `재고보다 많은 항목 ${overCount}건의 박스 수를 고쳐주세요`;
+      if (check.unresolvedCount > 0) msg = `빨간 항목 ${check.unresolvedCount}건 먼저 골라주세요`;
+      else if (check.shortageCount > 0) msg = `재고 부족 항목 ${check.shortageCount}건: 박스 수를 줄이거나 재고를 확인해 주세요`;
+      else if (check.badQtyCount > 0) msg = `박스 수가 비었거나 0 이하인 항목 ${check.badQtyCount}건을 고쳐주세요`;
+      else if (check.overCount > 0) msg = `재고보다 많이 빼는 위치 ${check.overCount}곳을 고쳐주세요`;
       document.getElementById('pr-block-msg').textContent = msg;
       const btn = document.getElementById('pr-add-btn');
       btn.disabled = !!msg || photoBusy;
-      btn.textContent = photoBusy ? '⏳ 추가 중...' : `✅ 전체 출고표에 추가 (${photoReview.rows.length}건)`;
+      btn.textContent = photoBusy ? '⏳ 추가 중...' : `✅ 전체 출고표에 추가 (${check.lineCount}건)`;
     }
 
-    function onPhotoQtyInput(i, value) {
-      photoReview.rows[i].qtyText = value;
-      updatePhotoReviewStatus();
+    // 박스 수를 바꾸면 그 줄을 다시 배정하고, 입력칸 포커스는 유지
+    function onPhotoQtyInput(g, value) {
+      photoReview.groups[g].qtyText = value;
+      reallocateGroup(g);
+      renderPhotoReview();
+      const input = document.getElementById('pr-qty-' + g);
+      if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
     }
 
-    function onPhotoPick(i, value) {
-      photoReview.rows[i].matchId = value === '' ? null : Number(value);
+    // 빨간 줄(상품을 못 정함)에서 재고를 고름 → 그 상품으로, 고른 위치를 먼저 쓰도록 배정
+    function onPhotoPickProduct(g, value) {
+      const group = photoReview.groups[g];
+      const row = value === '' ? null : listInvRows().find(r => r.id === Number(value));
+      group.itemName = row ? row.name : null;
+      group.prefLoc = row ? { col: row.col, can: row.can, floor: row.floor } : group.sheetLoc;
+      group.namePicked = !!row;
+      reallocateGroup(g);
       renderPhotoReview();
     }
 
-    function unlockPhotoRow(i) {
-      photoReview.rows[i].auto = false;
+    // 위치 줄의 선택칸을 바꿈
+    // - 같은 상품의 다른 위치 → 그 줄만 그 위치로 (직접 선택)
+    // - 다른 상품 → 매칭이 틀린 것이므로 그 상품으로 전체 다시 배정 (이름 짝 기억 대상)
+    function onPhotoPickLine(g, l, value) {
+      const group = photoReview.groups[g];
+      const row = listInvRows().find(r => r.id === Number(value));
+      if (!row) return;
+      if (row.name !== group.itemName) {
+        onPhotoPickProduct(g, value);
+        return;
+      }
+      group.lines[l] = { id: row.id, qty: group.lines[l].qty, kind: 'manual', open: true };
+      renderPhotoReview();
+    }
+
+    function openPhotoLine(g, l) {
+      photoReview.groups[g].lines[l].open = true;
       renderPhotoReview();
     }
 
@@ -1667,20 +1809,18 @@
 
     async function confirmPhotoReview() {
       if (!photoReview || photoBusy) return;
-      const { info, redCount, badQtyCount, overCount } = photoReviewCheck();
-      if (redCount || badQtyCount || overCount) return updatePhotoReviewStatus();
-      const rows = photoReview.rows;
-      const totalQty = info.reduce((s, x) => roundQty(s + x.qty), 0);
-      if (!confirm(`${rows.length}건 (합계 ${fmtQtyComma(totalQty)}박스)을 출고표에 추가할까요?`)) return;
+      const check = photoReviewCheck();
+      if (check.unresolvedCount || check.shortageCount || check.badQtyCount || check.overCount) return updatePhotoReviewStatus();
+      const groups = photoReview.groups;
+      const totalQty = groups.reduce((s, g) => roundQty(s + g.lines.reduce((t, l) => roundQty(t + l.qty), 0)), 0);
+      if (!confirm(`${check.lineCount}건 (합계 ${fmtQtyComma(totalQty)}박스)을 출고표에 추가할까요?`)) return;
 
       photoBusy = true;
       updatePhotoReviewStatus();
       try {
         // 1) 직접 고른 이름 짝 저장 (재고 소진으로 상품이 삭제되기 전에 이름을 기록)
         const aliasMap = new Map();
-        rows.forEach((row, k) => {
-          if (!row.auto && row.remember && info[k].item) aliasMap.set(row.sheetName, info[k].item.name);
-        });
+        groups.forEach(g => { if (g.namePicked && g.remember && g.itemName) aliasMap.set(g.sheetName, g.itemName); });
         let aliasErr = null;
         if (aliasMap.size > 0) {
           const aliasRows = Array.from(aliasMap, ([sheet_name, item_name]) => ({ sheet_name, item_name }));
@@ -1689,20 +1829,23 @@
           aliasErr = error;
         }
 
-        // 2) 줄마다 기존 "출고표입력"과 같은 함수로 처리
+        // 2) 위치 줄마다 기존 "출고표입력"과 같은 함수로 처리
         //    (출고표 기록 → 재고 차감, 0이면 삭제 → '출고' 로그)
         let okCount = 0;
         const fails = [];
-        for (let k = 0; k < rows.length; k++) {
-          const name = rows[k].sheetName;
-          const found = findInvItemById(info[k].item.id); // 앞 줄 처리로 재고가 바뀌었을 수 있어 매번 새로 찾는다
-          if (!found) { fails.push(`${name}: 재고에서 상품이 사라졌어요`); continue; }
-          if (info[k].qty > found.item.q) { fails.push(`${name}: 재고 부족 (현재 ${fmtQty(found.item.q)}개)`); continue; }
-          const result = await addToShippingSheet(found.item, info[k].qty, found);
-          if (result.shipErr) { fails.push(`${name}: 출고표 기록 실패`); continue; }
-          if (result.error) { fails.push(`${name}: 출고표엔 기록됐지만 재고 차감 실패 (${result.error.message})`); continue; }
-          if (result.logErr) fails.push(`${name}: 로그 저장 실패 (출고표·재고는 반영됨)`);
-          okCount++;
+        for (const group of groups) {
+          for (const line of group.lines) {
+            const name = group.sheetName;
+            const found = findInvItemById(line.id); // 앞 줄 처리로 재고가 바뀌었을 수 있어 매번 새로 찾는다
+            if (!found) { fails.push(`${name}: 재고에서 상품이 사라졌어요`); continue; }
+            const where = shipLocText(found);
+            if (line.qty > found.item.q) { fails.push(`${name} (${where}): 재고 부족 (현재 ${fmtQty(found.item.q)}개)`); continue; }
+            const result = await addToShippingSheet(found.item, line.qty, found);
+            if (result.shipErr) { fails.push(`${name} (${where}): 출고표 기록 실패`); continue; }
+            if (result.error) { fails.push(`${name} (${where}): 출고표엔 기록됐지만 재고 차감 실패 (${result.error.message})`); continue; }
+            if (result.logErr) fails.push(`${name} (${where}): 로그 저장 실패 (출고표·재고는 반영됨)`);
+            okCount++;
+          }
         }
 
         photoReview = null;
