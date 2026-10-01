@@ -104,7 +104,7 @@
     /* ===== 출고표 ===== */
     .ship-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
     .ship-row { display: flex; align-items: center; gap: 10px; background: #f9f9f9; border: 1px solid #e3e3e3; border-left: 4px solid #0066cc; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
-    .ship-loc { min-width: 92px; font-weight: bold; font-size: 16px; white-space: nowrap; }
+    .ship-loc { min-width: 128px; font-weight: bold; font-size: 16px; white-space: nowrap; }
     .ship-name { flex: 1; min-width: 0; font-weight: bold; color: #000; font-size: 16px; word-break: break-all; }
     .ship-qty { color: #C2410C; font-weight: bold; font-size: 16px; white-space: nowrap; }
     .ship-date { color: #666; font-size: 13px; white-space: nowrap; }
@@ -142,7 +142,7 @@
       .modal-buttons.quad { gap: 4px; }
       .modal-buttons.quad button { padding: 13px 1px; font-size: 13px; }
       .ship-row { flex-wrap: wrap; gap: 6px 10px; }
-      .ship-loc { min-width: 82px; font-size: 15px; }
+      .ship-loc { min-width: 112px; font-size: 15px; }
       .ship-name { font-size: 15px; }
       .ship-qty { font-size: 15px; }
       .ship-del { padding: 8px 14px; font-size: 14px; }
@@ -1216,6 +1216,15 @@
       renderLogs();
     }
 
+    // 출고표 위치 표시: "B열 1칸 1층" 형식 (층 색상은 기존 1/2/3층 색을 그대로 사용)
+    function shipLocHtml(r) {
+      const fc = getFloorColor(r.floor);
+      return `<span class="log-loc-col">${r.col}</span>열 <span class="log-loc-can">${r.can}</span>칸 <span style="color:${fc};">${r.floor}</span>층`;
+    }
+    function shipLocText(r) {
+      return `${r.col}열 ${r.can}칸 ${r.floor}층`;
+    }
+
     function renderShippingSheet() {
       if (shippingSheetError) {
         document.getElementById('ship-content').innerHTML =
@@ -1236,7 +1245,7 @@
         rows.forEach(r => {
           const fc = getFloorColor(r.floor);
           html += `<div class="ship-row" style="border-left-color:${fc};">
-            <span class="ship-loc"><span class="log-loc-col">${r.col}</span><span style="color:#999;">-</span><span class="log-loc-can">${r.can}</span><span style="color:#999;">-</span><span style="color:${fc};">${r.floor}</span></span>
+            <span class="ship-loc">${shipLocHtml(r)}</span>
             <span class="ship-name">${r.name}</span>
             <span class="ship-qty">${fmtQty(r.qty)}개</span>
             <span class="ship-date">${r.date || ''}</span>
@@ -1282,7 +1291,7 @@
     async function cancelShipRow(id) {
       const row = shippingSheet.find(r => r.id === id);
       if (!row) return;
-      const loc = `${row.col}-${row.can}-${row.floor}`;
+      const loc = shipLocText(row);
       if (!confirm(`재고 ${fmtQty(row.qty)}개가 원래 위치(${loc})로 복구됩니다. 취소할까요?`)) return;
 
       const { error } = await restoreStockFromShipRow(row);
@@ -1344,11 +1353,11 @@
       // 화면에 보이는 정렬 순서(열 → 칸 → 층) 그대로 내보낸다
       const rows = [['위치', '상품명', '수량', '날짜']];
       sortShippingRows(shippingSheet).forEach(r => {
-        rows.push([`${r.col}-${r.can}-${r.floor}`, r.name, roundQty(r.qty), r.date || '']);
+        rows.push([shipLocText(r), r.name, roundQty(r.qty), r.date || '']);
       });
       const ws = XLSX.utils.aoa_to_sheet(rows);
       applyQtyFormat(ws, 'C', rows.length);
-      ws['!cols'] = [{ wch: 12 }, { wch: 24 }, { wch: 10 }, { wch: 14 }];
+      ws['!cols'] = [{ wch: 16 }, { wch: 24 }, { wch: 10 }, { wch: 14 }];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, '출고표');
       XLSX.writeFile(wb, `출고표_${getTodayDate()}.xlsx`);
