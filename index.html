@@ -243,7 +243,8 @@
         </div>
         <div class="ship-toolbar">
           <button onclick="downloadShippingExcel()" style="margin:0;">📊 엑셀 다운로드</button>
-          <button onclick="clearShippingSheet()" style="margin:0; background:#dc3545;">🗑 출고표 비우기</button>
+          <button onclick="completeShipping()" style="margin:0; background:#198754;">✅ 출고 완료</button>
+          <button onclick="cancelAllShipping()" style="margin:0; background:#dc3545;">↩️ 전체 취소</button>
         </div>
         <div id="ship-content"></div>
       </div>
@@ -1176,6 +1177,10 @@
               icon = '🔀';
               color = '#6f42c1';
               lineHtml = `${icon} 이동: <span class="log-loc-col">${log.fromCol}</span>열 <span class="log-loc-can">${log.fromCan}</span>칸 <span class="log-loc-floor">${log.fromFloor}</span>층 → <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span>`;
+            } else if (log.type === '출고취소') {
+              icon = '↩️';
+              color = '#0ea5e9';
+              lineHtml = `${icon} 출고취소: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span>`;
             } else {
               icon = log.type === '입고' ? '📥' : '📤';
               color = log.type === '입고' ? '#28a745' : '#ffc107';
@@ -1235,31 +1240,104 @@
             <span class="ship-name">${r.name}</span>
             <span class="ship-qty">${fmtQty(r.qty)}개</span>
             <span class="ship-date">${r.date || ''}</span>
-            <button class="ship-del" onclick="deleteShipRow(${r.id})">삭제</button>
+            <button class="ship-del" onclick="cancelShipRow(${r.id})">취소</button>
           </div>`;
         });
       }
       document.getElementById('ship-content').innerHTML = html;
     }
 
-    async function deleteShipRow(id) {
-      if (!confirm('이 출고표 항목을 삭제할까요?\n(재고는 다시 늘어나지 않고 출고표 기록만 지워집니다)')) return;
-      const { error } = await sb.from('shipping_sheet').delete().eq('id', id);
-      logSb('delete', 'shipping_sheet', error, { id });
-      if (error) return alert('삭제 오류: ' + error.message);
-      await loadShippingSheet();
-      renderShippingSheet();
+    // 출고표 한 건을 재고로 되돌린다.
+    // - 같은 위치(열/칸/층)에 같은 상품명이 있으면 그 상품 수량에 더한다.
+    // - 출고로 재고가 0이 돼서 상품이 삭제됐던 경우엔 그 위치에 새로 만든다 (입고일: 오늘).
+    // - 되돌릴 때마다 inventory_logs에 '출고취소' 로그를 남긴다.
+    async function restoreStockFromShipRow(row) {
+      await loadInventory(); // 항상 최신 재고 상태를 기준으로 합칠지/새로 만들지 판단한다
+      const { col, can, floor, name } = row;
+      const qty = roundQty(row.qty);
+      const destItems = (inv[col] && inv[col][can] && inv[col][can][floor]) || [];
+      const existing = destItems.find(it => it.n === name);
+
+      if (existing) {
+        const newQty = roundQty(existing.q + qty);
+        const { error } = await sb.from('inventory_items').update({ qty: newQty }).eq('id', existing.id);
+        logSb('update', 'inventory_items', error, { id: existing.id, qty: newQty });
+        if (error) return { error };
+      } else {
+        const insertPayload = { col, can, floor, name, qty, in_date: getTodayDate(), exp_date: null };
+        const { error } = await sb.from('inventory_items').insert(insertPayload);
+        logSb('insert', 'inventory_items', error, insertPayload);
+        if (error) return { error };
+      }
+
+      const logPayload = { type: '출고취소', col, can, floor, name, qty, date: getTodayDate() };
+      const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
+      logSb('insert', 'inventory_logs', logErr, logPayload);
+      if (logErr) console.error('[Supabase] 출고취소 로그 저장 실패:', logErr);
+
+      return { error: null };
     }
 
-    async function clearShippingSheet() {
-      if (shippingSheet.length === 0) return alert('출고표가 이미 비어 있습니다');
-      if (!confirm(`출고표 ${shippingSheet.length}건을 모두 지울까요?\n(재고는 다시 늘어나지 않고 출고표 기록만 지워집니다)`)) return;
+    // 출고표 행 하나를 취소(= 재고 원복) 하고 그 행을 출고표에서 지운다.
+    async function cancelShipRow(id) {
+      const row = shippingSheet.find(r => r.id === id);
+      if (!row) return;
+      const loc = `${row.col}-${row.can}-${row.floor}`;
+      if (!confirm(`재고 ${fmtQty(row.qty)}개가 원래 위치(${loc})로 복구됩니다. 취소할까요?`)) return;
+
+      const { error } = await restoreStockFromShipRow(row);
+      if (error) { console.error('[Supabase] 출고 취소(재고 복구) 실패:', error); return alert('재고 복구 오류: ' + error.message); }
+
+      const { error: delErr } = await sb.from('shipping_sheet').delete().eq('id', id);
+      logSb('delete', 'shipping_sheet', delErr, { id });
+
+      await loadInventory();
+      await loadLogs();
+      await loadShippingSheet();
+      render();
+      renderLogs();
+      renderShippingSheet();
+
+      if (delErr) { console.error('[Supabase] 출고표 행 삭제 실패:', delErr); return alert('재고는 복구됐지만 출고표 행 삭제에 실패했습니다: ' + delErr.message); }
+      alert('출고가 취소되어 재고가 복구되었습니다!');
+    }
+
+    // "출고 완료": 재고는 그대로 두고 출고표 기록만 전부 삭제 (실제로 물건이 나간 뒤 정리용)
+    async function completeShipping() {
+      if (shippingSheet.length === 0) return alert('출고표가 비어 있습니다');
+      if (!confirm(`출고표 ${shippingSheet.length}건을 출고 완료 처리할까요?\n(재고는 그대로 두고 출고표 기록만 삭제됩니다)`)) return;
       const { error } = await sb.from('shipping_sheet').delete().gte('id', 0);
-      logSb('delete', 'shipping_sheet', error, '전체');
+      logSb('delete', 'shipping_sheet', error, '전체(출고완료)');
       if (error) return alert('삭제 오류: ' + error.message);
       await loadShippingSheet();
       renderShippingSheet();
-      alert('출고표를 비웠습니다!');
+      alert('출고 완료 처리되었습니다!');
+    }
+
+    // "전체 취소": 출고표 모든 행을 재고로 되돌린 뒤(행마다 '출고취소' 로그 기록) 출고표를 비운다
+    async function cancelAllShipping() {
+      if (shippingSheet.length === 0) return alert('출고표가 비어 있습니다');
+      const rows = sortShippingRows(shippingSheet);
+      const total = rows.reduce((sum, r) => roundQty(sum + Number(r.qty)), 0);
+      if (!confirm(`출고표 ${rows.length}건(합계 ${fmtQtyComma(total)}개)을 전체 취소할까요?\n각 상품이 원래 위치로 복구되고, 출고표 기록은 모두 삭제됩니다.`)) return;
+
+      let failCount = 0;
+      for (const row of rows) {
+        const { error } = await restoreStockFromShipRow(row);
+        if (error) { failCount++; console.error('[Supabase] 전체 취소 중 재고 복구 실패:', row, error); continue; }
+        const { error: delErr } = await sb.from('shipping_sheet').delete().eq('id', row.id);
+        if (delErr) { failCount++; console.error('[Supabase] 전체 취소 중 출고표 행 삭제 실패:', row, delErr); }
+      }
+
+      await loadInventory();
+      await loadLogs();
+      await loadShippingSheet();
+      render();
+      renderLogs();
+      renderShippingSheet();
+
+      if (failCount > 0) alert(`일부 항목(${failCount}건) 처리에 실패했습니다. 콘솔(F12)에서 확인해주세요.`);
+      else alert('전체 취소되었습니다! 재고가 모두 복구되었습니다.');
     }
 
     function downloadShippingExcel() {
