@@ -36,7 +36,7 @@
     .fl-name { font-weight: 600; color: #222; font-size: 17px; word-break: break-all; }
     .fl-date { font-weight: 400; color: #888; font-size: 14px; }
     .fl-exp { font-weight: 400; color: #fd7e14; font-size: 12px; margin-top: 2px; }
-    .fl-qty { min-width: 55px; text-align: right; font-weight: bold; color: #e03131; font-size: 17px; }
+    .fl-qty { min-width: 74px; text-align: right; font-weight: bold; color: #e03131; font-size: 17px; }
     .fl-empty { color: #888; font-weight: 400; }
 
     .card { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; }
@@ -78,6 +78,8 @@
     .modal-label { font-size: 16px; font-weight: bold; margin-bottom: 8px; display: block; margin-top: 15px; }
     .modal-buttons { display: flex; gap: 10px; margin-top: 12px; }
     .modal-buttons button { flex: 1; margin: 0; }
+    .modal-buttons.quad { gap: 6px; }
+    .modal-buttons.quad button { flex: 1 1 0; min-width: 0; padding: 13px 2px; font-size: 14px; white-space: nowrap; }
     .divider { border-top: 2px solid #ddd; margin: 20px 0; }
     .log-entry { background: #f9f9f9; padding: 12px; margin: 10px 0; border-left: 4px solid #0066cc; border-radius: 4px; }
     .log-first-line { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
@@ -99,6 +101,16 @@
     .log-item-name { font-weight: bold; color: #000; }
     .log-qty { color: #C2410C; font-weight: bold; }
 
+    /* ===== 출고표 ===== */
+    .ship-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .ship-row { display: flex; align-items: center; gap: 10px; background: #f9f9f9; border: 1px solid #e3e3e3; border-left: 4px solid #0066cc; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
+    .ship-loc { min-width: 92px; font-weight: bold; font-size: 16px; white-space: nowrap; }
+    .ship-name { flex: 1; min-width: 0; font-weight: bold; color: #000; font-size: 16px; word-break: break-all; }
+    .ship-qty { color: #C2410C; font-weight: bold; font-size: 16px; white-space: nowrap; }
+    .ship-date { color: #666; font-size: 13px; white-space: nowrap; }
+    .ship-del { background: #dc3545; padding: 6px 12px; margin: 0; flex: none; font-size: 13px; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
+    .ship-del:hover { background: #c82333; }
+
     .search-result-item { background: white; padding: 16px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 10px; font-size: 16px; line-height: 1.5; cursor: pointer; transition: background 0.15s; -webkit-tap-highlight-color: transparent; }
     .search-result-item:hover, .search-result-item:active { background: #f0f6ff; }
 
@@ -117,7 +129,7 @@
       .fl-floor { min-width: 42px; font-size: 16px; }
       .fl-name { font-size: 16px; }
       .fl-date { font-size: 13px; }
-      .fl-qty { min-width: 50px; font-size: 16px; }
+      .fl-qty { min-width: 68px; font-size: 16px; }
       .modal-content { padding: 20px; width: 94%; max-height: 92vh; }
       .modal-title { font-size: 20px; }
       button { padding: 14px 18px; }
@@ -127,13 +139,22 @@
       .log-type-btn { padding: 10px 12px; font-size: 13px; }
       .log-range { width: 100%; }
       .log-date-input { flex: 1; min-width: 0; }
+      .modal-buttons.quad { gap: 4px; }
+      .modal-buttons.quad button { padding: 13px 1px; font-size: 13px; }
+      .ship-row { flex-wrap: wrap; gap: 6px 10px; }
+      .ship-loc { min-width: 82px; font-size: 15px; }
+      .ship-name { font-size: 15px; }
+      .ship-qty { font-size: 15px; }
+      .ship-del { padding: 8px 14px; font-size: 14px; }
     }
     @media (max-width: 400px) {
       .can-island { gap: 8px; }
       .can-num { font-size: 18px; min-width: 36px; }
       .fl-floor { min-width: 38px; font-size: 15px; }
       .fl-name { font-size: 15px; }
-      .fl-qty { min-width: 44px; font-size: 15px; }
+      .fl-qty { min-width: 62px; font-size: 15px; }
+      .modal-buttons.quad button { font-size: 12px; }
+      .ship-date { width: 100%; }
     }
   </style>
 </head>
@@ -145,6 +166,7 @@
       <button class="tab-btn active" onclick="showTab('search', this)">🔍 검색</button>
       <button class="tab-btn" onclick="showTab('stats', this)">📈 통계</button>
       <button class="tab-btn" onclick="showTab('logs', this)">📋 로그</button>
+      <button class="tab-btn" onclick="showTab('ship', this)">📄 출고표</button>
       <button class="tab-btn" onclick="showTab('export', this)">💾 백업</button>
     </div>
 
@@ -214,6 +236,19 @@
       </div>
     </div>
 
+    <div id="ship" class="panel">
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <h2 style="margin:0;">📄 출고표</h2>
+        </div>
+        <div class="ship-toolbar">
+          <button onclick="downloadShippingExcel()" style="margin:0;">📊 엑셀 다운로드</button>
+          <button onclick="clearShippingSheet()" style="margin:0; background:#dc3545;">🗑 출고표 비우기</button>
+        </div>
+        <div id="ship-content"></div>
+      </div>
+    </div>
+
     <div id="export" class="panel">
       <div class="card">
         <h2>데이터 관리</h2>
@@ -240,7 +275,7 @@
         <label class="modal-label">상품명</label>
         <input type="text" id="modalName" placeholder="상품명">
         <label class="modal-label">수량</label>
-        <input type="number" id="modalQty" placeholder="수량" min="1">
+        <input type="number" id="modalQty" placeholder="수량" min="0.01" step="0.01">
         <label class="modal-label">입고일자</label>
         <input type="date" id="modalDate">
         <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
@@ -248,12 +283,11 @@
       </div>
 
       <div id="editButtons">
-        <div class="modal-buttons">
+        <div class="modal-buttons quad">
           <button class="in" onclick="showInModal()">입고</button>
-          <button class="out" onclick="outItem()">출고</button>
-        </div>
-        <div class="modal-buttons">
-          <button style="background: #6f42c1;" onclick="showMoveModal()">🔀 이동</button>
+          <button class="out" onclick="showOutModal()">출고</button>
+          <button style="background: #6f42c1;" onclick="showMoveModal()">이동</button>
+          <button style="background: #0d9488;" onclick="showShipModal()">출고표입력</button>
         </div>
         <div class="modal-buttons">
           <button onclick="saveItem()">저장</button>
@@ -272,7 +306,7 @@
         <label class="modal-label">상품명</label>
         <input type="text" id="newName" placeholder="상품명">
         <label class="modal-label">수량</label>
-        <input type="number" id="newQty" placeholder="수량" min="1">
+        <input type="number" id="newQty" placeholder="수량" min="0.01" step="0.01">
         <label class="modal-label">입고일자 <span style="font-weight:400; color:#888; font-size:13px;">(비우면 오늘 날짜)</span></label>
         <input type="date" id="newDate">
         <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택)</span></label>
@@ -287,7 +321,7 @@
 
       <div id="inSection" style="display:none;">
         <h3 style="margin-bottom: 15px;">입고 수량</h3>
-        <input type="number" id="inQty" placeholder="입고 수량" min="1">
+        <input type="number" id="inQty" placeholder="입고 수량" min="0.01" step="0.01">
         <label class="modal-label">입고일자 <span style="font-weight:400; color:#888; font-size:13px;">(비우면 오늘 날짜)</span></label>
         <input type="date" id="inDate">
         <label class="modal-label">유통기한 <span style="font-weight:400; color:#888; font-size:13px;">(선택, 비우면 기존 값 유지)</span></label>
@@ -295,6 +329,26 @@
         <div class="modal-buttons">
           <button class="in" onclick="confirmIn()">입고</button>
           <button style="background: #999;" onclick="cancelIn()">취소</button>
+        </div>
+      </div>
+
+      <div id="outSection" style="display:none;">
+        <h3 style="margin-bottom: 15px;">📤 출고 수량</h3>
+        <div id="outStockInfo" style="color:#666; font-size:14px; margin-bottom:6px;"></div>
+        <input type="number" id="outQty" placeholder="출고 수량" min="0.01" step="0.01">
+        <div class="modal-buttons">
+          <button class="out" onclick="confirmOut()">출고</button>
+          <button style="background: #999;" onclick="cancelOut()">취소</button>
+        </div>
+      </div>
+
+      <div id="shipSection" style="display:none;">
+        <h3 style="margin-bottom: 15px;">📄 출고표 입력</h3>
+        <div id="shipStockInfo" style="color:#666; font-size:14px; margin-bottom:6px;"></div>
+        <input type="number" id="shipQty" placeholder="출고표 수량" min="0.01" step="0.01">
+        <div class="modal-buttons">
+          <button style="background: #0d9488;" onclick="confirmShip()">등록</button>
+          <button style="background: #999;" onclick="cancelShip()">취소</button>
         </div>
       </div>
 
@@ -338,8 +392,42 @@
       C: {1:{2:[{n:'크림',q:7,d:'2024-01-26'}]},2:{2:[{n:'크림',q:24,d:'2024-01-27'}]},4:{1:[{n:'8/34',q:4,d:'2024-01-28'}],2:[{n:'산화제',q:72,d:'2024-01-29'}]},5:{1:[{n:'산화제',q:36,d:'2024-01-30'}],2:[{n:'산화제',q:36,d:'2024-01-31'}]},6:{1:[{n:'6/30',q:5,d:'2024-02-01'}]}}
     };
 
+    // ===== 수량(소수점 두 자리) 유틸 =====
+    // 부동소수점 오차(0.1 + 0.2 = 0.30000000000000004) 방지를 위해
+    // 모든 계산 결과는 roundQty로 소수 둘째 자리까지 반올림한다.
+    function roundQty(n) {
+      const v = Number(n);
+      if (!isFinite(v)) return 0;
+      return Math.round((v + Number.EPSILON) * 100) / 100;
+    }
+    // 화면 표시용: 항상 소수점 두 자리 (24 -> "24.00", 3.5 -> "3.50")
+    function fmtQty(n) {
+      return roundQty(n).toFixed(2);
+    }
+    // 천 단위 구분 + 소수점 두 자리 (통계 합계용)
+    function fmtQtyComma(n) {
+      return roundQty(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    // 입력칸 값 읽기: 비었거나 0 이하면 null
+    function readQtyInput(id) {
+      const raw = document.getElementById(id).value;
+      if (raw === '' || raw === null) return null;
+      const v = roundQty(parseFloat(raw));
+      if (!isFinite(v) || v <= 0) return null;
+      return v;
+    }
+    // 엑셀 수량 열에 소수점 두 자리 서식 적용
+    function applyQtyFormat(ws, colLetter, rowCount) {
+      for (let r = 2; r <= rowCount; r++) {
+        const cell = ws[colLetter + r];
+        if (cell && typeof cell.v === 'number') cell.z = '0.00';
+      }
+    }
+
     let inv = { A: {}, B: {}, C: {} };
     let logs = [];
+    let shippingSheet = [];
+    let shippingSheetError = null;
     let editingItem = null;
     let editingCan = null;
     let statsSortDir = 'desc';
@@ -383,7 +471,7 @@
         if (!next[col]) next[col] = {};
         if (!next[col][can]) next[col][can] = {};
         if (!next[col][can][floor]) next[col][can][floor] = [];
-        next[col][can][floor].push({ id, n: name, q: qty, d: in_date, e: exp_date });
+        next[col][can][floor].push({ id, n: name, q: roundQty(qty), d: in_date, e: exp_date });
       });
       inv = next;
     }
@@ -393,7 +481,32 @@
       const { data: rows, error } = await sb.from('inventory_logs').select('*').order('id', { ascending: true });
       logSb('select', 'inventory_logs', error, rows);
       if (error) { alert('로그 불러오기 오류: ' + error.message); return; }
-      logs = rows.map(r => ({ id: r.id, type: r.type, col: r.col, can: r.can, floor: r.floor, name: r.name, qty: r.qty, date: r.date, fromCol: r.from_col, fromCan: r.from_can, fromFloor: r.from_floor }));
+      logs = rows.map(r => ({ id: r.id, type: r.type, col: r.col, can: r.can, floor: r.floor, name: r.name, qty: roundQty(r.qty), date: r.date, fromCol: r.from_col, fromCan: r.from_can, fromFloor: r.from_floor }));
+    }
+
+    // 출고표 정렬: 열(A->B->C) -> 칸 번호(숫자순) -> 층(1->2->3) -> 등록순
+    function sortShippingRows(rows) {
+      return rows.slice().sort((a, b) =>
+        String(a.col).localeCompare(String(b.col)) ||
+        (Number(a.can) - Number(b.can)) ||
+        (Number(a.floor) - Number(b.floor)) ||
+        (Number(a.id) - Number(b.id))
+      );
+    }
+
+    async function loadShippingSheet() {
+      console.log('[Supabase] shipping_sheet select 요청 중...');
+      const { data: rows, error } = await sb.from('shipping_sheet').select('*');
+      logSb('select', 'shipping_sheet', error, rows);
+      if (error) {
+        // shipping_sheet 테이블을 아직 만들지 않았을 수도 있으므로 alert 대신
+        // 출고표 탭 안에 안내 문구만 보여준다.
+        shippingSheetError = error.message;
+        shippingSheet = [];
+        return;
+      }
+      shippingSheetError = null;
+      shippingSheet = sortShippingRows((rows || []).map(r => ({ ...r, qty: roundQty(r.qty) })));
     }
 
     function subscribeRealtime() {
@@ -412,6 +525,14 @@
           renderLogs();
         })
         .subscribe((status) => console.log('[Realtime] inventory_logs 채널 상태:', status));
+
+      sb.channel('shipping-sheet-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'shipping_sheet' }, async (payload) => {
+          console.log('[Realtime] shipping_sheet 변경 감지:', payload);
+          await loadShippingSheet();
+          renderShippingSheet();
+        })
+        .subscribe((status) => console.log('[Realtime] shipping_sheet 채널 상태:', status));
     }
 
     function showTab(name, btn) {
@@ -421,6 +542,7 @@
       btn.classList.add('active');
       if (name === 'stats') { renderStats(); renderMonthlyStats(); }
       if (name === 'logs') renderLogs();
+      if (name === 'ship') renderShippingSheet();
     }
 
     function getTodayDate() {
@@ -445,6 +567,8 @@
       document.getElementById('editButtons').style.display = 'block';
       document.getElementById('addSection').style.display = 'block';
       document.getElementById('inSection').style.display = 'none';
+      document.getElementById('outSection').style.display = 'none';
+      document.getElementById('shipSection').style.display = 'none';
       document.getElementById('moveSection').style.display = 'none';
     }
 
@@ -454,7 +578,7 @@
       editingCan = { col, can };
       document.getElementById('modalTitle').textContent = `${col}열 칸${can} 상품 수정`;
       document.getElementById('modalName').value = item.n;
-      document.getElementById('modalQty').value = item.q;
+      document.getElementById('modalQty').value = fmtQty(item.q);
       document.getElementById('modalDate').value = item.d || getTodayDate();
       document.getElementById('modalExpDate').value = item.e || '';
       setEditMode();
@@ -489,6 +613,8 @@
       document.getElementById('editButtons').style.display = 'none';
       document.getElementById('addSection').style.display = 'block';
       document.getElementById('inSection').style.display = 'none';
+      document.getElementById('outSection').style.display = 'none';
+      document.getElementById('shipSection').style.display = 'none';
       document.getElementById('moveSection').style.display = 'none';
 
       const floors = getAllFloors();
@@ -509,11 +635,24 @@
       document.getElementById('newFloor').value = floor;
     }
 
-    function showInModal() {
+    // 모달 안에서 한 섹션만 보여준다 (입고/출고/이동/출고표입력 공통)
+    function showOnlySection(sectionId) {
       document.getElementById('editFields').style.display = 'none';
       document.getElementById('editButtons').style.display = 'none';
       document.getElementById('addSection').style.display = 'none';
-      document.getElementById('inSection').style.display = 'block';
+      ['inSection', 'outSection', 'shipSection', 'moveSection'].forEach(id => {
+        document.getElementById(id).style.display = id === sectionId ? 'block' : 'none';
+      });
+    }
+
+    function getEditingItem() {
+      if (!editingItem) return null;
+      const { col, can, floor, idx } = editingItem;
+      return (inv[col] && inv[col][can] && inv[col][can][floor] && inv[col][can][floor][idx]) || null;
+    }
+
+    function showInModal() {
+      showOnlySection('inSection');
       document.getElementById('inQty').value = '';
       document.getElementById('inDate').value = '';
       document.getElementById('inExpDate').value = '';
@@ -525,13 +664,13 @@
 
     async function confirmIn() {
       if (!editingItem) return;
-      const qty = parseInt(document.getElementById('inQty').value);
-      if (!qty || qty < 1) return alert('수량을 입력해주세요');
+      const qty = readQtyInput('inQty');
+      if (qty === null) return alert('수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
       const { col, can, floor, idx, id } = editingItem;
       const date = document.getElementById('inDate').value || getTodayDate();
       const expDate = document.getElementById('inExpDate').value;
       const item = inv[col][can][floor][idx];
-      const newQty = item.q + qty;
+      const newQty = roundQty(item.q + qty);
 
       const updatePayload = { qty: newQty, in_date: date };
       if (expDate) updatePayload.exp_date = expDate;
@@ -553,11 +692,7 @@
 
     function showMoveModal() {
       if (!editingItem) return;
-      document.getElementById('editFields').style.display = 'none';
-      document.getElementById('editButtons').style.display = 'none';
-      document.getElementById('addSection').style.display = 'none';
-      document.getElementById('inSection').style.display = 'none';
-      document.getElementById('moveSection').style.display = 'block';
+      showOnlySection('moveSection');
 
       const { col, can, floor } = editingItem;
       const mc = document.getElementById('moveCol');
@@ -614,8 +749,9 @@
       }
 
       if (merge) {
-        const { error: updErr } = await sb.from('inventory_items').update({ qty: existing.q + item.q }).eq('id', existing.id);
-        logSb('update', 'inventory_items', updErr, { id: existing.id, qty: existing.q + item.q });
+        const mergedQty = roundQty(existing.q + item.q);
+        const { error: updErr } = await sb.from('inventory_items').update({ qty: mergedQty }).eq('id', existing.id);
+        logSb('update', 'inventory_items', updErr, { id: existing.id, qty: mergedQty });
         if (updErr) return alert('이동 오류: ' + updErr.message);
 
         const { error: delErr } = await sb.from('inventory_items').delete().eq('id', id);
@@ -639,30 +775,51 @@
       alert('이동되었습니다!');
     }
 
-    async function outItem() {
-      if (!editingItem) return;
-      const qty = parseInt(prompt('출고 수량:'));
-      if (!qty || qty < 1) return alert('수량을 입력해주세요');
-      const { col, can, floor, idx, id } = editingItem;
+    // 출고 공통 처리: 재고 차감(차감 후 0이면 상품 삭제) + '출고' 로그 기록
+    // 일반 출고와 출고표입력이 똑같은 규칙을 쓰도록 한 곳에 모아 둔다.
+    async function applyOutflow(item, qty) {
+      const { col, can, floor, id } = editingItem;
       const today = getTodayDate();
-      const item = inv[col][can][floor][idx];
-      if (item.q < qty) return alert('재고가 부족합니다');
-      const newQty = item.q - qty;
-      const depleted = newQty === 0;
+      const newQty = roundQty(item.q - qty);
+      const depleted = newQty <= 0;
 
       if (depleted) {
-        const { error: delErr } = await sb.from('inventory_items').delete().eq('id', id);
-        logSb('delete', 'inventory_items', delErr, { id });
-        if (delErr) { console.error('[Supabase] 출고(소진) 실패:', delErr); return alert('출고 오류: ' + delErr.message); }
+        const { error } = await sb.from('inventory_items').delete().eq('id', id);
+        logSb('delete', 'inventory_items', error, { id });
+        if (error) return { error, depleted };
       } else {
-        const { error: updErr } = await sb.from('inventory_items').update({ qty: newQty }).eq('id', id);
-        logSb('update', 'inventory_items', updErr, { id, qty: newQty });
-        if (updErr) { console.error('[Supabase] 출고 실패:', updErr); return alert('출고 오류: ' + updErr.message); }
+        const { error } = await sb.from('inventory_items').update({ qty: newQty }).eq('id', id);
+        logSb('update', 'inventory_items', error, { id, qty: newQty });
+        if (error) return { error, depleted };
       }
 
       const logPayload = { type: '출고', col, can, floor, name: item.n, qty, date: today };
       const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
       logSb('insert', 'inventory_logs', logErr, logPayload);
+      return { error: null, depleted, logErr };
+    }
+
+    function showOutModal() {
+      const item = getEditingItem();
+      if (!item) return;
+      showOnlySection('outSection');
+      document.getElementById('outStockInfo').textContent = `현재 재고: ${fmtQty(item.q)}개`;
+      document.getElementById('outQty').value = '';
+    }
+
+    function cancelOut() {
+      setEditMode();
+    }
+
+    async function confirmOut() {
+      const item = getEditingItem();
+      if (!item) return;
+      const qty = readQtyInput('outQty');
+      if (qty === null) return alert('출고 수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
+      if (qty > item.q) return alert(`재고가 부족합니다 (현재 재고 ${fmtQty(item.q)}개)`);
+
+      const { error, depleted, logErr } = await applyOutflow(item, qty);
+      if (error) { console.error('[Supabase] 출고 실패:', error); return alert('출고 오류: ' + error.message); }
 
       // 재고 변경(update/delete)은 이미 성공했으므로, 로그 저장 성공 여부와 무관하게
       // 화면은 항상 최신 DB 상태로 갱신한다 (delete 완료 → loadInventory 완료 → render 순서 유지).
@@ -673,6 +830,49 @@
 
       if (logErr) { console.error('[Supabase] 출고 로그 저장 실패:', logErr); return alert('로그 저장 오류: ' + logErr.message); }
       alert(depleted ? '출고되었습니다! (재고 소진으로 삭제됨)' : '출고되었습니다!');
+    }
+
+    function showShipModal() {
+      const item = getEditingItem();
+      if (!item) return;
+      showOnlySection('shipSection');
+      document.getElementById('shipStockInfo').textContent = `현재 재고: ${fmtQty(item.q)}개`;
+      document.getElementById('shipQty').value = '';
+    }
+
+    function cancelShip() {
+      setEditMode();
+    }
+
+    async function confirmShip() {
+      const item = getEditingItem();
+      if (!item) return;
+      const qty = readQtyInput('shipQty');
+      if (qty === null) return alert('출고표 수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
+      if (qty > item.q) return alert(`재고가 부족합니다 (현재 재고 ${fmtQty(item.q)}개)`);
+
+      const { col, can, floor } = editingItem;
+
+      // 1) 출고표에 먼저 기록한다. (재고가 0이 되어 상품이 삭제되어도 출고표 기록은 남아야 함)
+      const shipPayload = { col, can, floor, name: item.n, qty, date: getTodayDate() };
+      const { error: shipErr } = await sb.from('shipping_sheet').insert(shipPayload);
+      logSb('insert', 'shipping_sheet', shipErr, shipPayload);
+      if (shipErr) { console.error('[Supabase] 출고표 기록 실패:', shipErr); return alert('출고표 기록 오류: ' + shipErr.message); }
+
+      // 2) 재고 차감 + '출고' 로그 (기존 출고와 동일한 처리)
+      const { error, depleted, logErr } = await applyOutflow(item, qty);
+      if (error) console.error('[Supabase] 출고표 등록 중 재고 차감 실패:', error);
+
+      await loadInventory();
+      await loadLogs();
+      await loadShippingSheet();
+      render();
+      renderShippingSheet();
+      closeModal();
+
+      if (error) return alert('출고표에는 기록됐지만 재고 차감에 실패했습니다: ' + error.message);
+      if (logErr) { console.error('[Supabase] 출고표 출고 로그 저장 실패:', logErr); return alert('로그 저장 오류: ' + logErr.message); }
+      alert(depleted ? '출고표에 등록되었습니다! (재고 소진으로 상품 삭제됨)' : '출고표에 등록되었습니다!');
     }
 
     let modalHistoryPushed = false;
@@ -707,10 +907,11 @@
       if (!editingItem) return;
       const floor = parseInt(document.getElementById('modalFloor').value);
       const name = document.getElementById('modalName').value.trim();
-      const qty = parseInt(document.getElementById('modalQty').value);
+      const qty = readQtyInput('modalQty');
       const date = document.getElementById('modalDate').value || getTodayDate();
       const expDate = document.getElementById('modalExpDate').value || null;
-      if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
+      if (!name) return alert('상품명을 입력해주세요');
+      if (qty === null) return alert('수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
       const { id } = editingItem;
 
       const updatePayload = { floor, name, qty, in_date: date, exp_date: expDate };
@@ -727,10 +928,11 @@
       if (!editingCan) return;
       const floor = parseInt(document.getElementById('newFloor').value);
       const name = document.getElementById('newName').value.trim();
-      const qty = parseInt(document.getElementById('newQty').value);
+      const qty = readQtyInput('newQty');
       const date = document.getElementById('newDate').value || getTodayDate();
       const expDate = document.getElementById('newExpDate').value || null;
-      if (!name || !qty || qty < 1) return alert('올바르게 입력해주세요');
+      if (!name) return alert('상품명을 입력해주세요');
+      if (qty === null) return alert('수량을 0보다 큰 숫자로 입력해주세요 (소수점 두 자리까지)');
       const { col, can } = editingCan;
 
       const insertPayload = { col, can, floor, name, qty, in_date: date, exp_date: expDate };
@@ -780,7 +982,7 @@
                     <span class="fl-name">${it.n}${dateHtml}</span>
                     ${expHtml}
                   </div>
-                  <span class="fl-qty">${it.q}개</span>
+                  <span class="fl-qty">${fmtQty(it.q)}개</span>
                 </div>`;
               });
             } else {
@@ -810,9 +1012,9 @@
               if (inv[col][c][f]) {
                 inv[col][c][f].forEach((it, idx) => {
                   if (!prod[it.n]) prod[it.n] = { qty: 0, locations: [] };
-                  prod[it.n].qty += it.q;
+                  prod[it.n].qty = roundQty(prod[it.n].qty + it.q);
                   prod[it.n].locations.push({ col, can: c, floor: f, idx });
-                  tot += it.q;
+                  tot = roundQty(tot + it.q);
                 });
               }
             }
@@ -847,7 +1049,7 @@
       const entries = sortEntries(Object.entries(prod), sortMode, statsSortDir, data => data.qty);
 
       let html = `<div class="stats-summary-bar">
-        <div class="stats-summary-count">전체 ${tot.toLocaleString()}개 · 종류 ${Object.keys(prod).length.toLocaleString()}</div>
+        <div class="stats-summary-count">전체 ${fmtQtyComma(tot)}개 · 종류 ${Object.keys(prod).length.toLocaleString()}</div>
         <div class="stats-legend">
           <span><span class="legend-dot" style="background:#E24B4A;"></span>부족 10개↓</span>
           <span><span class="legend-dot" style="background:#639922;"></span>적정 11~50</span>
@@ -865,7 +1067,7 @@
           <div class="stock-card-body">
             <div class="stock-card-header">
               <span class="stock-card-name">${n}</span>
-              <span class="stock-card-qty" style="color:${color};">${data.qty}개</span>
+              <span class="stock-card-qty" style="color:${color};">${fmtQty(data.qty)}개</span>
             </div>
             <div class="loc-chips">${chipsHtml}</div>
           </div>
@@ -892,8 +1094,8 @@
       logs.forEach(l => {
         if (!l.date || l.date.slice(0, 7) !== month) return;
         if (!prod[l.name]) prod[l.name] = { in: 0, out: 0 };
-        if (l.type === '입고') prod[l.name].in += l.qty;
-        else prod[l.name].out += l.qty;
+        if (l.type === '입고') prod[l.name].in = roundQty(prod[l.name].in + l.qty);
+        else if (l.type === '출고') prod[l.name].out = roundQty(prod[l.name].out + l.qty);
       });
       return prod;
     }
@@ -920,7 +1122,7 @@
         entries.forEach(([name, v]) => {
           html += `<div style="padding:15px;display:flex;justify-content:space-between;border-bottom:1px solid #ddd;font-size:16px;">
             <span>${name}</span>
-            <span><span style="color:#28a745;font-weight:bold;">입고 ${v.in}</span> / <span style="color:#e8590c;font-weight:bold;">출고 ${v.out}</span></span>
+            <span><span style="color:#28a745;font-weight:bold;">입고 ${fmtQty(v.in)}</span> / <span style="color:#e8590c;font-weight:bold;">출고 ${fmtQty(v.out)}</span></span>
           </div>`;
         });
       }
@@ -984,7 +1186,7 @@
                 <span>${lineHtml}</span>
                 <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
               </div>
-              <div>수량: <span class="log-qty">${log.qty}개</span></div>
+              <div>수량: <span class="log-qty">${fmtQty(log.qty)}개</span></div>
               <div class="log-date">${log.date}</div>
             </div>`;
           });
@@ -1009,6 +1211,71 @@
       renderLogs();
     }
 
+    function renderShippingSheet() {
+      if (shippingSheetError) {
+        document.getElementById('ship-content').innerHTML =
+          `<div style="color:#b02a37; background:#fff5f5; border:1px solid #f1c0c4; border-radius:8px; padding:16px; line-height:1.6;">
+            출고표 테이블(shipping_sheet)을 읽을 수 없습니다.<br>
+            <b>supabase_update_2026-10-01.sql</b> 파일을 Supabase SQL Editor에서 한 번 실행해 주세요.<br>
+            <span style="color:#888; font-size:13px;">(오류: ${shippingSheetError})</span>
+          </div>`;
+        return;
+      }
+      const rows = sortShippingRows(shippingSheet);
+      let html = '';
+      if (rows.length === 0) {
+        html = '<div style="color:#999; text-align:center; padding:20px;">출고표가 비어 있습니다</div>';
+      } else {
+        const total = rows.reduce((sum, r) => roundQty(sum + Number(r.qty)), 0);
+        html += `<div class="stats-summary-bar"><div class="stats-summary-count">${rows.length}건 · 합계 ${fmtQtyComma(total)}개</div></div>`;
+        rows.forEach(r => {
+          const fc = getFloorColor(r.floor);
+          html += `<div class="ship-row" style="border-left-color:${fc};">
+            <span class="ship-loc"><span class="log-loc-col">${r.col}</span><span style="color:#999;">-</span><span class="log-loc-can">${r.can}</span><span style="color:#999;">-</span><span style="color:${fc};">${r.floor}</span></span>
+            <span class="ship-name">${r.name}</span>
+            <span class="ship-qty">${fmtQty(r.qty)}개</span>
+            <span class="ship-date">${r.date || ''}</span>
+            <button class="ship-del" onclick="deleteShipRow(${r.id})">삭제</button>
+          </div>`;
+        });
+      }
+      document.getElementById('ship-content').innerHTML = html;
+    }
+
+    async function deleteShipRow(id) {
+      if (!confirm('이 출고표 항목을 삭제할까요?\n(재고는 다시 늘어나지 않고 출고표 기록만 지워집니다)')) return;
+      const { error } = await sb.from('shipping_sheet').delete().eq('id', id);
+      logSb('delete', 'shipping_sheet', error, { id });
+      if (error) return alert('삭제 오류: ' + error.message);
+      await loadShippingSheet();
+      renderShippingSheet();
+    }
+
+    async function clearShippingSheet() {
+      if (shippingSheet.length === 0) return alert('출고표가 이미 비어 있습니다');
+      if (!confirm(`출고표 ${shippingSheet.length}건을 모두 지울까요?\n(재고는 다시 늘어나지 않고 출고표 기록만 지워집니다)`)) return;
+      const { error } = await sb.from('shipping_sheet').delete().gte('id', 0);
+      logSb('delete', 'shipping_sheet', error, '전체');
+      if (error) return alert('삭제 오류: ' + error.message);
+      await loadShippingSheet();
+      renderShippingSheet();
+      alert('출고표를 비웠습니다!');
+    }
+
+    function downloadShippingExcel() {
+      // 화면에 보이는 정렬 순서(열 → 칸 → 층) 그대로 내보낸다
+      const rows = [['위치', '상품명', '수량', '날짜']];
+      sortShippingRows(shippingSheet).forEach(r => {
+        rows.push([`${r.col}-${r.can}-${r.floor}`, r.name, roundQty(r.qty), r.date || '']);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      applyQtyFormat(ws, 'C', rows.length);
+      ws['!cols'] = [{ wch: 12 }, { wch: 24 }, { wch: 10 }, { wch: 14 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '출고표');
+      XLSX.writeFile(wb, `출고표_${getTodayDate()}.xlsx`);
+    }
+
     function doSearch() {
       const q = document.getElementById('search-input').value.toLowerCase();
       const { prod } = getProductTotals();
@@ -1024,7 +1291,7 @@
                     const qtyColor = getStockStatus(totalQty).color;
                     html += `<div class="search-result-item" onclick="openEditModal('${col}',${c},${f},${idx})">
                       <span class="log-item-name">${it.n}</span>${it.d ? ` <span class="fl-date">[${it.d}]</span>` : ''}<br>
-                      <span class="log-loc-col">${col}</span>열 <span class="log-loc-can">${c}</span>칸 <span class="log-loc-floor">${f}</span>층 | <span style="color:${qtyColor}; font-weight:bold;">${it.q}개</span>
+                      <span class="log-loc-col">${col}</span>열 <span class="log-loc-can">${c}</span>칸 <span class="log-loc-floor">${f}</span>층 | <span style="color:${qtyColor}; font-weight:bold;">${fmtQty(it.q)}개</span>
                     </div>`;
                   }
                 });
@@ -1081,7 +1348,7 @@
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
             for (let f = 1; f <= 10; f++) {
-              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${it.q},${it.d},${it.e || ''}\n`);
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => csv += `${col},${c},${f},${it.n},${fmtQty(it.q)},${it.d},${it.e || ''}\n`);
             }
           }
         }
@@ -1099,21 +1366,25 @@
         for (let c = 1; c <= 20; c++) {
           if (inv[col][c]) {
             for (let f = 1; f <= 10; f++) {
-              if (inv[col][c][f]) inv[col][c][f].forEach(it => rows.push([col, c, f, it.n, it.q, it.d || '', it.e || '']));
+              if (inv[col][c][f]) inv[col][c][f].forEach(it => rows.push([col, c, f, it.n, roundQty(it.q), it.d || '', it.e || '']));
             }
           }
         }
       });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      applyQtyFormat(ws, 'E', rows.length);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '재고현황');
+      XLSX.utils.book_append_sheet(wb, ws, '재고현황');
       XLSX.writeFile(wb, `재고현황_${getTodayDate()}.xlsx`);
     }
 
     function downloadLogsExcel() {
       const rows = [['구분', '열', '칸', '층', '상품명', '수량', '날짜']];
-      logs.forEach(l => rows.push([l.type, l.col, l.can, l.floor, l.name, l.qty, l.date]));
+      logs.forEach(l => rows.push([l.type, l.col, l.can, l.floor, l.name, roundQty(l.qty), l.date]));
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      applyQtyFormat(ws, 'F', rows.length);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '입출고로그');
+      XLSX.utils.book_append_sheet(wb, ws, '입출고로그');
       XLSX.writeFile(wb, `입출고로그_${getTodayDate()}.xlsx`);
     }
 
@@ -1121,9 +1392,12 @@
       const month = getSelectedMonth();
       const prod = getMonthlyProductStats(month);
       const rows = [['월', '상품명', '입고', '출고']];
-      Object.entries(prod).forEach(([name, v]) => rows.push([month, name, v.in, v.out]));
+      Object.entries(prod).forEach(([name, v]) => rows.push([month, name, roundQty(v.in), roundQty(v.out)]));
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      applyQtyFormat(ws, 'C', rows.length);
+      applyQtyFormat(ws, 'D', rows.length);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), '월별통계');
+      XLSX.utils.book_append_sheet(wb, ws, '월별통계');
       XLSX.writeFile(wb, `월별통계_${month}.xlsx`);
     }
 
@@ -1155,7 +1429,7 @@
           Object.entries(d.inv || {}).forEach(([col, cans]) => {
             Object.entries(cans).forEach(([can, floors]) => {
               Object.entries(floors).forEach(([floor, items]) => {
-                items.forEach(it => itemRows.push({ col, can: parseInt(can), floor: parseInt(floor), name: it.n, qty: it.q, in_date: it.d, exp_date: it.e || null }));
+                items.forEach(it => itemRows.push({ col, can: parseInt(can), floor: parseInt(floor), name: it.n, qty: roundQty(it.q), in_date: it.d, exp_date: it.e || null }));
               });
             });
           });
@@ -1164,7 +1438,7 @@
             if (error) throw new Error(error.message);
           }
 
-          const logRows = (d.logs || []).map(l => ({ type: l.type, col: l.col, can: l.can, floor: l.floor, name: l.name, qty: l.qty, date: l.date }));
+          const logRows = (d.logs || []).map(l => ({ type: l.type, col: l.col, can: l.can, floor: l.floor, name: l.name, qty: roundQty(l.qty), date: l.date }));
           if (logRows.length) {
             const { error } = await sb.from('inventory_logs').insert(logRows);
             if (error) throw new Error(error.message);
@@ -1182,7 +1456,9 @@
     (async function init() {
       await loadInventory();
       await loadLogs();
+      await loadShippingSheet();
       render();
+      renderShippingSheet();
       subscribeRealtime();
     })();
   </script>
