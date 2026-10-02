@@ -103,13 +103,26 @@
 
     /* ===== 출고표 ===== */
     .ship-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
-    .ship-row { display: flex; align-items: center; gap: 10px; background: #f9f9f9; border: 1px solid #e3e3e3; border-left: 4px solid #0066cc; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
-    .ship-loc { min-width: 128px; font-weight: bold; font-size: 16px; white-space: nowrap; }
-    .ship-name { flex: 1; min-width: 0; font-weight: bold; color: #000; font-size: 16px; word-break: break-all; }
-    .ship-qty { color: #C2410C; font-weight: bold; font-size: 16px; white-space: nowrap; }
-    .ship-date { color: #666; font-size: 13px; white-space: nowrap; }
-    .ship-del { background: #dc3545; padding: 6px 12px; margin: 0; flex: none; font-size: 13px; border-radius: 4px; -webkit-tap-highlight-color: transparent; }
-    .ship-del:hover { background: #c82333; }
+    /* 출고표 목록: 표(그리드) 형태 - 위치 76px / 제품명 70px / 수량 58px / 버튼(남는 공간) */
+    .ship-list { border-top: 1px solid #d9d9d9; }
+    .ship-row { display: grid; grid-template-columns: 76px 70px 58px minmax(0, 1fr); background: #fff; border-bottom: 1px solid #d9d9d9; border-left: 4px solid #0066cc; border-right: 1px solid #d9d9d9; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .ship-row.checked { background: #ffe066; }
+    .ship-row > div { min-width: 0; padding: 8px 5px; display: flex; align-items: center; border-right: 1px solid #d9d9d9; }
+    .ship-row > div:last-child { border-right: none; }
+    .ship-loc { font-weight: bold; font-size: 14px; line-height: 1.3; word-break: keep-all; }
+    .ship-name { font-weight: bold; color: #000; font-size: 14px; line-height: 1.3; word-break: keep-all; overflow-wrap: normal; }
+    .ship-row > .ship-qty { justify-content: center; text-align: center; color: #C2410C; font-weight: bold; font-size: 14px; word-break: keep-all; }
+    .ship-qty-input { width: 100%; height: 30px; margin: 0; padding: 0 2px; font-size: 14px; text-align: center; border: 1px solid #999; border-radius: 4px; -moz-appearance: textfield; }
+    .ship-qty-input::-webkit-outer-spin-button, .ship-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .ship-qty-input.invalid { border: 2px solid #dc3545; }
+    .ship-row > .ship-btns { gap: 5px; overflow: hidden; }
+    .ship-row .ship-btn { flex: 1 1 0; min-width: 0; max-width: 56px; height: 34px; margin: 0; padding: 0; font-size: 13px; border-radius: 6px; color: #fff; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+    .ship-row .ship-edit { background: #f08a24; }
+    .ship-row .ship-edit:hover { background: #d97817; }
+    .ship-row .ship-edit.save { background: #1f9a5a; }
+    .ship-row .ship-edit.save:hover { background: #1a8450; }
+    .ship-row .ship-del { background: #6b7280; }
+    .ship-row .ship-del:hover { background: #5b616d; }
     .ship-search-input { margin: 0 0 10px; padding: 14px; font-size: 17px; min-height: 50px; }
     .ship-search-results { margin-bottom: 16px; }
     .ship-sr { border: 1px solid #ddd; border-left: 4px solid #0066cc; border-radius: 6px; background: #fff; margin-bottom: 8px; overflow: hidden; }
@@ -201,11 +214,6 @@
       .log-date-input { flex: 1; min-width: 0; }
       .modal-buttons.quad { gap: 4px; }
       .modal-buttons.quad button { padding: 13px 1px; font-size: 13px; }
-      .ship-row { flex-wrap: wrap; gap: 6px 10px; }
-      .ship-loc { min-width: 112px; font-size: 15px; }
-      .ship-name { font-size: 15px; }
-      .ship-qty { font-size: 15px; }
-      .ship-del { padding: 8px 14px; font-size: 14px; }
       .ship-sr-line { flex-wrap: wrap; gap: 4px 10px; }
     }
     @media (max-width: 400px) {
@@ -215,7 +223,6 @@
       .fl-name { font-size: 15px; }
       .fl-qty { min-width: 62px; font-size: 15px; }
       .modal-buttons.quad button { font-size: 12px; }
-      .ship-date { width: 100%; }
     }
   </style>
 </head>
@@ -580,6 +587,8 @@
       }
       shippingSheetError = null;
       shippingSheet = sortShippingRows((rows || []).map(r => ({ ...r, qty: roundQty(r.qty) })));
+      if (shipEditId !== null && !shippingSheet.some(r => r.id === shipEditId)) shipEditId = null;
+      pruneShipChecked();
     }
 
     function subscribeRealtime() {
@@ -605,7 +614,7 @@
         .on('postgres_changes', { event: '*', schema: 'public', table: 'shipping_sheet' }, async (payload) => {
           console.log('[Realtime] shipping_sheet 변경 감지:', payload);
           await loadShippingSheet();
-          renderShippingSheet();
+          if (shipEditId === null) renderShippingSheet(); // 수량 입력 중엔 다시 그리지 않음 (키패드 닫힘 방지)
         })
         .subscribe((status) => console.log('[Realtime] shipping_sheet 채널 상태:', status));
     }
@@ -1956,18 +1965,126 @@
       } else {
         const total = rows.reduce((sum, r) => roundQty(sum + Number(r.qty)), 0);
         html += `<div class="stats-summary-bar"><div class="stats-summary-count">${rows.length}건 · 합계 ${fmtQtyComma(total)}개</div></div>`;
+        const checked = loadShipChecked();
+        html += '<div class="ship-list">';
         rows.forEach(r => {
           const fc = getFloorColor(r.floor);
-          html += `<div class="ship-row" style="border-left-color:${fc};">
-            <span class="ship-loc">${shipLocHtml(r)}</span>
-            <span class="ship-name">${r.name}</span>
-            <span class="ship-qty">${fmtQty(r.qty)}개</span>
-            <span class="ship-date">${r.date || ''}</span>
-            <button class="ship-del" onclick="cancelShipRow(${r.id})">취소</button>
+          const editing = shipEditId === r.id;
+          const qtyCell = editing
+            ? `<input type="text" inputmode="decimal" class="ship-qty-input" id="ship-qty-input-${r.id}" value="${shipEditDraft}" oninput="shipEditDraft = this.value; this.classList.remove('invalid')" onkeydown="if (event.key === 'Enter') saveShipQty(${r.id})">`
+            : `${fmtQty(r.qty)}개`;
+          html += `<div class="ship-row${checked.has(r.id) ? ' checked' : ''}" style="border-left-color:${fc};" onclick="toggleShipChecked(event, ${r.id}, this)">
+            <div class="ship-loc">${shipLocHtml(r)}</div>
+            <div class="ship-name">${r.name}</div>
+            <div class="ship-qty">${qtyCell}</div>
+            <div class="ship-btns">
+              ${editing
+                ? `<button class="ship-btn ship-edit save" onclick="saveShipQty(${r.id})">저장</button>`
+                : `<button class="ship-btn ship-edit" onclick="startShipEdit(${r.id})">수정</button>`}
+              <button class="ship-btn ship-del" onclick="cancelShipRow(${r.id})">취소</button>
+            </div>
           </div>`;
         });
+        html += '</div>';
       }
       document.getElementById('ship-content').innerHTML = html;
+    }
+
+    // ===== 출고표 행 체크 (물건 어디까지 찾았는지 표시) =====
+    // localStorage에 출고표 항목 id 목록으로 저장 → 새로고침해도 유지
+    const SHIP_CHECKED_KEY = 'shipCheckedIds';
+    function loadShipChecked() {
+      try { return new Set(JSON.parse(localStorage.getItem(SHIP_CHECKED_KEY) || '[]')); }
+      catch (e) { return new Set(); }
+    }
+    function saveShipChecked(set) {
+      try { localStorage.setItem(SHIP_CHECKED_KEY, JSON.stringify([...set])); } catch (e) {}
+    }
+    // 출고표에서 사라진 항목(취소/삭제/출고완료)의 체크 기록은 지운다
+    function pruneShipChecked() {
+      const ids = new Set(shippingSheet.map(r => r.id));
+      const checked = loadShipChecked();
+      const kept = new Set([...checked].filter(id => ids.has(id)));
+      if (kept.size !== checked.size) saveShipChecked(kept);
+    }
+    function toggleShipChecked(event, id, rowEl) {
+      if (event.target.closest('button, input')) return; // 버튼·입력칸 누를 땐 색 안 바꿈
+      const checked = loadShipChecked();
+      if (checked.has(id)) checked.delete(id); else checked.add(id);
+      saveShipChecked(checked);
+      rowEl.classList.toggle('checked', checked.has(id));
+    }
+
+    // ===== 출고표 수량 수정 =====
+    let shipEditId = null;     // 지금 수량을 고치고 있는 출고표 항목 id
+    let shipEditDraft = '';    // 입력 중인 값 (실시간 갱신으로 다시 그려져도 유지)
+    let shipEditBusy = false;
+
+    function startShipEdit(id) {
+      const row = shippingSheet.find(r => r.id === id);
+      if (!row) return;
+      shipEditId = id;
+      shipEditDraft = String(roundQty(row.qty));
+      renderShippingSheet();
+      const input = document.getElementById(`ship-qty-input-${id}`);
+      if (input) { input.focus(); input.select(); }
+    }
+
+    // 저장: 출고표 수량을 바꾸고, 바뀐 차이만큼 재고도 맞춘다
+    //  - 늘리면 그 위치 재고에서 더 차감('출고' 로그), 0이 되면 상품 삭제
+    //  - 줄이면 그 위치 재고로 되돌림('출고취소' 로그)
+    async function saveShipQty(id) {
+      if (shipEditBusy) return;
+      const row = shippingSheet.find(r => r.id === id);
+      const input = document.getElementById(`ship-qty-input-${id}`);
+      if (!row || !input) return;
+      const newQty = parseQtyValue(input.value.trim().replace(',', '.'));
+      if (newQty === null) { input.classList.add('invalid'); input.focus(); return; }
+
+      const oldQty = roundQty(row.qty);
+      const diff = roundQty(newQty - oldQty);
+      if (diff === 0) { shipEditId = null; renderShippingSheet(); return; }
+
+      shipEditBusy = true;
+      try {
+        let stockItem = null;
+        if (diff > 0) {
+          await loadInventory(); // 최신 재고 기준으로 부족 여부 판단
+          const items = (inv[row.col] && inv[row.col][row.can] && inv[row.col][row.can][row.floor]) || [];
+          stockItem = items.find(it => it.n === row.name);
+          const have = stockItem ? stockItem.q : 0;
+          if (have < diff) {
+            return alert(`재고가 부족합니다.
+${shipLocText(row)} "${row.name}" 남은 재고 ${fmtQty(have)}개 (추가로 ${fmtQty(diff)}개 필요)`);
+          }
+        }
+
+        const { error: shipErr } = await sb.from('shipping_sheet').update({ qty: newQty }).eq('id', id);
+        logSb('update', 'shipping_sheet', shipErr, { id, qty: newQty });
+        if (shipErr) { console.error('[Supabase] 출고표 수량 수정 실패:', shipErr); return alert('출고표 수정 오류: ' + shipErr.message); }
+
+        let result;
+        if (diff > 0) {
+          result = await applyOutflow(stockItem, diff, { col: row.col, can: row.can, floor: row.floor, id: stockItem.id });
+        } else {
+          result = await restoreStockFromShipRow({ ...row, qty: -diff });
+        }
+
+        shipEditId = null;
+        shipEditDraft = '';
+        await loadInventory();
+        await loadLogs();
+        await loadShippingSheet();
+        render();
+        renderLogs();
+        renderShippingSheet();
+        renderShipSearch();
+
+        if (result.error) { console.error('[Supabase] 수량 수정 중 재고 반영 실패:', result.error); return alert('출고표 수량은 바뀌었지만 재고 반영에 실패했습니다: ' + result.error.message); }
+        if (result.logErr) console.error('[Supabase] 수량 수정 로그 저장 실패:', result.logErr);
+      } finally {
+        shipEditBusy = false;
+      }
     }
 
     // 출고표 한 건을 재고로 되돌린다.
