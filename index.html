@@ -102,7 +102,8 @@
     .log-qty { color: #C2410C; font-weight: bold; }
 
     /* ===== 출고표 ===== */
-    .ship-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .ship-toolbar { display: flex; flex-wrap: nowrap; gap: 5px; align-items: center; margin-bottom: 14px; }
+    .ship-toolbar button { flex: 1; min-width: 0; margin: 0; padding: 10px 0; font-size: 13px; white-space: nowrap; }
     /* 출고표 목록: 표(그리드) 형태 - 위치 76px / 제품명 70px / 수량 58px / 버튼(남는 공간) */
     .ship-list { border-top: 1px solid #d9d9d9; }
     .ship-row { display: grid; grid-template-columns: 76px 70px 58px minmax(0, 1fr); background: #fff; border-bottom: 1px solid #d9d9d9; border-left: 4px solid #0066cc; border-right: 1px solid #d9d9d9; cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -312,16 +313,16 @@
         <input type="search" id="ship-search-input" class="ship-search-input" placeholder="출고할 상품 검색" autocomplete="off" oninput="onShipSearchInput()">
         <div id="ship-search-results" class="ship-search-results"></div>
         <div id="ship-photo-drop" class="ship-photo-drop">
-          <button type="button" class="ship-photo-btn" onclick="document.getElementById('ship-photo-file').click()">📷 사장님 출고 사진 올리기</button>
+          <button type="button" class="ship-photo-btn" onclick="document.getElementById('ship-photo-file').click()">📷 사진올리기</button>
           <div class="ship-photo-hint">사진을 여기로 끌어다 놓거나, PC에서는 Ctrl+V 로 붙여넣기</div>
           <input type="file" id="ship-photo-file" accept="image/*" style="display:none;" onchange="onShipPhotoFile(event)">
           <div id="ship-photo-status" class="ship-photo-status"></div>
         </div>
         <div id="ship-photo-review"></div>
         <div class="ship-toolbar">
-          <button onclick="downloadShippingExcel()" style="margin:0;">📊 엑셀 다운로드</button>
-          <button onclick="completeShipping()" style="margin:0; background:#198754;">✅ 출고 완료</button>
-          <button onclick="cancelAllShipping()" style="margin:0; background:#dc3545;">↩️ 전체 취소</button>
+          <button onclick="downloadShippingExcel()" >엑셀 다운로드</button>
+          <button onclick="completeShipping()" style="background:#198754;">출고 완료</button>
+          <button onclick="cancelAllShipping()" style="background:#dc3545;">전체 취소</button>
         </div>
         <div id="ship-content"></div>
       </div>
