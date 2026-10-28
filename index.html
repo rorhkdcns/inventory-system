@@ -159,7 +159,11 @@
     .pt-rz:hover, .pt-rz.on { background: #0066cc; }
     .pt-table tr.red td { background: #fff5f5; }
     .pt-table tr.yellow td { background: #fffbea; }
+    .pt-table tr.found td { background: #e6f4ea; }
     .pt-table tr.checked td { background: #e7f1ff; }
+    .pt-found { margin: 0; padding: 0; border: none; background: transparent; font-size: 14px; color: #999; cursor: pointer; }
+    .pt-found:hover { background: transparent; color: #555; }
+    .pt-found.y { color: #1e7e34; }
     .pt-table tr.pt-sub td { border-top-style: dashed; }
     .pt-table tr.pt-foot td { background: #f1f3f5; }
     .pt-muted { color: #777; }
@@ -615,6 +619,7 @@
           render();
           renderShipSearch();
           if (!photoBusy && !ptEditing) renderPhotoReview();
+          if (!ptEditing) renderShippingSheet(); // 출고표의 재고 칸도 갱신
         })
         .subscribe((status) => console.log('[Realtime] inventory_items 채널 상태:', status));
 
@@ -630,7 +635,7 @@
         .on('postgres_changes', { event: '*', schema: 'public', table: 'shipping_sheet' }, async (payload) => {
           console.log('[Realtime] shipping_sheet 변경 감지:', payload);
           await loadShippingSheet();
-          if (shipEditId === null) renderShippingSheet(); // 수량 입력 중엔 다시 그리지 않음 (키패드 닫힘 방지)
+          if (!ptEditing) renderShippingSheet(); // 셀 입력 중엔 다시 그리지 않음 (키패드 닫힘 방지)
         })
         .subscribe((status) => console.log('[Realtime] shipping_sheet 채널 상태:', status));
     }
@@ -1736,7 +1741,6 @@
     const PT_WIDTH_KEY = 'ptColWidths';
     let ptSelKey = null;     // 선택된 셀 ('q:그룹번호' 박스 / 's:재고id' 재고)
     let ptEditing = false;   // 셀 입력 중이면 실시간 갱신으로 다시 그리지 않음
-    let ptEventsReady = false;
 
     // 표 숫자 표시: 소수점이 없으면 정수로 (2.00 → 2, 0.33 → 0.33)
     function ptNum(n) {
@@ -1747,15 +1751,23 @@
       return `<span class="pt-st ${color}">● ${text}</span>`;
     }
 
-    function loadPtWidths() {
+    // 칸 너비 저장/불러오기 (표마다 따로: 사진 확인표 / 출고표)
+    const PT_WIDTH_DEFAULTS = {};
+    function loadPtWidths(key = PT_WIDTH_KEY) {
+      const def = PT_WIDTH_DEFAULTS[key] || PT_DEFAULT_WIDTHS;
       try {
-        const w = JSON.parse(localStorage.getItem(PT_WIDTH_KEY) || 'null');
-        if (Array.isArray(w) && w.length === PT_COLS.length && w.every(n => n >= 30)) return w;
+        const w = JSON.parse(localStorage.getItem(key) || 'null');
+        if (Array.isArray(w) && w.length === def.length && w.every(n => n >= 30)) return w;
       } catch (e) { /* 저장값이 없거나 깨졌으면 기본값 */ }
-      return PT_DEFAULT_WIDTHS.slice();
+      return def.slice();
     }
-    function savePtWidths(w) {
-      try { localStorage.setItem(PT_WIDTH_KEY, JSON.stringify(w)); } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
+    function savePtWidths(w, key = PT_WIDTH_KEY) {
+      try { localStorage.setItem(key, JSON.stringify(w)); } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
+    }
+    // 셀 입력·재고 수정 뒤 두 표 모두 다시 그리기
+    function ptRerender() {
+      renderPhotoReview();
+      renderShippingSheet();
     }
 
     function renderPhotoReview() {
@@ -1862,7 +1874,7 @@
           <span class="pt-hint">박스·재고 칸: 클릭 → 숫자 입력 → Enter (방향키로 이동) · 재고를 고치면 실제 재고도 바뀌어요 · 제목줄 칸 경계를 끌면 너비 조절</span>
         </div>
         ${photoReview.addOpen === 'top' ? renderPtAddBox(all) : ''}
-        <div class="pt-wrap"><table class="pt-table" id="pt-table" style="width:${totalWidth}px">
+        <div class="pt-wrap"><table class="pt-table" id="pt-table" data-wkey="${PT_WIDTH_KEY}" style="width:${totalWidth}px">
           <colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
           <thead><tr>${head}</tr></thead>
           <tbody>${body}</tbody>
@@ -2030,15 +2042,14 @@
     }
 
     // ----- 셀 입력 (엑셀처럼) -----
-    function ptCells() {
-      const table = document.getElementById('pt-table');
+    function ptCells(table) {
       return table ? Array.from(table.querySelectorAll('td.xc')) : [];
     }
     function ptCellByKey(key) {
-      return ptCells().find(td => td.dataset.k === key) || null;
+      return Array.from(document.querySelectorAll('.pt-table td.xc')).find(td => td.dataset.k === key) || null;
     }
     function selectPtCell(td) {
-      ptCells().forEach(c => c.classList.remove('sel'));
+      document.querySelectorAll('.pt-table td.xc.sel').forEach(c => c.classList.remove('sel'));
       ptSelKey = td ? td.dataset.k : null;
       if (td) { td.classList.add('sel'); td.focus(); }
     }
@@ -2050,7 +2061,7 @@
     }
     // 이동할 셀 찾기: 세로는 같은 열의 위/아래 셀, 가로는 표 순서상 앞/뒤 셀
     function ptNeighbor(td, dir) {
-      const cells = ptCells();
+      const cells = ptCells(td.closest('table'));
       const i = cells.indexOf(td);
       if (i < 0) return null;
       if (dir === 'left') return cells[i - 1] || null;
@@ -2087,15 +2098,15 @@
       const nextKey = next ? next.dataset.k : key;
       ptEditing = false;
       ptSelKey = nextKey;
-      if (key.startsWith('q:')) {
-        commitPtQty(Number(key.slice(2)), value);
-      } else {
-        await commitPtStock(Number(key.slice(2)), value);
-      }
+      const id = Number(key.slice(2));
+      if (key.startsWith('q:')) commitPtQty(id, value);       // 사진 확인표 박스
+      else if (key === 'b:new') await commitShipNew(value);         // 출고표 새 줄 박스
+      else if (key.startsWith('b:')) await commitShipQty(id, value); // 출고표 박스
+      else await commitPtStock(id, value);                     // 재고 (s: 사진 확인표, v: 출고표)
     }
     function cancelPtEdit() {
       ptEditing = false;
-      renderPhotoReview();
+      ptRerender();
     }
 
     // 박스 수 → 그 줄 다시 배정
@@ -2113,10 +2124,10 @@
       const found = findInvItemById(id);
       const raw = String(value).trim();
       const v = raw === '' ? NaN : roundQty(parseFloat(raw));
-      if (!found || !isFinite(v) || v < 0) { renderPhotoReview(); if (found && raw !== '') alert('재고는 0 이상의 숫자로 입력해 주세요'); return; }
+      if (!found || !isFinite(v) || v < 0) { ptRerender(); if (found && raw !== '') alert('재고는 0 이상의 숫자로 입력해 주세요'); return; }
       const { col, can, floor, item } = found;
-      if (v === roundQty(item.q)) return renderPhotoReview();
-      if (v === 0 && !confirm(`${item.n} (${col}열 ${can}칸 ${floor}층) 재고를 0으로 하면 이 위치에서 삭제돼요. 진행할까요?`)) return renderPhotoReview();
+      if (v === roundQty(item.q)) return ptRerender();
+      if (v === 0 && !confirm(`${item.n} (${col}열 ${can}칸 ${floor}층) 재고를 0으로 하면 이 위치에서 삭제돼요. 진행할까요?`)) return ptRerender();
 
       let error;
       if (v === 0) {
@@ -2126,7 +2137,7 @@
         ({ error } = await sb.from('inventory_items').update({ qty: v }).eq('id', id));
         logSb('update', 'inventory_items', error, { id, qty: v });
       }
-      if (error) { renderPhotoReview(); return alert('재고 수정 오류: ' + error.message); }
+      if (error) { ptRerender(); return alert('재고 수정 오류: ' + error.message); }
 
       const logPayload = { type: '재고수정', col, can: parseInt(can), floor: parseInt(floor), name: item.n, qty: v, date: getTodayDate() };
       const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
@@ -2139,14 +2150,14 @@
         // 같은 상품을 쓰는 줄은 바뀐 재고로 다시 배정
         photoReview.groups.forEach((gr, g) => { if (gr.itemName === item.n) reallocateGroup(g); });
       }
-      renderPhotoReview();
+      ptRerender();
       if (logErr) alert('재고는 수정됐지만 로그 저장에 실패했어요: ' + logErr.message);
     }
 
     // 표 이벤트는 바깥 상자에 한 번만 연결 (표를 다시 그려도 유지)
     function ensurePtEvents(box) {
-      if (ptEventsReady) return;
-      ptEventsReady = true;
+      if (box.dataset.ptReady) return;
+      box.dataset.ptReady = '1';
 
       box.addEventListener('click', e => {
         const td = e.target.closest('td.xc');
@@ -2189,15 +2200,16 @@
         if (!rz) return;
         e.preventDefault();
         const i = Number(rz.dataset.i);
-        drag = { i, x: e.clientX, widths: loadPtWidths(), rz };
+        const table = rz.closest('table');
+        drag = { i, x: e.clientX, table, key: table.dataset.wkey, widths: loadPtWidths(table.dataset.wkey), rz };
         rz.classList.add('on');
         rz.setPointerCapture(e.pointerId);
       });
       box.addEventListener('pointermove', e => {
         if (!drag) return;
         const w = Math.max(30, Math.round(drag.widths[drag.i] + e.clientX - drag.x));
-        const table = document.getElementById('pt-table');
-        if (!table) return;
+        const table = drag.table;
+        if (!table || !table.isConnected) return;
         const cols = table.querySelectorAll('col');
         cols[drag.i].style.width = w + 'px';
         const next = drag.widths.slice();
@@ -2207,7 +2219,7 @@
       });
       const endDrag = () => {
         if (!drag) return;
-        if (drag.current) savePtWidths(drag.current);
+        if (drag.current) savePtWidths(drag.current, drag.key);
         drag.rz.classList.remove('on');
         drag = null;
       };
@@ -2301,9 +2313,45 @@
       window.addEventListener('drop', (e) => e.preventDefault());
     })();
 
+    // ===== 출고표 (사진 확인표와 같은 엑셀식 표) =====
+    let shipEditId = null;     // (예전 수정 모드용, 지금은 항상 null)
+    let shipEditBusy = false;  // 수량·위치 변경 처리 중
+    const SHIP_COLS = ['', '제품', '위치', '박스', '재고', '찾음', '작업'];
+    const SHIP_WIDTH_KEY = 'shipColWidths';
+    PT_WIDTH_DEFAULTS[SHIP_WIDTH_KEY] = [36, 140, 140, 70, 70, 90, 140];
+    const shipSelIds = new Set();   // 체크(선택)한 출고표 줄 → [선택 취소]
+    let shipPickerId = null;        // [변경] 검색칸이 열린 줄
+    let shipPickerQuery = '';
+    let shipAddOpen = null;         // [줄 추가] 검색칸 위치 ('top' | 'bottom')
+    let shipAddQuery = '';
+    let shipNewRow = null;          // 추가 중인 새 줄 { invId } (박스 수 입력 전)
+
+    // 그 출고표 줄 위치에 남아 있는 같은 상품 재고
+    function shipStockItem(r) {
+      const items = (inv[r.col] && inv[r.col][r.can] && inv[r.col][r.can][r.floor]) || [];
+      return items.find(it => it.n === r.name) || null;
+    }
+
+    // 재고 검색 후보 버튼 목록 (onPick: 'fnName(' 형태, 뒤에 재고 id 가 붙음)
+    function shipPickList(query, onPickPrefix) {
+      const all = sortShippingRows(listInvRows());
+      const q = normName(query || '');
+      const rows = q ? all.filter(r => normName(r.name).includes(q) || normName(shipLocText(r)).includes(q)) : all;
+      const list = rows.slice(0, 40).map(r =>
+        `<button type="button" class="pt-btn" onclick="${onPickPrefix}${r.id})">${escapeHtml(`${r.name} · ${shipLocText(r)} (${ptNum(r.qty)})`)}</button>`).join('');
+      return list || '<span class="pt-pick-empty">맞는 재고가 없어요</span>';
+    }
+    function shipAddBox() {
+      return `<div class="pt-add-box pt-picker">
+          <input type="text" id="ship-add-input" autocomplete="off" placeholder="추가할 제품 번호나 이름 입력 (예: 6/ , 안묻는)" value="${escapeHtml(shipAddQuery)}" oninput="onShipAddInput(this.value)">
+          <div class="pt-pick-list">${shipPickList(shipAddQuery, 'pickShipNewRow(')}</div>
+        </div>`;
+    }
+
     function renderShippingSheet() {
+      const box = document.getElementById('ship-content');
       if (shippingSheetError) {
-        document.getElementById('ship-content').innerHTML =
+        box.innerHTML =
           `<div style="color:#b02a37; background:#fff5f5; border:1px solid #f1c0c4; border-radius:8px; padding:16px; line-height:1.6;">
             출고표 테이블(shipping_sheet)을 읽을 수 없습니다.<br>
             <b>supabase_update_2026-10-01.sql</b> 파일을 Supabase SQL Editor에서 한 번 실행해 주세요.<br>
@@ -2311,39 +2359,80 @@
           </div>`;
         return;
       }
+      ensurePtEvents(box);
       const rows = sortShippingRows(shippingSheet);
-      let html = '';
-      if (rows.length === 0) {
-        html = '<div style="color:#999; text-align:center; padding:20px;">출고표가 비어 있습니다</div>';
-      } else {
-        const total = rows.reduce((sum, r) => roundQty(sum + Number(r.qty)), 0);
-        html += `<div class="stats-summary-bar"><div class="stats-summary-count">${rows.length}건 · 합계 ${fmtQtyComma(total)}개</div></div>`;
-        const checked = loadShipChecked();
-        html += '<div class="ship-list">';
-        rows.forEach(r => {
-          const fc = getFloorColor(r.floor);
-          const editing = shipEditId === r.id;
-          const qtyCell = editing
-            ? `<input type="text" inputmode="decimal" class="ship-qty-input" id="ship-qty-input-${r.id}" value="${shipEditDraft}" oninput="shipEditDraft = this.value; this.classList.remove('invalid')" onkeydown="if (event.key === 'Enter') saveShipQty(${r.id})">`
-            : `${fmtQty(r.qty)}개`;
-          html += `<div class="ship-row${checked.has(r.id) ? ' checked' : ''}" style="border-left-color:${fc};" onclick="toggleShipChecked(event, ${r.id}, this)">
-            <div class="ship-loc">${shipLocHtml(r)}</div>
-            <div class="ship-name">${r.name}</div>
-            <div class="ship-qty">${qtyCell}</div>
-            <div class="ship-btns">
-              ${editing
-                ? `<button class="ship-btn ship-edit save" onclick="saveShipQty(${r.id})">저장</button>`
-                : `<button class="ship-btn ship-edit" onclick="startShipEdit(${r.id})">수정</button>`}
-              <button class="ship-btn ship-del" onclick="cancelShipRow(${r.id})">취소</button>
-            </div>
-          </div>`;
-        });
-        html += '</div>';
+      const ids = new Set(rows.map(r => r.id));
+      [...shipSelIds].forEach(id => { if (!ids.has(id)) shipSelIds.delete(id); });
+      const found = loadShipChecked();
+      const widths = loadPtWidths(SHIP_WIDTH_KEY);
+      const stockCell = item => item
+        ? `<td class="xc" tabindex="0" data-k="v:${item.id}">${ptNum(item.q)}</td>`
+        : `<td class="pt-muted">0</td>`;
+
+      let body = '';
+      rows.forEach(r => {
+        const isFound = found.has(r.id);
+        const isSel = shipSelIds.has(r.id);
+        const cls = `${isFound ? 'found' : ''}${isSel ? ' checked' : ''}`;
+        body += `<tr class="${cls}">
+          <td><input type="checkbox" class="pt-ck" aria-label="줄 선택"${isSel ? ' checked' : ''} onchange="onShipSel(${r.id}, this.checked)"></td>
+          <td title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</td>
+          <td>${escapeHtml(shipLocText(r))}</td>
+          <td class="xc" tabindex="0" data-k="b:${r.id}">${ptNum(r.qty)}</td>
+          ${stockCell(shipStockItem(r))}
+          <td><button type="button" class="pt-found${isFound ? ' y' : ''}" onclick="toggleShipFound(${r.id})">${isFound ? '● 찾음' : '○ 찾는 중'}</button></td>
+          <td><div class="pt-act"><button type="button" class="pt-btn" onclick="toggleShipPicker(${r.id})">변경</button><button type="button" class="pt-btn del" onclick="cancelShipRow(${r.id})">취소</button></div></td>
+        </tr>`;
+        if (shipPickerId === r.id) {
+          body += `<tr class="pt-picker-row"><td colspan="${SHIP_COLS.length}"><div class="pt-picker">
+              <input type="text" id="ship-pick-input" autocomplete="off" placeholder="바꿀 제품 번호나 이름 입력 (예: 6/ , 안묻는)" value="${escapeHtml(shipPickerQuery)}" oninput="onShipPickerInput(this.value)">
+              <div class="pt-pick-list">${shipPickList(shipPickerQuery, `changeShipRow(${r.id}, `)}</div>
+            </div></td></tr>`;
+        }
+      });
+
+      // 추가 중인 새 줄 (박스 수 입력 → Enter 하면 출고표에 등록)
+      if (shipNewRow) {
+        const f = findInvItemById(shipNewRow.invId);
+        if (!f) shipNewRow = null;
+        else body += `<tr class="checked">
+            <td></td><td>${escapeHtml(f.item.n)}</td><td>${escapeHtml(shipLocText(f))}</td>
+            <td class="xc" tabindex="0" data-k="b:new"></td><td>${ptNum(f.item.q)}</td>
+            <td class="pt-muted">새 줄</td>
+            <td><div class="pt-act"><button type="button" class="pt-btn del" onclick="cancelShipNewRow()">빼기</button></div></td>
+          </tr>`;
       }
-      document.getElementById('ship-content').innerHTML = html;
+      if (rows.length === 0 && !shipNewRow) {
+        body += `<tr><td colspan="${SHIP_COLS.length}" class="pt-muted" style="height:48px;">출고표가 비어 있어요</td></tr>`;
+      }
+
+      const total = rows.reduce((sum, r) => roundQty(sum + Number(r.qty)), 0);
+      const allSel = rows.length > 0 && rows.every(r => shipSelIds.has(r.id));
+      const head = SHIP_COLS.map((label, i) => {
+        const inner = i === 0 ? `<input type="checkbox" class="pt-ck" aria-label="전체 선택"${allSel ? ' checked' : ''} onchange="onShipSelAll(this.checked)">` : label;
+        const rz = i < SHIP_COLS.length - 1 ? `<div class="pt-rz" data-i="${i}"></div>` : '';
+        return `<th>${inner}${rz}</th>`;
+      }).join('');
+
+      box.innerHTML = `<div class="pt-toolbar">
+          <button type="button" class="pt-btn pt-add-btn" onclick="toggleShipAdd('top')">＋ 줄 추가</button>
+          <button type="button" class="pt-btn" onclick="cancelShipChecked()">선택 취소</button>
+          <span>${shipSelIds.size}개 선택됨</span>
+          <span class="pt-hint">박스·재고 칸: 클릭 → 숫자 입력 → Enter · 박스를 바꾸면 재고도 자동으로 맞춰지고, 재고를 고치면 실제 재고가 바뀌어요</span>
+        </div>
+        ${shipAddOpen === 'top' ? shipAddBox() : ''}
+        <div class="pt-wrap"><table class="pt-table" id="ship-table" data-wkey="${SHIP_WIDTH_KEY}" style="width:${widths.reduce((a, b) => a + b, 0)}px">
+          <colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+          <thead><tr>${head}</tr></thead>
+          <tbody>${body}</tbody>
+          <tfoot><tr class="pt-foot"><td></td><td>합계</td><td></td><td>${ptNum(total)}</td><td colspan="3">${rows.length}건 · 찾음 ${rows.filter(r => found.has(r.id)).length}건</td></tr></tfoot>
+        </table></div>
+        <div class="pt-bottom-bar"><button type="button" class="pt-btn pt-add-btn" onclick="toggleShipAdd('bottom')">＋ 줄 추가</button></div>
+        ${shipAddOpen === 'bottom' ? shipAddBox() : ''}`;
+      restorePtSelection();
     }
 
-    // ===== 출고표 행 체크 (물건 어디까지 찾았는지 표시) =====
+    // ===== 출고표 줄 찾음 표시 (물건 어디까지 찾았는지) =====
     // localStorage에 출고표 항목 id 목록으로 저장 → 새로고침해도 유지
     const SHIP_CHECKED_KEY = 'shipCheckedIds';
     function loadShipChecked() {
@@ -2353,60 +2442,80 @@
     function saveShipChecked(set) {
       try { localStorage.setItem(SHIP_CHECKED_KEY, JSON.stringify([...set])); } catch (e) {}
     }
-    // 출고표에서 사라진 항목(취소/삭제/출고완료)의 체크 기록은 지운다
+    // 출고표에서 사라진 항목(취소/삭제/출고완료)의 기록은 지운다
     function pruneShipChecked() {
       const ids = new Set(shippingSheet.map(r => r.id));
       const checked = loadShipChecked();
       const kept = new Set([...checked].filter(id => ids.has(id)));
       if (kept.size !== checked.size) saveShipChecked(kept);
     }
-    function toggleShipChecked(event, id, rowEl) {
-      if (event.target.closest('button, input')) return; // 버튼·입력칸 누를 땐 색 안 바꿈
+    function toggleShipFound(id) {
       const checked = loadShipChecked();
       if (checked.has(id)) checked.delete(id); else checked.add(id);
       saveShipChecked(checked);
-      rowEl.classList.toggle('checked', checked.has(id));
-    }
-
-    // ===== 출고표 수량 수정 =====
-    let shipEditId = null;     // 지금 수량을 고치고 있는 출고표 항목 id
-    let shipEditDraft = '';    // 입력 중인 값 (실시간 갱신으로 다시 그려져도 유지)
-    let shipEditBusy = false;
-
-    function startShipEdit(id) {
-      const row = shippingSheet.find(r => r.id === id);
-      if (!row) return;
-      shipEditId = id;
-      shipEditDraft = String(roundQty(row.qty));
       renderShippingSheet();
-      const input = document.getElementById(`ship-qty-input-${id}`);
-      if (input) { input.focus(); input.select(); }
     }
 
-    // 저장: 출고표 수량을 바꾸고, 바뀐 차이만큼 재고도 맞춘다
+    // ----- 선택 / 선택 취소 -----
+    function onShipSel(id, on) {
+      if (on) shipSelIds.add(id); else shipSelIds.delete(id);
+      renderShippingSheet();
+    }
+    function onShipSelAll(on) {
+      shippingSheet.forEach(r => { if (on) shipSelIds.add(r.id); else shipSelIds.delete(r.id); });
+      renderShippingSheet();
+    }
+    async function cancelShipChecked() {
+      const rows = sortShippingRows(shippingSheet.filter(r => shipSelIds.has(r.id)));
+      if (rows.length === 0) return alert('취소할 줄을 먼저 체크해 주세요');
+      const total = rows.reduce((sum, r) => roundQty(sum + Number(r.qty)), 0);
+      if (!confirm(`선택한 ${rows.length}건(합계 ${ptNum(total)}개)을 취소할까요?\n각 상품이 원래 위치로 복구되고, 출고표에서 지워집니다.`)) return;
+      let failCount = 0;
+      for (const row of rows) {
+        const { error } = await restoreStockFromShipRow(row);
+        if (error) { failCount++; console.error('[Supabase] 선택 취소 중 재고 복구 실패:', row, error); continue; }
+        const { error: delErr } = await sb.from('shipping_sheet').delete().eq('id', row.id);
+        logSb('delete', 'shipping_sheet', delErr, { id: row.id });
+        if (delErr) failCount++;
+        shipSelIds.delete(row.id);
+      }
+      await loadInventory();
+      await loadLogs();
+      await loadShippingSheet();
+      render();
+      renderLogs();
+      renderShippingSheet();
+      renderShipSearch();
+      if (failCount > 0) alert(`일부 항목(${failCount}건) 처리에 실패했습니다. 콘솔(F12)에서 확인해주세요.`);
+    }
+
+    // ----- 박스 수 수정 (엑셀식 셀) -----
+    async function commitShipQty(id, value) {
+      const newQty = parseQtyValue(String(value).trim().replace(',', '.'));
+      if (newQty === null) { renderShippingSheet(); return alert('박스 수는 0보다 큰 숫자로 입력해 주세요'); }
+      await setShipQty(id, newQty);
+    }
+
+    // 출고표 수량을 바꾸고, 바뀐 차이만큼 재고도 맞춘다
     //  - 늘리면 그 위치 재고에서 더 차감('출고' 로그), 0이 되면 상품 삭제
     //  - 줄이면 그 위치 재고로 되돌림('출고취소' 로그)
-    async function saveShipQty(id) {
+    async function setShipQty(id, newQty) {
       if (shipEditBusy) return;
       const row = shippingSheet.find(r => r.id === id);
-      const input = document.getElementById(`ship-qty-input-${id}`);
-      if (!row || !input) return;
-      const newQty = parseQtyValue(input.value.trim().replace(',', '.'));
-      if (newQty === null) { input.classList.add('invalid'); input.focus(); return; }
-
+      if (!row) return renderShippingSheet();
       const oldQty = roundQty(row.qty);
       const diff = roundQty(newQty - oldQty);
-      if (diff === 0) { shipEditId = null; renderShippingSheet(); return; }
+      if (diff === 0) return renderShippingSheet();
 
       shipEditBusy = true;
       try {
         let stockItem = null;
         if (diff > 0) {
           await loadInventory(); // 최신 재고 기준으로 부족 여부 판단
-          const items = (inv[row.col] && inv[row.col][row.can] && inv[row.col][row.can][row.floor]) || [];
-          stockItem = items.find(it => it.n === row.name);
+          stockItem = shipStockItem(row);
           const have = stockItem ? stockItem.q : 0;
           if (have < diff) {
+            renderShippingSheet();
             return alert(`재고가 부족합니다.
 ${shipLocText(row)} "${row.name}" 남은 재고 ${fmtQty(have)}개 (추가로 ${fmtQty(diff)}개 필요)`);
           }
@@ -2414,17 +2523,12 @@ ${shipLocText(row)} "${row.name}" 남은 재고 ${fmtQty(have)}개 (추가로 ${
 
         const { error: shipErr } = await sb.from('shipping_sheet').update({ qty: newQty }).eq('id', id);
         logSb('update', 'shipping_sheet', shipErr, { id, qty: newQty });
-        if (shipErr) { console.error('[Supabase] 출고표 수량 수정 실패:', shipErr); return alert('출고표 수정 오류: ' + shipErr.message); }
+        if (shipErr) { renderShippingSheet(); return alert('출고표 수정 오류: ' + shipErr.message); }
 
-        let result;
-        if (diff > 0) {
-          result = await applyOutflow(stockItem, diff, { col: row.col, can: row.can, floor: row.floor, id: stockItem.id });
-        } else {
-          result = await restoreStockFromShipRow({ ...row, qty: -diff });
-        }
+        const result = diff > 0
+          ? await applyOutflow(stockItem, diff, { col: row.col, can: row.can, floor: row.floor, id: stockItem.id })
+          : await restoreStockFromShipRow({ ...row, qty: -diff });
 
-        shipEditId = null;
-        shipEditDraft = '';
         await loadInventory();
         await loadLogs();
         await loadShippingSheet();
@@ -2433,11 +2537,106 @@ ${shipLocText(row)} "${row.name}" 남은 재고 ${fmtQty(have)}개 (추가로 ${
         renderShippingSheet();
         renderShipSearch();
 
-        if (result.error) { console.error('[Supabase] 수량 수정 중 재고 반영 실패:', result.error); return alert('출고표 수량은 바뀌었지만 재고 반영에 실패했습니다: ' + result.error.message); }
+        if (result.error) return alert('출고표 수량은 바뀌었지만 재고 반영에 실패했습니다: ' + result.error.message);
         if (result.logErr) console.error('[Supabase] 수량 수정 로그 저장 실패:', result.logErr);
       } finally {
         shipEditBusy = false;
       }
+    }
+
+    // ----- 제품·위치 변경: 원래 위치로 되돌리고 새 위치에서 뺀다 -----
+    function toggleShipPicker(id) {
+      shipPickerId = shipPickerId === id ? null : id;
+      shipPickerQuery = '';
+      renderShippingSheet();
+      const input = document.getElementById('ship-pick-input');
+      if (input) input.focus();
+    }
+    function onShipPickerInput(value) {
+      shipPickerQuery = value;
+      renderShippingSheet();
+      const input = document.getElementById('ship-pick-input');
+      if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    }
+    async function changeShipRow(shipId, invId) {
+      if (shipEditBusy) return;
+      const row = shippingSheet.find(r => r.id === shipId);
+      const target = findInvItemById(invId);
+      if (!row || !target) return alert('재고를 찾을 수 없어요. 새로고침 후 다시 해주세요.');
+      shipPickerId = null;
+      const sameSpot = target.col === row.col && target.can === Number(row.can) && target.floor === Number(row.floor) && target.item.n === row.name;
+      if (sameSpot) return renderShippingSheet();
+      const qty = roundQty(row.qty);
+      if (target.item.q < qty) { renderShippingSheet(); return alert(`재고가 부족합니다.\n${shipLocText(target)} "${target.item.n}" 남은 재고 ${fmtQty(target.item.q)}개 (필요 ${fmtQty(qty)}개)`); }
+
+      shipEditBusy = true;
+      try {
+        const back = await restoreStockFromShipRow(row);
+        if (back.error) { renderShippingSheet(); return alert('원래 위치로 되돌리기 실패: ' + back.error.message); }
+        await loadInventory();
+        const t2 = findInvItemById(invId);
+        if (!t2) { await loadShippingSheet(); renderShippingSheet(); return alert('바꿀 재고가 사라졌어요. 원래 위치로는 되돌려졌어요.'); }
+        const out = await applyOutflow(t2.item, qty, { col: t2.col, can: t2.can, floor: t2.floor, id: invId });
+        const upd = { col: t2.col, can: t2.can, floor: t2.floor, name: t2.item.n };
+        const { error: shipErr } = await sb.from('shipping_sheet').update(upd).eq('id', shipId);
+        logSb('update', 'shipping_sheet', shipErr, { id: shipId, ...upd });
+
+        await loadInventory();
+        await loadLogs();
+        await loadShippingSheet();
+        render();
+        renderLogs();
+        renderShippingSheet();
+        renderShipSearch();
+        if (out.error) alert('새 위치 재고 차감 실패: ' + out.error.message);
+        else if (shipErr) alert('재고는 바뀌었지만 출고표 줄 수정에 실패했어요: ' + shipErr.message);
+      } finally {
+        shipEditBusy = false;
+      }
+    }
+
+    // ----- 줄 추가 -----
+    function toggleShipAdd(where) {
+      shipAddOpen = shipAddOpen === where ? null : where;
+      shipAddQuery = '';
+      renderShippingSheet();
+      const input = document.getElementById('ship-add-input');
+      if (input) input.focus();
+    }
+    function onShipAddInput(value) {
+      shipAddQuery = value;
+      renderShippingSheet();
+      const input = document.getElementById('ship-add-input');
+      if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    }
+    function pickShipNewRow(invId) {
+      shipAddOpen = null;
+      shipAddQuery = '';
+      shipNewRow = { invId };
+      ptSelKey = 'b:new';
+      renderShippingSheet();
+      const td = ptCellByKey('b:new');
+      if (td) { td.scrollIntoView({ block: 'nearest' }); startPtEdit(td, ''); }
+    }
+    function cancelShipNewRow() {
+      shipNewRow = null;
+      ptEditing = false;
+      renderShippingSheet();
+    }
+    async function commitShipNew(value) {
+      if (!shipNewRow) return renderShippingSheet();
+      const raw = String(value).trim();
+      if (raw === '') return cancelShipNewRow();
+      const qty = parseQtyValue(raw.replace(',', '.'));
+      const f = findInvItemById(shipNewRow.invId);
+      if (!f) { shipNewRow = null; renderShippingSheet(); return alert('재고를 찾을 수 없어요'); }
+      if (qty === null) { renderShippingSheet(); return alert('박스 수는 0보다 큰 숫자로 입력해 주세요'); }
+      if (qty > f.item.q) { renderShippingSheet(); return alert(`재고가 부족합니다 (현재 재고 ${fmtQty(f.item.q)}개)`); }
+      shipNewRow = null;
+      ptSelKey = null;
+      const result = await addToShippingSheet(f.item, qty, { col: f.col, can: f.can, floor: f.floor, id: f.id });
+      if (result.shipErr) return;
+      if (result.error || result.logErr) alertShipResult(result);
     }
 
     // 출고표 한 건을 재고로 되돌린다.
