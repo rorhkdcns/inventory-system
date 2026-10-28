@@ -1541,10 +1541,16 @@
       const codes = [];
       stripCapacity(s).replace(/\(([^)]*)\)/g, (m, inner) => {
         const v = normName(inner);
-        if (/^\d+\/\d+$/.test(v)) codes.push(v);
+        if (/^\d+\/\d+$/.test(v)) codes.push(codeKey(v));
         return m;
       });
       return codes;
+    }
+
+    // 제품 번호 비교용: 숫자 앞의 0 무시 (예: "6/04" = "6/4", "07/30" = "7/30")
+    function codeKey(s) {
+      const v = normName(s);
+      return /^\d+\/\d+$/.test(v) ? v.split('/').map(n => String(parseInt(n, 10))).join('/') : v;
     }
 
     // 핵심어: 괄호·공백으로 나눈 낱말 (예: "칼라 볼륨 매직 (2제) (크림)" → 칼라, 볼륨, 매직, 2제, 크림)
@@ -1573,7 +1579,7 @@
       const codes = sheetCodes(it.name);
       if (codes.length > 0) {
         // 번호가 있으면 그 번호와 정확히 같은 재고만. 없으면 다른 상품으로 대체하지 않는다.
-        pool = all.filter(r => codes.includes(normName(r.name)));
+        pool = all.filter(r => codes.includes(codeKey(r.name)));
       } else {
         const words = sheetWords(it.name);
         const joined = words.join('');
