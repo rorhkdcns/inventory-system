@@ -187,6 +187,9 @@
     .pt-pick-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow-y: auto; }
     .pt-pick-list .pt-btn { height: 28px; }
     .pt-pick-empty { font-size: 13px; color: #888; }
+    .pt-add-btn { height: 28px !important; padding: 0 12px !important; }
+    .pt-add-box { margin: 8px 0; padding: 8px; background: #f8f9fa; border: 1px solid #c8c8c8; border-radius: 6px; }
+    .pt-bottom-bar { margin: -2px 0 10px; }
     .pt-remember { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 12px; color: #555; cursor: pointer; }
     .pt-remember input { width: 13px; height: 13px; margin: 0; padding: 0; flex: none; }
     .pr-footer { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; }
@@ -1853,16 +1856,20 @@
         html += `<div class="pr-block-msg" style="margin-bottom:8px;">이름 짝 기억 테이블(name_alias)을 읽지 못했어요. supabase_update_name_alias.sql 을 실행해 주세요.</div>`;
       }
       html += `<div class="pt-toolbar">
+          <button type="button" class="pt-btn pt-add-btn" onclick="togglePtAdd('top')">＋ 줄 추가</button>
           <button type="button" class="pt-btn" onclick="deletePtChecked()">선택 삭제</button>
           <span>${checkedCount}개 선택됨</span>
           <span class="pt-hint">박스·재고 칸: 클릭 → 숫자 입력 → Enter (방향키로 이동) · 재고를 고치면 실제 재고도 바뀌어요 · 제목줄 칸 경계를 끌면 너비 조절</span>
         </div>
+        ${photoReview.addOpen === 'top' ? renderPtAddBox(all) : ''}
         <div class="pt-wrap"><table class="pt-table" id="pt-table" style="width:${totalWidth}px">
           <colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
           <thead><tr>${head}</tr></thead>
           <tbody>${body}</tbody>
           <tfoot><tr class="pt-foot"><td></td><td>합계</td><td></td><td>${ptNum(qtySum)}</td><td colspan="3">${photoReview.groups.length}건 · 확인필요 ${check.redCount}건</td></tr></tfoot>
         </table></div>
+        <div class="pt-bottom-bar"><button type="button" class="pt-btn pt-add-btn" onclick="togglePtAdd('bottom')">＋ 줄 추가</button></div>
+        ${photoReview.addOpen === 'bottom' ? renderPtAddBox(all) : ''}
         <div class="pr-footer">
           <div class="pr-block-msg" id="pr-block-msg"></div>
           <button type="button" class="pr-add" id="pr-add-btn" onclick="confirmPhotoReview()">✅ 전체 출고표에 추가</button>
@@ -1889,6 +1896,56 @@
           <input type="text" id="pt-pick-input-${g}" autocomplete="off" placeholder="제품 번호나 이름 입력 (예: 6/ , 안묻는)" value="${escapeHtml(group.pickerQuery || '')}" oninput="onPtPickerInput(${g}, this.value)">
           <div class="pt-pick-list">${list || '<span class="pt-pick-empty">맞는 재고가 없어요</span>'}</div>
         </div></td></tr>`;
+    }
+
+    // 줄 추가: 검색칸 + 재고 후보 버튼 (누른 버튼 근처에 열림)
+    function renderPtAddBox(all) {
+      const query = normName(photoReview.addQuery || '');
+      const rows = query ? all.filter(r => normName(r.name).includes(query) || normName(shipLocText(r)).includes(query)) : all;
+      const list = rows.slice(0, 40).map(r =>
+        `<button type="button" class="pt-btn" onclick="addPtRow(${r.id})">${escapeHtml(`${r.name} · ${shipLocText(r)} (${ptNum(r.qty)})`)}</button>`).join('');
+      return `<div class="pt-add-box pt-picker">
+          <input type="text" id="pt-add-input" autocomplete="off" placeholder="추가할 제품 번호나 이름 입력 (예: 6/ , 안묻는)" value="${escapeHtml(photoReview.addQuery || '')}" oninput="onPtAddInput(this.value)">
+          <div class="pt-pick-list">${list || '<span class="pt-pick-empty">맞는 재고가 없어요</span>'}</div>
+        </div>`;
+    }
+    function togglePtAdd(where) {
+      photoReview.addOpen = photoReview.addOpen === where ? null : where;
+      photoReview.addQuery = '';
+      renderPhotoReview();
+      const input = document.getElementById('pt-add-input');
+      if (input) input.focus();
+    }
+    function onPtAddInput(value) {
+      photoReview.addQuery = value;
+      renderPhotoReview();
+      const input = document.getElementById('pt-add-input');
+      if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    }
+    // 고른 재고로 새 줄 추가 → 박스 칸에 바로 숫자 입력
+    function addPtRow(id) {
+      const row = listInvRows().find(r => r.id === Number(id));
+      if (!row) return;
+      photoReview.groups.push({
+        sheetName: row.name,
+        sheetLoc: null,
+        prefLoc: { col: row.col, can: row.can, floor: row.floor },
+        qtyText: '',
+        itemName: row.name,
+        nameCandidates: [],
+        namePicked: false,
+        remember: false,
+        lines: [],
+        shortage: 0,
+        added: true
+      });
+      photoReview.addOpen = null;
+      photoReview.addQuery = '';
+      const g = photoReview.groups.length - 1;
+      ptSelKey = 'q:' + g;
+      renderPhotoReview();
+      const td = ptCellByKey('q:' + g);
+      if (td) { td.scrollIntoView({ block: 'nearest' }); startPtEdit(td, ''); }
     }
 
     // 추가 버튼 상태 / 막힌 이유 (노란 줄은 막지 않음)
