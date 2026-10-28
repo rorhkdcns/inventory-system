@@ -148,35 +148,47 @@
     .ship-photo-status.err { color: #b02a37; }
     .pr-card { border: 2px solid #6f42c1; border-radius: 10px; background: #fff; padding: 14px; margin-bottom: 16px; }
     .pr-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
-    /* 확인 화면 표: 모든 글씨 13px */
+    /* 확인 화면 표: 엑셀처럼 (글씨 14px 통일, 가운데 정렬, 셀 클릭 → 바로 입력) */
+    .pt-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 14px; color: #555; }
+    .pt-hint { font-size: 12px; color: #888; }
     .pt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 10px; }
-    .pt-table { width: 100%; min-width: 580px; border-collapse: collapse; font-size: 13px; }
-    .pt-table th, .pt-table td { border: 1px solid #ccc; padding: 6px 8px; font-size: 13px; vertical-align: middle; text-align: left; }
-    .pt-table th { background: #f1f3f5; font-weight: bold; white-space: nowrap; }
-    .pt-table tfoot td { background: #f8f9fa; font-weight: bold; }
+    .pt-table { border-collapse: collapse; table-layout: fixed; font-size: 14px; color: #222; background: #fff; }
+    .pt-table th, .pt-table td { height: 32px; padding: 0 6px; border: 1px solid #c8c8c8; font-size: 14px; font-weight: normal; text-align: center; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pt-table th { background: #f1f3f5; position: relative; user-select: none; }
+    .pt-rz { position: absolute; top: 0; right: -4px; width: 8px; height: 100%; cursor: col-resize; z-index: 2; touch-action: none; }
+    .pt-rz:hover, .pt-rz.on { background: #0066cc; }
     .pt-table tr.red td { background: #fff5f5; }
     .pt-table tr.yellow td { background: #fffbea; }
+    .pt-table tr.checked td { background: #e7f1ff; }
     .pt-table tr.pt-sub td { border-top-style: dashed; }
-    .pt-num { text-align: right !important; white-space: nowrap; }
+    .pt-table tr.pt-foot td { background: #f1f3f5; }
     .pt-muted { color: #777; }
-    .pt-name { max-width: 220px; }
-    .pt-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    /* 입력칸·선택칸: 기본 모양 없애고 칸에 꽉 차게 (높이 = 다른 칸과 같은 31px) */
-    .pt-table td { height: 31px; line-height: 18px; }
-    .pt-table td.pt-fill { padding: 0; position: relative; }
-    .pt-qty { display: block; width: 100%; min-width: 76px; height: 31px; margin: 0; padding: 0 8px; border: none; border-radius: 0; box-shadow: none; background: transparent; font-size: 13px; line-height: 31px; text-align: right; -webkit-appearance: none; appearance: none; }
-    .pt-qty:focus, .pt-select:focus { outline: 2px solid #0066cc; outline-offset: -2px; }
-    .pt-select-wrap { position: relative; display: block; background: #fff8d6; }
-    .pt-select { display: block; width: 100%; min-width: 130px; height: 31px; margin: 0; padding: 0 26px 0 8px; border: none; border-radius: 0; box-shadow: none; background: transparent; color: #000; font-size: 13px; line-height: 31px; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-    .pt-select::-ms-expand { display: none; }
-    .pt-arrow { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 15px; line-height: 1; color: #664d03; font-weight: bold; margin-top: -3px; }
-    .pt-unmatched { color: #dc3545; font-weight: bold; }
-    .pt-badge { display: inline-block; font-size: 13px; font-weight: bold; border-radius: 4px; padding: 2px 8px; white-space: nowrap; }
-    .pt-badge.green { background: #d1f0dc; color: #146c43; }
-    .pt-badge.yellow { background: #ffe69c; color: #664d03; }
-    .pt-badge.red { background: #dc3545; color: #fff; }
-    .pt-remember { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 11px; color: #555; cursor: pointer; white-space: nowrap; }
-    .pt-remember input { width: 14px; height: 14px; margin: 0; flex: none; }
+    .pt-unmatched { color: #dc3545; }
+    .pt-table td.xc { position: relative; cursor: cell; outline: none; user-select: none; }
+    .pt-table td.xc.sel { box-shadow: inset 0 0 0 2px #1e7e34; }
+    .pt-table td.xc.chg { color: #0066cc; }
+    .pt-table td.xc input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: none; border-radius: 0; text-align: center; font-size: 14px; font-family: inherit; color: #222; background: #fff; box-shadow: inset 0 0 0 2px #1e7e34; outline: none; }
+    .pt-table td.pt-locc { padding: 0; }
+    .pt-loc { display: block; width: 100%; height: 32px; margin: 0; padding: 0 4px; border: none; border-radius: 0; background: transparent; font-size: 14px; font-family: inherit; color: #222; text-align: center; text-align-last: center; cursor: pointer; }
+    .pt-loc:focus { outline: 2px solid #0066cc; outline-offset: -2px; }
+    .pt-ck { width: 16px !important; height: 16px; margin: 0 !important; padding: 0 !important; vertical-align: middle; cursor: pointer; }
+    .pt-st { white-space: nowrap; }
+    .pt-st.green { color: #1e7e34; }
+    .pt-st.yellow { color: #b8860b; }
+    .pt-st.red { color: #dc3545; }
+    .pt-btn { display: inline-flex; align-items: center; justify-content: center; line-height: 1; height: 24px; margin: 0; padding: 0 10px; font-size: 13px; font-weight: normal; color: #333; background: #fff; border: 1px solid #b5b5b5; border-radius: 4px; cursor: pointer; }
+    .pt-btn:hover { background: #f1f3f5; }
+    .pt-act { display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .pt-act .pt-btn { width: 64px; padding: 0; }
+    .pt-btn.del { color: #dc3545; }
+    .pt-btn.pick { color: #dc3545; border-color: #dc3545; }
+    .pt-picker-row td { height: auto !important; padding: 8px !important; white-space: normal !important; background: #f8f9fa; text-align: left !important; }
+    .pt-picker input { width: 100%; height: 32px; margin: 0 0 6px; padding: 0 8px; font-size: 14px; border: 1px solid #b5b5b5; border-radius: 4px; }
+    .pt-pick-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .pt-pick-list .pt-btn { height: 28px; }
+    .pt-pick-empty { font-size: 13px; color: #888; }
+    .pt-remember { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 12px; color: #555; cursor: pointer; }
+    .pt-remember input { width: 13px; height: 13px; margin: 0; padding: 0; flex: none; }
     .pr-footer { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 6px; }
     .pr-footer button { margin: 0; min-height: 48px; font-size: 15px; font-weight: bold; }
     .pr-footer .pr-add { flex: 2 1 200px; background: #0d9488; }
@@ -599,7 +611,7 @@
           await loadInventory();
           render();
           renderShipSearch();
-          if (!photoBusy) renderPhotoReview();
+          if (!photoBusy && !ptEditing) renderPhotoReview();
         })
         .subscribe((status) => console.log('[Realtime] inventory_items 채널 상태:', status));
 
@@ -1275,6 +1287,10 @@
               icon = '🔀';
               color = '#6f42c1';
               lineHtml = `${icon} 이동: <span class="log-loc-col">${log.fromCol}</span>열 <span class="log-loc-can">${log.fromCan}</span>칸 <span class="log-loc-floor">${log.fromFloor}</span>층 → <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span>`;
+            } else if (log.type === '재고수정') {
+              icon = '✏️';
+              color = '#0066cc';
+              lineHtml = `${icon} 재고수정: <span class="log-loc-col">${log.col}</span>열 <span class="log-loc-can">${log.can}</span>칸 <span class="log-loc-floor">${log.floor}</span>층 - <span class="log-item-name">${log.name}</span>`;
             } else if (log.type === '출고취소') {
               icon = '↩️';
               color = '#0ea5e9';
@@ -1289,7 +1305,7 @@
                 <span>${lineHtml}</span>
                 <button class="log-del" onclick="deleteLog(${log.id})">삭제</button>
               </div>
-              <div>수량: <span class="log-qty">${fmtQty(log.qty)}개</span></div>
+              <div>${log.type === '재고수정' ? '수정 후 재고' : '수량'}: <span class="log-qty">${fmtQty(log.qty)}개</span></div>
               <div class="log-date">${log.date}</div>
             </div>`;
           });
@@ -1647,7 +1663,7 @@
           sheetName: it.name,
           sheetLoc: photoLocOf(it),
           prefLoc: photoLocOf(it), // 배정할 때 먼저 쓰는 위치 (직접 고르면 그 위치로 바뀜)
-          qtyText: fmtQty(it.qty),
+          qtyText: String(roundQty(it.qty)),
           itemName,
           nameCandidates,
           namePicked: false, // 상품을 직접 골랐는지 (이름 짝 기억 대상)
@@ -1711,97 +1727,141 @@
       };
     }
 
-    function prBadge(color, text) {
-      return `<span class="pt-badge ${color}">${text}</span>`;
+    // ===== 확인 화면 표 (엑셀처럼: 셀 클릭 → 숫자 입력 → Enter, 방향키 이동, 칸 너비 조절) =====
+    const PT_COLS = ['', '제품', '위치', '박스', '재고', '상태', '작업'];
+    const PT_DEFAULT_WIDTHS = [36, 150, 150, 70, 70, 110, 150];
+    const PT_WIDTH_KEY = 'ptColWidths';
+    let ptSelKey = null;     // 선택된 셀 ('q:그룹번호' 박스 / 's:재고id' 재고)
+    let ptEditing = false;   // 셀 입력 중이면 실시간 갱신으로 다시 그리지 않음
+    let ptEventsReady = false;
+
+    // 표 숫자 표시: 소수점이 없으면 정수로 (2.00 → 2, 0.33 → 0.33)
+    function ptNum(n) {
+      return String(roundQty(n));
+    }
+
+    function ptStatus(color, text) {
+      return `<span class="pt-st ${color}">● ${text}</span>`;
+    }
+
+    function loadPtWidths() {
+      try {
+        const w = JSON.parse(localStorage.getItem(PT_WIDTH_KEY) || 'null');
+        if (Array.isArray(w) && w.length === PT_COLS.length && w.every(n => n >= 30)) return w;
+      } catch (e) { /* 저장값이 없거나 깨졌으면 기본값 */ }
+      return PT_DEFAULT_WIDTHS.slice();
+    }
+    function savePtWidths(w) {
+      try { localStorage.setItem(PT_WIDTH_KEY, JSON.stringify(w)); } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
     }
 
     function renderPhotoReview() {
       const box = document.getElementById('ship-photo-review');
-      if (!photoReview) { box.innerHTML = ''; return; }
+      if (!photoReview) { box.innerHTML = ''; ptSelKey = null; ptEditing = false; return; }
+      ensurePtEvents(box);
 
       const all = sortShippingRows(listInvRows());
       const byId = new Map(all.map(r => [r.id, r]));
       const check = photoReviewCheck();
-      // 위치 선택칸 (같은 상품의 위치만, 위치만 표시)
-      // 화살표(⌄)는 별도 요소. pointer-events:none 이라 화살표를 눌러도 선택칸이 열린다
-      const selectWrap = (onchange, optionsHtml) => `<div class="pt-select-wrap"><select class="pt-select" onchange="${onchange}">${optionsHtml}</select><span class="pt-arrow">⌄</span></div>`;
-      const locSelect = (rows, selectedId, onchange) => selectWrap(onchange,
-        rows.map(r => `<option value="${r.id}"${r.id === selectedId ? ' selected' : ''}>${escapeHtml(shipLocText(r))}</option>`).join(''));
+      const widths = loadPtWidths();
+
+      const locSelect = (options, selectedId, onchange) =>
+        `<select class="pt-loc" onchange="${onchange}">` +
+        options.map(r => `<option value="${r.id}"${r.id === selectedId ? ' selected' : ''}>${escapeHtml(`${shipLocText(r)} (${ptNum(r.qty)})`)}</option>`).join('') +
+        `</select>`;
+      const stockCell = item => item
+        ? `<td class="xc" tabindex="0" data-k="s:${item.id}">${ptNum(item.qty)}</td>`
+        : `<td>-</td>`;
 
       let body = '';
       let qtySum = 0;
+      let checkedCount = 0;
       photoReview.groups.forEach((group, g) => {
         const gx = check.groups[g];
         const q = parseQtyValue(group.qtyText);
         if (q !== null) qtySum = roundQty(qtySum + q);
+        if (group.checked) checkedCount++;
 
-        // 제품 칸: 매칭된 재고 상품명 (마우스 올리면 사장님 원래 표기). 아직 못 정했으면 사장님 표기를 빨간 글씨로
+        const ck = `<td><input type="checkbox" class="pt-ck" aria-label="행 선택"${group.checked ? ' checked' : ''} onchange="onPtCheck(${g}, this.checked)"></td>`;
         const nameCell = group.itemName
-          ? `<td class="pt-name" title="${escapeHtml(group.sheetName)}"><div class="pt-ellipsis">${escapeHtml(group.itemName)}</div></td>`
-          : `<td class="pt-name" title="${escapeHtml(group.sheetName)}"><div class="pt-ellipsis pt-unmatched">${escapeHtml(group.sheetName)}</div></td>`;
-        const qtyCell = `<td class="pt-num pt-fill"><input type="text" class="pt-qty" id="pr-qty-${g}" inputmode="decimal" autocomplete="off" value="${escapeHtml(group.qtyText)}" oninput="onPhotoQtyInput(${g}, this.value)" onblur="onPhotoQtyBlur(${g})"></td>`;
+          ? `<td title="${escapeHtml(group.sheetName)}">${escapeHtml(group.itemName)}</td>`
+          : `<td class="pt-unmatched" title="${escapeHtml(group.sheetName)}">${escapeHtml(group.sheetName)}</td>`;
+        const qtyCell = `<td class="xc" tabindex="0" data-k="q:${g}">${escapeHtml(group.qtyText)}</td>`;
         const remember = group.namePicked
-          ? `<label class="pt-remember"><input type="checkbox"${group.remember ? ' checked' : ''} onchange="photoReview.groups[${g}].remember = this.checked"> 다음부터 자동으로 맞추기</label>`
+          ? `<label class="pt-remember" title="다음부터 이 이름은 자동으로 맞추기"><input type="checkbox"${group.remember ? ' checked' : ''} onchange="photoReview.groups[${g}].remember = this.checked">기억</label>`
           : '';
-        const groupRedBadge = gx.unresolved ? prBadge('red', '선택필요')
-          : gx.badQty ? prBadge('red', '박스 확인')
-          : gx.shortage > 0 ? prBadge('red', `재고부족 ${fmtQty(gx.shortage)}`)
+        const actions = `<td><div class="pt-act">` +
+          (group.itemName
+            ? `<button type="button" class="pt-btn" onclick="togglePtPicker(${g})">변경</button>`
+            : `<button type="button" class="pt-btn pick" onclick="togglePtPicker(${g})">제품 선택</button>`) +
+          `<button type="button" class="pt-btn del" onclick="deletePtGroup(${g})">삭제</button></div></td>`;
+        const groupRed = gx.unresolved ? ptStatus('red', '선택필요')
+          : gx.badQty ? ptStatus('red', '박스 확인')
+          : gx.shortage > 0 ? ptStatus('red', `부족 ${ptNum(gx.shortage)}`)
           : '';
+        const rowCls = cls => `${cls}${group.checked ? ' checked' : ''}`;
 
-        // 상품을 못 정한 줄: 위치 칸에서 재고를 직접 고른다 (같은 위치에 여러 상품이 있을 수 있어 상품명도 함께 표시)
         if (gx.unresolved || group.lines.length === 0) {
-          const opt = r => `<option value="${r.id}">${escapeHtml(`${shipLocText(r)} · ${r.name}`)}</option>`;
-          const locCell = gx.unresolved
-            ? selectWrap(`onPhotoPickProduct(${g}, this.value)`,
-                `<option value="">선택</option>` +
-                (group.nameCandidates.length > 0 ? `<optgroup label="후보">${group.nameCandidates.map(opt).join('')}</optgroup>` : '') +
-                `<optgroup label="전체 재고">${all.map(opt).join('')}</optgroup>`)
-            : '-';
-          body += `<tr class="red">${nameCell}${qtyCell}<td class="${gx.unresolved ? 'pt-fill' : ''}">${locCell}</td><td class="pt-num">-</td><td>${groupRedBadge || prBadge('red', '선택필요')}${remember}</td></tr>`;
-          return;
-        }
-
-        const sameProduct = all.filter(r => r.name === group.itemName);
-        const lineCells = group.lines.map((line, l) => {
-          const item = byId.get(line.id);
-          const lx = gx.lines[l];
-          const editable = line.kind === 'yellow' || line.kind === 'manual';
-          const options = item && !sameProduct.includes(item) ? [item, ...sameProduct] : sameProduct;
-          return {
-            name: item ? item.name : group.itemName,
-            editable,
-            loc: editable ? locSelect(options, line.id, `onPhotoPickLine(${g}, ${l}, this.value)`) : escapeHtml(item ? shipLocText(item) : '-'),
-            stock: item ? fmtQty(item.qty) : '-',
-            badge: lx.over ? prBadge('red', '재고초과') : line.kind === 'yellow' ? prBadge('yellow', '자동배정') : prBadge('green', '매칭'),
-            yellow: line.kind === 'yellow'
-          };
-        });
-
-        if (lineCells.length === 1) {
-          const c = lineCells[0];
-          const cls = gx.red ? 'red' : c.yellow ? 'yellow' : '';
-          body += `<tr class="${cls}">${nameCell}${qtyCell}<td class="${c.editable ? 'pt-fill' : ''}">${c.loc}</td><td class="pt-num">${c.stock}</td><td>${groupRedBadge || c.badge}${remember}</td></tr>`;
+          body += `<tr class="${rowCls('red')}">${ck}${nameCell}<td>-</td>${qtyCell}<td>-</td><td>${groupRed || ptStatus('red', '선택필요')}${remember}</td>${actions}</tr>`;
         } else {
-          // 여러 위치에서 나눠 빼는 경우: 제품 줄 + 위치별 줄
-          const anyYellow = lineCells.some(c => c.yellow);
-          const cls = gx.red ? 'red' : anyYellow ? 'yellow' : '';
-          const headBadge = groupRedBadge || (gx.red ? prBadge('red', '재고초과') : anyYellow ? prBadge('yellow', '자동배정') : prBadge('green', '매칭'));
-          body += `<tr class="${cls}">${nameCell}${qtyCell}<td class="pt-muted">${lineCells.length}곳에서 나눠 빼기</td><td class="pt-num">-</td><td>${headBadge}${remember}</td></tr>`;
-          lineCells.forEach((c, l) => {
-            body += `<tr class="pt-sub ${cls}"><td class="pt-name" title="${escapeHtml(group.sheetName)}"><div class="pt-ellipsis pt-muted">↳ ${escapeHtml(c.name)}</div></td><td class="pt-num">${fmtQty(group.lines[l].qty)}</td><td class="${c.editable ? 'pt-fill' : ''}">${c.loc}</td><td class="pt-num">${c.stock}</td><td>${c.badge}</td></tr>`;
+          const sameProduct = all.filter(r => r.name === group.itemName);
+          const lineCells = group.lines.map((line, l) => {
+            const item = byId.get(line.id) || null;
+            const lx = gx.lines[l];
+            const options = item && !sameProduct.includes(item) ? [item, ...sameProduct] : sameProduct;
+            return {
+              item,
+              name: item ? item.name : group.itemName,
+              loc: item ? locSelect(options, line.id, `onPhotoPickLine(${g}, ${l}, this.value)`) : '-',
+              status: lx.over ? ptStatus('red', '재고초과') : line.kind === 'yellow' ? ptStatus('yellow', '자동배정') : ptStatus('green', '정상'),
+              yellow: line.kind === 'yellow'
+            };
           });
+
+          if (lineCells.length === 1) {
+            const c = lineCells[0];
+            const cls = gx.red ? 'red' : c.yellow ? 'yellow' : '';
+            body += `<tr class="${rowCls(cls)}">${ck}${nameCell}<td class="pt-locc">${c.loc}</td>${qtyCell}${stockCell(c.item)}<td>${groupRed || c.status}${remember}</td>${actions}</tr>`;
+          } else {
+            // 여러 위치에서 나눠 빼는 경우: 제품 줄 + 위치별 줄
+            const anyYellow = lineCells.some(c => c.yellow);
+            const cls = gx.red ? 'red' : anyYellow ? 'yellow' : '';
+            const head = groupRed || (gx.red ? ptStatus('red', '재고초과') : anyYellow ? ptStatus('yellow', '자동배정') : ptStatus('green', '정상'));
+            body += `<tr class="${rowCls(cls)}">${ck}${nameCell}<td class="pt-muted">${lineCells.length}곳에서 나눠 빼기</td>${qtyCell}<td>-</td><td>${head}${remember}</td>${actions}</tr>`;
+            lineCells.forEach((c, l) => {
+              body += `<tr class="pt-sub ${rowCls(cls)}"><td></td><td class="pt-muted">↳ ${escapeHtml(c.name)}</td><td class="pt-locc">${c.loc}</td><td>${ptNum(group.lines[l].qty)}</td>${stockCell(c.item)}<td>${c.status}</td><td></td></tr>`;
+            });
+          }
         }
+
+        if (group.pickerOpen) body += renderPtPicker(group, g, all);
       });
+
+      const allChecked = photoReview.groups.length > 0 && checkedCount === photoReview.groups.length;
+      const head = PT_COLS.map((label, i) => {
+        const inner = i === 0
+          ? `<input type="checkbox" class="pt-ck" aria-label="전체 선택"${allChecked ? ' checked' : ''} onchange="onPtCheckAll(this.checked)">`
+          : label;
+        const rz = i < PT_COLS.length - 1 ? `<div class="pt-rz" data-i="${i}"></div>` : '';
+        return `<th>${inner}${rz}</th>`;
+      }).join('');
+      const totalWidth = widths.reduce((a, b) => a + b, 0);
 
       let html = `<div class="pr-card">
         <div class="pr-title">📷 사진에서 읽은 출고 목록</div>`;
       if (photoReview.aliasError) {
         html += `<div class="pr-block-msg" style="margin-bottom:8px;">이름 짝 기억 테이블(name_alias)을 읽지 못했어요. supabase_update_name_alias.sql 을 실행해 주세요.</div>`;
       }
-      html += `<div class="pt-wrap"><table class="pt-table">
-          <thead><tr><th>제품</th><th>박스</th><th>위치</th><th>재고</th><th>상태</th></tr></thead>
+      html += `<div class="pt-toolbar">
+          <button type="button" class="pt-btn" onclick="deletePtChecked()">선택 삭제</button>
+          <span>${checkedCount}개 선택됨</span>
+          <span class="pt-hint">박스·재고 칸: 클릭 → 숫자 입력 → Enter (방향키로 이동) · 재고를 고치면 실제 재고도 바뀌어요 · 제목줄 칸 경계를 끌면 너비 조절</span>
+        </div>
+        <div class="pt-wrap"><table class="pt-table" id="pt-table" style="width:${totalWidth}px">
+          <colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>
+          <thead><tr>${head}</tr></thead>
           <tbody>${body}</tbody>
-          <tfoot><tr><td>합계</td><td class="pt-num">${fmtQty(qtySum)}</td><td colspan="3">${photoReview.groups.length}건 · 선택필요 ${check.redCount}건</td></tr></tfoot>
+          <tfoot><tr class="pt-foot"><td></td><td>합계</td><td></td><td>${ptNum(qtySum)}</td><td colspan="3">${photoReview.groups.length}건 · 확인필요 ${check.redCount}건</td></tr></tfoot>
         </table></div>
         <div class="pr-footer">
           <div class="pr-block-msg" id="pr-block-msg"></div>
@@ -1810,7 +1870,25 @@
         </div>
       </div>`;
       box.innerHTML = html;
+      restorePtSelection();
       updatePhotoReviewStatus();
+    }
+
+    // 제품 변경/선택: 그 줄 아래에 검색칸 + 후보 버튼
+    function renderPtPicker(group, g, all) {
+      const query = normName(group.pickerQuery || '');
+      let rows;
+      if (!query) {
+        rows = group.nameCandidates && group.nameCandidates.length > 0 ? group.nameCandidates : all;
+      } else {
+        rows = all.filter(r => normName(r.name).includes(query) || normName(shipLocText(r)).includes(query));
+      }
+      const list = rows.slice(0, 40).map(r =>
+        `<button type="button" class="pt-btn" onclick="onPtPick(${g}, ${r.id})">${escapeHtml(`${r.name} · ${shipLocText(r)} (${ptNum(r.qty)})`)}</button>`).join('');
+      return `<tr class="pt-picker-row"><td colspan="${PT_COLS.length}"><div class="pt-picker">
+          <input type="text" id="pt-pick-input-${g}" autocomplete="off" placeholder="제품 번호나 이름 입력 (예: 6/ , 안묻는)" value="${escapeHtml(group.pickerQuery || '')}" oninput="onPtPickerInput(${g}, this.value)">
+          <div class="pt-pick-list">${list || '<span class="pt-pick-empty">맞는 재고가 없어요</span>'}</div>
+        </div></td></tr>`;
     }
 
     // 추가 버튼 상태 / 막힌 이유 (노란 줄은 막지 않음)
@@ -1818,7 +1896,8 @@
       if (!photoReview) return;
       const check = photoReviewCheck();
       let msg = '';
-      if (check.unresolvedCount > 0) msg = `빨간 항목 ${check.unresolvedCount}건 먼저 골라주세요`;
+      if (photoReview.groups.length === 0) msg = '출고할 항목이 없어요';
+      else if (check.unresolvedCount > 0) msg = `빨간 항목 ${check.unresolvedCount}건 먼저 골라주세요`;
       else if (check.shortageCount > 0) msg = `재고 부족 항목 ${check.shortageCount}건: 박스 수를 줄이거나 재고를 확인해 주세요`;
       else if (check.badQtyCount > 0) msg = `박스 수가 비었거나 0 이하인 항목 ${check.badQtyCount}건을 고쳐주세요`;
       else if (check.overCount > 0) msg = `재고보다 많이 빼는 위치 ${check.overCount}곳을 고쳐주세요`;
@@ -1828,27 +1907,51 @@
       btn.textContent = photoBusy ? '⏳ 추가 중...' : `✅ 전체 출고표에 추가 (${check.lineCount}건)`;
     }
 
-    // 박스 수를 바꾸면 그 줄을 다시 배정하고, 입력칸 포커스는 유지
-    function onPhotoQtyInput(g, value) {
-      photoReview.groups[g].qtyText = value;
-      reallocateGroup(g);
+    // ----- 체크/삭제 -----
+    function onPtCheck(g, checked) {
+      photoReview.groups[g].checked = checked;
       renderPhotoReview();
-      const input = document.getElementById('pr-qty-' + g);
+    }
+    function onPtCheckAll(checked) {
+      photoReview.groups.forEach(gr => { gr.checked = checked; });
+      renderPhotoReview();
+    }
+    function deletePtGroup(g) {
+      photoReview.groups.splice(g, 1);
+      ptSelKey = null;
+      renderPhotoReview();
+    }
+    function deletePtChecked() {
+      const n = photoReview.groups.filter(gr => gr.checked).length;
+      if (n === 0) return alert('삭제할 줄을 먼저 체크해 주세요');
+      photoReview.groups = photoReview.groups.filter(gr => !gr.checked);
+      ptSelKey = null;
+      renderPhotoReview();
+    }
+
+    // ----- 제품 변경 -----
+    function togglePtPicker(g) {
+      const group = photoReview.groups[g];
+      group.pickerOpen = !group.pickerOpen;
+      group.pickerQuery = '';
+      renderPhotoReview();
+      if (group.pickerOpen) {
+        const input = document.getElementById('pt-pick-input-' + g);
+        if (input) input.focus();
+      }
+    }
+    function onPtPickerInput(g, value) {
+      photoReview.groups[g].pickerQuery = value;
+      renderPhotoReview();
+      const input = document.getElementById('pt-pick-input-' + g);
       if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
     }
-
-    // 입력을 마치면 소수점 두 자리로 맞춘다 (다시 그리지 않음 → 버튼 클릭이 끊기지 않게)
-    function onPhotoQtyBlur(g) {
-      if (!photoReview) return;
-      const group = photoReview.groups[g];
-      const v = parseQtyValue(group.qtyText);
-      if (v === null) return;
-      group.qtyText = fmtQty(v);
-      const input = document.getElementById('pr-qty-' + g);
-      if (input) input.value = group.qtyText;
+    function onPtPick(g, id) {
+      photoReview.groups[g].pickerOpen = false;
+      onPhotoPickProduct(g, String(id));
     }
 
-    // 선택필요 줄에서 재고를 고름 → 그 상품으로, 고른 위치를 먼저 쓰도록 배정
+    // 선택필요 줄/변경에서 재고를 고름 → 그 상품으로, 고른 위치를 먼저 쓰도록 배정
     function onPhotoPickProduct(g, value) {
       const group = photoReview.groups[g];
       const row = value === '' ? null : listInvRows().find(r => r.id === Number(value));
@@ -1867,6 +1970,192 @@
       if (row.name !== group.itemName) { onPhotoPickProduct(g, value); return; }
       group.lines[l] = { id: row.id, qty: group.lines[l].qty, kind: 'manual' };
       renderPhotoReview();
+    }
+
+    // ----- 셀 입력 (엑셀처럼) -----
+    function ptCells() {
+      const table = document.getElementById('pt-table');
+      return table ? Array.from(table.querySelectorAll('td.xc')) : [];
+    }
+    function ptCellByKey(key) {
+      return ptCells().find(td => td.dataset.k === key) || null;
+    }
+    function selectPtCell(td) {
+      ptCells().forEach(c => c.classList.remove('sel'));
+      ptSelKey = td ? td.dataset.k : null;
+      if (td) { td.classList.add('sel'); td.focus(); }
+    }
+    function restorePtSelection() {
+      if (!ptSelKey) return;
+      const td = ptCellByKey(ptSelKey);
+      if (td) { td.classList.add('sel'); td.focus({ preventScroll: true }); }
+      else ptSelKey = null;
+    }
+    // 이동할 셀 찾기: 세로는 같은 열의 위/아래 셀, 가로는 표 순서상 앞/뒤 셀
+    function ptNeighbor(td, dir) {
+      const cells = ptCells();
+      const i = cells.indexOf(td);
+      if (i < 0) return null;
+      if (dir === 'left') return cells[i - 1] || null;
+      if (dir === 'right') return cells[i + 1] || null;
+      const step = dir === 'down' ? 1 : -1;
+      for (let j = i + step; j >= 0 && j < cells.length; j += step) {
+        if (cells[j].cellIndex === td.cellIndex) return cells[j];
+      }
+      return null;
+    }
+
+    function startPtEdit(td, initial) {
+      if (ptEditing) return;
+      ptEditing = true;
+      selectPtCell(td);
+      const prev = td.textContent;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.inputMode = 'decimal';
+      input.autocomplete = 'off';
+      input.value = initial === undefined ? prev : initial;
+      td.textContent = '';
+      td.appendChild(input);
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      input.addEventListener('blur', () => { if (ptEditing && td.contains(input)) finishPtEdit(td, input.value, null); });
+    }
+
+    // 입력 확정. move: 확정 후 이동할 방향 (null 이면 그 자리)
+    async function finishPtEdit(td, value, move) {
+      if (!ptEditing) return;
+      const key = td.dataset.k;
+      const next = move ? ptNeighbor(td, move) : td;
+      const nextKey = next ? next.dataset.k : key;
+      ptEditing = false;
+      ptSelKey = nextKey;
+      if (key.startsWith('q:')) {
+        commitPtQty(Number(key.slice(2)), value);
+      } else {
+        await commitPtStock(Number(key.slice(2)), value);
+      }
+    }
+    function cancelPtEdit() {
+      ptEditing = false;
+      renderPhotoReview();
+    }
+
+    // 박스 수 → 그 줄 다시 배정
+    function commitPtQty(g, value) {
+      const group = photoReview.groups[g];
+      if (!group) return renderPhotoReview();
+      const v = parseQtyValue(String(value).trim());
+      group.qtyText = v === null ? String(value).trim() : ptNum(v);
+      reallocateGroup(g);
+      renderPhotoReview();
+    }
+
+    // 재고 수 → 실제 재고(inventory_items)도 바로 수정 + '재고수정' 로그
+    async function commitPtStock(id, value) {
+      const found = findInvItemById(id);
+      const raw = String(value).trim();
+      const v = raw === '' ? NaN : roundQty(parseFloat(raw));
+      if (!found || !isFinite(v) || v < 0) { renderPhotoReview(); if (found && raw !== '') alert('재고는 0 이상의 숫자로 입력해 주세요'); return; }
+      const { col, can, floor, item } = found;
+      if (v === roundQty(item.q)) return renderPhotoReview();
+      if (v === 0 && !confirm(`${item.n} (${col}열 ${can}칸 ${floor}층) 재고를 0으로 하면 이 위치에서 삭제돼요. 진행할까요?`)) return renderPhotoReview();
+
+      let error;
+      if (v === 0) {
+        ({ error } = await sb.from('inventory_items').delete().eq('id', id));
+        logSb('delete', 'inventory_items', error, { id });
+      } else {
+        ({ error } = await sb.from('inventory_items').update({ qty: v }).eq('id', id));
+        logSb('update', 'inventory_items', error, { id, qty: v });
+      }
+      if (error) { renderPhotoReview(); return alert('재고 수정 오류: ' + error.message); }
+
+      const logPayload = { type: '재고수정', col, can: parseInt(can), floor: parseInt(floor), name: item.n, qty: v, date: getTodayDate() };
+      const { error: logErr } = await sb.from('inventory_logs').insert(logPayload);
+      logSb('insert', 'inventory_logs', logErr, logPayload);
+
+      await loadInventory();
+      render();
+      renderShipSearch();
+      if (photoReview) {
+        // 같은 상품을 쓰는 줄은 바뀐 재고로 다시 배정
+        photoReview.groups.forEach((gr, g) => { if (gr.itemName === item.n) reallocateGroup(g); });
+      }
+      renderPhotoReview();
+      if (logErr) alert('재고는 수정됐지만 로그 저장에 실패했어요: ' + logErr.message);
+    }
+
+    // 표 이벤트는 바깥 상자에 한 번만 연결 (표를 다시 그려도 유지)
+    function ensurePtEvents(box) {
+      if (ptEventsReady) return;
+      ptEventsReady = true;
+
+      box.addEventListener('click', e => {
+        const td = e.target.closest('td.xc');
+        if (td && !td.querySelector('input')) selectPtCell(td);
+      });
+      box.addEventListener('dblclick', e => {
+        const td = e.target.closest('td.xc');
+        if (td && !ptEditing) startPtEdit(td);
+      });
+      box.addEventListener('keydown', e => {
+        const td = e.target.closest && e.target.closest('td.xc');
+        if (!td) return;
+        const input = td.querySelector('input');
+        const k = e.key;
+        if (input) {
+          if (k === 'Enter') { e.preventDefault(); finishPtEdit(td, input.value, 'down'); }
+          else if (k === 'Tab') { e.preventDefault(); finishPtEdit(td, input.value, e.shiftKey ? 'left' : 'right'); }
+          else if (k === 'Escape') { e.preventDefault(); cancelPtEdit(); }
+          return;
+        }
+        const moves = { ArrowDown: 'down', ArrowUp: 'up', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'down' };
+        if (moves[k]) { e.preventDefault(); const n = ptNeighbor(td, moves[k]); if (n) selectPtCell(n); }
+        else if (k === 'Tab') { e.preventDefault(); const n = ptNeighbor(td, e.shiftKey ? 'left' : 'right'); if (n) selectPtCell(n); }
+        else if (k === 'F2') { e.preventDefault(); startPtEdit(td); }
+        else if (k === 'Backspace' || k === 'Delete') { e.preventDefault(); startPtEdit(td, ''); }
+        else if (/^[0-9.]$/.test(k) && !e.ctrlKey && !e.metaKey) { e.preventDefault(); startPtEdit(td, k); }
+      });
+      // 휴대폰: 셀을 한 번 누르면 바로 입력칸 (키보드가 뜨도록)
+      box.addEventListener('touchend', e => {
+        const td = e.target.closest('td.xc');
+        if (!td || ptEditing || td.querySelector('input')) return;
+        e.preventDefault();
+        startPtEdit(td);
+      });
+
+      // 제목줄 칸 경계 끌어서 너비 조절 (마우스·터치 모두)
+      let drag = null;
+      box.addEventListener('pointerdown', e => {
+        const rz = e.target.closest('.pt-rz');
+        if (!rz) return;
+        e.preventDefault();
+        const i = Number(rz.dataset.i);
+        drag = { i, x: e.clientX, widths: loadPtWidths(), rz };
+        rz.classList.add('on');
+        rz.setPointerCapture(e.pointerId);
+      });
+      box.addEventListener('pointermove', e => {
+        if (!drag) return;
+        const w = Math.max(30, Math.round(drag.widths[drag.i] + e.clientX - drag.x));
+        const table = document.getElementById('pt-table');
+        if (!table) return;
+        const cols = table.querySelectorAll('col');
+        cols[drag.i].style.width = w + 'px';
+        const next = drag.widths.slice();
+        next[drag.i] = w;
+        table.style.width = next.reduce((a, b) => a + b, 0) + 'px';
+        drag.current = next;
+      });
+      const endDrag = () => {
+        if (!drag) return;
+        if (drag.current) savePtWidths(drag.current);
+        drag.rz.classList.remove('on');
+        drag = null;
+      };
+      box.addEventListener('pointerup', endDrag);
+      box.addEventListener('pointercancel', endDrag);
     }
 
     function cancelPhotoReview() {
